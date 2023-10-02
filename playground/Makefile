@@ -1,13 +1,18 @@
 COMPILER	:=	c++ -std=c++98
 FLAGS		:=	-Wall -Werror -Wextra
-FILES		:=	*.cpp
-BIN			:=	connect.cpp
+SERVER_FILE	:=	server.cpp
+CLIENT_FILE	:=	client.cpp
 
 all:
-	$(COMPILER) $(FLAGS) $(FILES) -o $(BIN)
+	$(COMPILER) $(FLAGS) $(SERVER_FILE) -o server
+	$(COMPILER) $(FLAGS) $(CLIENT_FILE) -o client
 
-run:
-	./$(BIN)
+
+run_server:
+	./server
+
+run_client:
+	./client
 
 clean:
-	rm $(BIN)
+	rm server client

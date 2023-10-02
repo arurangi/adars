@@ -57,7 +57,7 @@ int main()
     ///////////////////////////////////////////////////////////
 
     /**
-     * @brief Listen() : Wait for incoming connections
+     * @brief Listen() : listen for socket connections and limit the queue of incoming connections
      * ---
      * @param socket : server socket file descripor
      * @param backlog : maximum number of pending connections that can be queued up before connections are refused
@@ -71,9 +71,9 @@ int main()
     std::cout << "Server listening on port " << SERVER_PORT << std::endl;
 
     /**
-     * @brief accept() : accept connection
+     * @brief accept() : accept a new connection on a socket
      * ---
-     * @param socket : server socket
+     * @param socket : server socket file descriptor
      * @param address : client address structure to be filled
      * @param address_len : client's address length
      * @return dataExchangeSokcet 
