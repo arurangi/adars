@@ -56,14 +56,13 @@ int main()
 
     ///////////////////////////////////////////////////////////
 
-    // The listen system call tells a socket that it should be
-    // capable of accepting incoming connections
     /**
-     * @brief Wait for incoming connections
-     * 
-     * 
+     * @brief Listen() : Wait for incoming connections
+     * ---
+     * @param socket : server socket file descripor
+     * @param backlog : maximum number of pending connections that can be queued up before connections are refused
+     * @return -1 if failed, number > 0 if success
      */
-
     if (listen(serverSocket, BACKLOG_LISTENING) < 0)
     {
         std::perror("In listen");
@@ -71,6 +70,14 @@ int main()
     }
     std::cout << "Server listening on port " << SERVER_PORT << std::endl;
 
+    /**
+     * @brief accept() : accept connection
+     * ---
+     * @param socket : server socket
+     * @param address : client address structure to be filled
+     * @param address_len : client's address length
+     * @return dataExchangeSokcet 
+     */
     clientAddrLen = sizeof(clientAddress);
     if ((dataExchangeSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddrLen)) < 0)
     {
