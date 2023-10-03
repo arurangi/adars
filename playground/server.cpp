@@ -6,17 +6,19 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-#define IPV4    AF_INET
-#define IPV6    AF_INET6
-#define TCP     SOCK_STREAM
-#define UDP     SOCK_DGRAM
-#define DEFAULT 0
-#define SERVER_PORT 8080
-#define BACKLOG_LISTENING 3
-#define BUFFER_SIZE 1024
+#include "Http.hpp"
 
-#define WEB_PORT 80
-#define LOCALHOST "127.0.0.1"
+#define IPV4                AF_INET
+#define IPV6                AF_INET6
+#define TCP                 SOCK_STREAM
+#define UDP                 SOCK_DGRAM
+#define DEFAULT             0
+#define SERVER_PORT         8080
+#define BACKLOG_LISTENING   3
+#define BUFFER_SIZE         1024
+
+#define WEB_PORT            80
+#define LOCALHOST           "127.0.0.1"
 
 int main()
 {
@@ -25,7 +27,7 @@ int main()
     int                 dataExchangeSocket;
     struct sockaddr_in  clientAddress;
     socklen_t           clientAddrLen;
-
+    Http                _http;
 
     // Create socket
     serverSocket = socket(IPV4, TCP, DEFAULT);
@@ -66,10 +68,10 @@ int main()
         int bytes_read = read(dataExchangeSocket, buffer, BUFFER_SIZE);
         std::cout << buffer << std::endl;
         if (bytes_read < 0)
-            std::cout << "No bytes are there to read\n";
+            std::cout << "No bytes are there to read\n\r";
         
-        char response[] = "Hello from the server";
-        write(dataExchangeSocket, response, std::strlen(response));
+        // char response[] = "Hello from the server";
+        write(dataExchangeSocket, _http.respond().c_str(), _http.getContentLength());
         
         std::cout << "------------------Hello message sent-------------------\n";
 

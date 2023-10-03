@@ -8,13 +8,12 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 
-
 #define IPV4        AF_INET
 
+#define HOST        LOCALHOST
 #define LOCALHOST   "127.0.0.1"
 #define GOOGLE_IP      
 #define FACEBOOK_IP
-#define HOST        LOCALHOST
 
 #define DEFAULT     0
 #define SERVER_PORT 8080

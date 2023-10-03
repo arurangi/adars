@@ -1,6 +1,8 @@
 # About [in progress]
 This project is about building an HTTP server from scratch (without libraries) in C/C++.
 
+<details>
+<summary>Show Notes</summary>
 # Terms
 __The beginning of wisdom is the definition of terms -- Socrates__
 
@@ -74,7 +76,7 @@ An IP determines the location of the server.
 > HTTP Request: 
 
 > HTTP: Response: 
-
+</details>
 
 ## Workflow
 ### Client
