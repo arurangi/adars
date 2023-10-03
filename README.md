@@ -43,6 +43,26 @@ A socket is the mechanism that most popular operating systems provide to give pr
 
 > IP:
 
+Identifier for a computer or device on a network. Equivalent to its full name.
+
+An IP determines the location of the server.
+
+> Ports:
+
+- A port number determines which service or program on that computer it wants to use. 
+
+- port numbers use 2 bytes (16 bits). Meaning they can represent 65536 values.
+- 3 catagories of port numbers:
+| Port numbers | Description | Exemples |
+| -- | -- | -- |
+| 0 - 1023      | system or well-known ports| 80 & 443 (web pages), 21 (FTP), 25 (SMTP) |
+| 1024 - 49 151 | user or registered ports. These ports can be registered by companies of developpers for a particular service. | 1102 (adobe), 1433 (Microsoft SQL server), 1416 (Novell), 1527 (Oracle)|
+| 49 152 - 65 535   | dynamic or private ports. Client-side ports that are free to use. These are the ports that your computer assigns temporarily to itself during sessions. | while viewing a web page|
+
+ The first two categories are used on a server. While the last one is for client, meaning our computer. Whenever our computer wants to use a service or program of another computer it assigns itself a port number of range category 3 to communicate.  
+
+- a port number is always associated with an IP address 
+
 > TCP/UDP: 
 
 > HTTP: 
@@ -50,8 +70,6 @@ A socket is the mechanism that most popular operating systems provide to give pr
 > Server: 
 
 > Client: 
-
-> Ports:
 
 > HTTP Request: 
 

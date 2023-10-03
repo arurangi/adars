@@ -16,3 +16,7 @@ run_client:
 
 clean:
 	rm server client
+
+re: clean all
+
+.PHONY:	all run_client run_server clean re

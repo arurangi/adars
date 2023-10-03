@@ -15,6 +15,9 @@
 #define BACKLOG_LISTENING 3
 #define BUFFER_SIZE 1024
 
+#define WEB_PORT 80
+#define LOCALHOST "127.0.0.1"
+
 int main()
 {
     int                 serverSocket;
@@ -60,9 +63,9 @@ int main()
         }
 
         char buffer[BUFFER_SIZE] = {0};
-        int valread = read(dataExchangeSocket, buffer, BUFFER_SIZE);
+        int bytes_read = read(dataExchangeSocket, buffer, BUFFER_SIZE);
         std::cout << buffer << std::endl;
-        if (valread < 0)
+        if (bytes_read < 0)
             std::cout << "No bytes are there to read\n";
         
         char response[] = "Hello from the server";

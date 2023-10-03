@@ -8,47 +8,61 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 
+
+#define IPV4        AF_INET
+
+#define LOCALHOST   "127.0.0.1"
+#define GOOGLE_IP      
+#define FACEBOOK_IP
+#define HOST        LOCALHOST
+
+#define DEFAULT     0
 #define SERVER_PORT 8080
+#define BUFFER_SIZE 1024
+
 
 int main()
 {
-    int sock = 0; long valread;
-    struct sockaddr_in serv_addr;
-    char hello[] = "Hello from client";
-    char buffer[1024] = {0};
+    int                 clientSocket;
+    struct sockaddr_in  serverAddress;
+    long                bytes_read;
+    char                message[] = "Hello from client";
+    char                buffer[BUFFER_SIZE] = {0};
 
     // 1. create socket
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    clientSocket = socket(IPV4, SOCK_STREAM, DEFAULT);
+    if (clientSocket < 0)
     {
         printf("\n Socket creation error \n");
-        return -1;
+        exit(EXIT_FAILURE);
     }
     
     // 2. connect to remote server
-    // -- initialize address structure
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(SERVER_PORT);
+    memset(&serverAddress, 0, sizeof(serverAddress));
+    serverAddress.sin_family = IPV4;
+    serverAddress.sin_port = htons(SERVER_PORT);
     // -- -- convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
+    if(inet_pton(IPV4, LOCALHOST, &serverAddress.sin_addr) <= 0)
     {
-        printf("\nInvalid address/ Address not supported \n");
-        return -1;
+        std::cerr << "\nInvalid address/ Address not supported \n";
+        exit(EXIT_FAILURE);
     }
     // -- connect
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    if (connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
     {
-        printf("\nConnection Failed \n");
-        return -1;
+        std::cerr << "\nConnection Failed \n";
+        exit(EXIT_FAILURE);
     }
 
     // 3. send message
-    send(sock , hello , strlen(hello) , 0 );
-    printf("Hello message sent\n");
+    send(clientSocket , message , std::strlen(message) , 0);
+    std::cout << "Hello message sent\n";
 
     // 4. read response
-    valread = read( sock , buffer, 1024);
-    printf("%s\n",buffer );
+    bytes_read = read(clientSocket , buffer, BUFFER_SIZE);
+    if(bytes_read < 0)
+        printf("No bytes are there to read");
+    std::cout << buffer << std::endl;
 
-    return 0;
+    return EXIT_SUCCESS;
 }
