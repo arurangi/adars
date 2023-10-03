@@ -78,17 +78,16 @@ An IP determines the location of the server.
 > HTTP: Response: 
 </details>
 
-## Workflow
-### Client
-1. create a socket
-2. connect it to a remote addres (needs IP & port)
-3. if successful connection, can start sending and receiving data
-4. close socket
+## Communication Workflow
+### Client (browser)
+1. visite ``localhost:80/ressource_path``
 
 ### Server
-1. create the socket
-2. wait for an incoming connection + accept connections
-4. read request than send response
+0. parse configuration file
+0. start TCP/IPV4 connection
+2. listen for incoming connection + accept connections
+4. process request
+5. construct response + send
 5. close the socket
 
 ## Use cases

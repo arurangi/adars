@@ -70,8 +70,8 @@ int main()
         if (bytes_read < 0)
             std::cout << "No bytes are there to read\n\r";
         
-        // char response[] = "Hello from the server";
-        write(dataExchangeSocket, _http.respond().c_str(), _http.getContentLength());
+        // char response[] = "Hello from the server"; 
+        write(dataExchangeSocket, _http.respond("text/html").c_str(), _http.getContentLength());
         
         std::cout << "------------------Hello message sent-------------------\n";
 

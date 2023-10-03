@@ -6,7 +6,7 @@
 #    By: arurangi <arurangi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/27 19:36:10 by arurangi          #+#    #+#              #
-#    Updated: 2023/09/27 19:36:16 by arurangi         ###   ########.fr        #
+#    Updated: 2023/10/03 15:52:29 by arurangi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,7 @@ OBJ_DIR		=	obj/
 ### files
 SOURCES		:= $(wildcard $(SRC_DIR)*.cpp)
 OBJECTS		:= $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR)%.o, $(SOURCES))
+CONFIG_FILE	:=	.config
 
 ### variables
 COMPILER	=   c++ -std=c++98 $(OPTIMIZE)
