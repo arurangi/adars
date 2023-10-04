@@ -12,6 +12,8 @@
     #define CMAGENTA  "\033[0;35m"
     #define CRESET    "\033[0m"
 
+    #define BYTES_PER_CHAR 2
+
     class Http {
 
         __unused float       _version;
@@ -39,26 +41,26 @@
             }
 
             // construct the response header
-            std::string respond(std::string content_type) {
-                std::string     buffer, response, content;
+            std::string respond(std::string content_type)
+            {
+                std::string     response, buffer, body, header;
                 std::ifstream   requestedFile("index.html");
 
-                // open file
                 if (!requestedFile.is_open())
-                    exit(EXIT_FAILURE); // error message
-                response = "HTTP/1.1 200 OK\nContent-Type: ";
-                response += content_type;
-                response += ";charset=UTF-8\nContent-Length: ";
-                response += Utils::to_str(content.size()) + "\n\r";
-                response += "\n\r";
-                while (std::getline(requestedFile, buffer))
-                    response += buffer + "\n\r";
+                    exit(EXIT_FAILURE);
                 
-                _contentLength = response.size();
+                while (std::getline(requestedFile, buffer))
+                    body += buffer + "\n";
+                _contentLength = body.size() * BYTES_PER_CHAR;
                 requestedFile.close();
 
-                std::cout << CBLUE << response << CRESET << std::endl;
+                header   = "HTTP/1.1 200 OK\n";
+                header   += "Content-Type: " + content_type + "\n";
+                header   += "Content-Length: " + Utils::to_str(_contentLength) + "\n";
+            
+                response = header + "\n" + body;
 
+                std::cout << CBLUE << response << CRESET << std::endl;
                 return response;
             }
 

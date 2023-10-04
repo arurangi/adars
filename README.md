@@ -76,6 +76,10 @@ An IP determines the location of the server.
 > HTTP Request: 
 
 > HTTP: Response: 
+
+## Bug Fixes:
+- [Bind failed: Address already in use](https://stackoverflow.com/questions/15198834/bind-failed-address-already-in-use)
+
 </details>
 
 ## Communication Workflow

@@ -37,6 +37,13 @@ int main()
         exit(EXIT_FAILURE);
     }
 
+    // Enable SO_REUSEADDR option
+    int reuse = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = IPV4;
     serverAddress.sin_port = htons(SERVER_PORT);
