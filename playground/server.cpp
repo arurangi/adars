@@ -8,6 +8,10 @@
 
 #include "Http.hpp"
 
+#include <queue>
+
+#include <thread>
+
 #define IPV4                AF_INET
 #define IPV6                AF_INET6
 #define TCP                 SOCK_STREAM
@@ -20,14 +24,35 @@
 #define WEB_PORT            80
 #define LOCALHOST           "127.0.0.1"
 
+#define DEBUG_MODE          // comment when not in debug mode
+
+void handleHttpRequest(const int& clientSocket) {
+
+    Http                _http;
+
+    char request[BUFFER_SIZE] = {0};
+    memset(request, 0, sizeof(request));
+    int bytes_read = read(clientSocket, request, BUFFER_SIZE);
+    std::cout << request << std::endl;
+    if (bytes_read < 0)
+        std::cout << "No bytes are there to read\n\r";
+    
+    // process request
+    std::stringstream ss(request);
+    std::string method, location, protocol;
+    ss >> method >> location >> protocol;
+    std::cout << CYELLOW << location << CRESET << std::endl;
+
+    write(clientSocket, _http.respond(location).c_str(), _http.getContentLength());
+}
+
 int main()
 {
     int                 serverSocket;
     struct sockaddr_in  serverAddress;
-    int                 dataExchangeSocket;
+    int                 clientSocket;
     struct sockaddr_in  clientAddress;
-    socklen_t           clientAddrLen;
-    Http                _http;
+    socklen_t           clientAddrLen = sizeof(clientAddress);
 
     // Create socket
     serverSocket = socket(IPV4, TCP, DEFAULT);
@@ -38,11 +63,14 @@ int main()
     }
 
     // Enable SO_REUSEADDR option
-    int reuse = 1;
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
+    #ifdef DEBUG_MODE
+        std::cout << "==== Debug mode is ON\n";
+        int reuse = 1;
+        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+            perror("setsockopt");
+            exit(EXIT_FAILURE);
+        }
+    #endif
 
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = IPV4;
@@ -64,25 +92,20 @@ int main()
     while (1)
     {
         std::cout << "\n+++++++ Waiting for new connection ++++++++\n\n";
-        clientAddrLen = sizeof(clientAddress);
-        if ((dataExchangeSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddrLen)) < 0)
+        if ((clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddrLen)) < 0)
         {
             std::perror("In accept");
             exit(EXIT_FAILURE);
         }
 
-        char buffer[BUFFER_SIZE] = {0};
-        int bytes_read = read(dataExchangeSocket, buffer, BUFFER_SIZE);
-        std::cout << buffer << std::endl;
-        if (bytes_read < 0)
-            std::cout << "No bytes are there to read\n\r";
-        
-        // char response[] = "Hello from the server"; 
-        write(dataExchangeSocket, _http.respond("text/html").c_str(), _http.getContentLength());
+        // std::thread(handleHttpRequest, clientSocket).detach();
+
+        handleHttpRequest(clientSocket);
         
         std::cout << "------------------Hello message sent-------------------\n";
 
-        close(dataExchangeSocket);
+        close(clientSocket);
     }
+    close(serverSocket);
     return EXIT_SUCCESS;
 }

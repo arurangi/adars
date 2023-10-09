@@ -1,12 +1,11 @@
-COMPILER	:=	c++ -std=c++98
+COMPILER	:=	c++ -std=c++11
 FLAGS		:=	-Wall -Werror -Wextra
 SERVER_FILE	:=	server.cpp
 CLIENT_FILE	:=	client.cpp
 
 all:
-	$(COMPILER) $(FLAGS) $(SERVER_FILE) -o server
-	$(COMPILER) $(FLAGS) $(CLIENT_FILE) -o client
-
+	@$(COMPILER) $(FLAGS) $(SERVER_FILE) -o server
+	@./server
 
 run_server:
 	./server
