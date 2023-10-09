@@ -1,111 +1,135 @@
 // Server side C program to demonstrate Socket programming
 
-#include <iostream>
+#include "Server.hpp"
 
-#include <sys/socket.h>
-#include <unistd.h>
-#include <netinet/in.h>
+Server::Server() {}
 
-#include "Http.hpp"
+//////////////////////////////////////////////////////////////////////////////////
 
-#include <queue>
-
-#include <thread>
-
-#define IPV4                AF_INET
-#define IPV6                AF_INET6
-#define TCP                 SOCK_STREAM
-#define UDP                 SOCK_DGRAM
-#define DEFAULT             0
-#define SERVER_PORT         8080
-#define BACKLOG_LISTENING   3
-#define BUFFER_SIZE         1024
-
-#define WEB_PORT            80
-#define LOCALHOST           "127.0.0.1"
-
-#define DEBUG_MODE          // comment when not in debug mode
-
-void handleHttpRequest(const int& clientSocket) {
-
-    Http                _http;
-
-    char request[BUFFER_SIZE] = {0};
-    memset(request, 0, sizeof(request));
-    int bytes_read = read(clientSocket, request, BUFFER_SIZE);
-    std::cout << request << std::endl;
-    if (bytes_read < 0)
-        std::cout << "No bytes are there to read\n\r";
-    
-    // process request
-    std::stringstream ss(request);
-    std::string method, location, protocol;
-    ss >> method >> location >> protocol;
-    std::cout << CYELLOW << location << CRESET << std::endl;
-
-    write(clientSocket, _http.respond(location).c_str(), _http.getContentLength());
-}
-
-int main()
+void
+Server::create(int domain, int service, int protocol, int port)
 {
-    int                 serverSocket;
-    struct sockaddr_in  serverAddress;
-    int                 clientSocket;
-    struct sockaddr_in  clientAddress;
-    socklen_t           clientAddrLen = sizeof(clientAddress);
+    _domain     = domain;
+    _service    = service;
+    _protocol   = protocol;
+    _port       = port;
 
-    // Create socket
-    serverSocket = socket(IPV4, TCP, DEFAULT);
-    if (serverSocket < 0)
-    {
-        std::perror("cannot create socket");
-        exit(EXIT_FAILURE);
-    }
-
+    // Create 
+    _socket = socket(domain, service, protocol);
+    if (_socket < 0)
+        throw Server::SocketCreationProblem();
+    
     // Enable SO_REUSEADDR option
     #ifdef DEBUG_MODE
         std::cout << "==== Debug mode is ON\n";
         int reuse = 1;
-        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-            perror("setsockopt");
-            exit(EXIT_FAILURE);
-        }
+        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
+            throw Server::SocketCreationProblem();
     #endif
+    
+    // Bind socket
+    std::memset(&_address, 0, sizeof(_address));
+    _address.sin_family = _domain;
+    _address.sin_port = htons(_port);
+    _address.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(_socket, (struct sockaddr*)&_address, sizeof(_address)))
+        throw Server::SocketBindingProblem();
+}
 
-    memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = IPV4;
-    serverAddress.sin_port = htons(SERVER_PORT);
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)))
-    {
-        std::perror("bind failed");
+void
+Server::listen(int backlog)
+{
+    _backlog = backlog;
+
+    if (listen(_socket, _backlog) < 0)
+        throw Server::ListeningProblem();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Server::processRequest(const int& client_socket)
+{
+    memset(_request._raw, 0, sizeof(_request._raw));
+    int bytes_read = read(client_socket, _request._raw, BUFFER_SIZE);
+    std::cout << _request._raw << std::endl;
+    if (bytes_read < 0)
+        std::cout << "No bytes are there to read\n\r";
+    
+    // process _request [+ check errors]
+    std::stringstream ss(_request);
+    ss >> _request._method >> _request._path >> _request._version;
+}
+
+void Server::sendResponse(onst int& client_socket)
+{
+    // Server::Request _request
+
+    std::string     response, buffer, body, header;
+    std::ifstream   requestedFile("." + _request._path);
+
+    if (!requestedFile.is_open())
         exit(EXIT_FAILURE);
-    }
 
-    // listen for incoming connections
-    if (listen(serverSocket, BACKLOG_LISTENING) < 0)
+    // get content type (MIME)
+    size_t found = file.find(".");
+    if (found == std::string::npos)
+        std::cout << "No extension found\n";
+    std::string extension = file.substr(found+1, file.size());
+    std::string _contentType = "text/" + extension;
+
+    // store response body
+    while (std::getline(requestedFile, buffer))
+        body += buffer + "\n";
+    _contentLength = body.size() * BYTES_PER_CHAR;
+    requestedFile.close();
+
+    // construct HTTP response
+    header   = "HTTP/1.1 200 OK\n";
+    header   += "Content-Type: " + _contentType + "\n";
+    header   += "Content-Length: " + Utils::to_str(_contentLength) + "\n";
+    header   += "Connection: keep-alive\n"; // added for persistent connection
+
+    response = header + "\n" + body;
+
+    write(clientSocket, _http.respond(location).c_str(), _http.getContentLength());
+}
+
+int getContentLength() { return _contentLength; }
+
+// Checks no errors happened
+void Server::check(int status, std::string error_msg)
+{
+    if (status < 0)
     {
-        std::perror("In listen");
-        exit(EXIT_FAILURE);
+        std::cout << "Error: " << error_msg << std::endl;
+        throw Server::ListeningProblem();
     }
+}
 
-    while (1)
-    {
-        std::cout << "\n+++++++ Waiting for new connection ++++++++\n\n";
-        if ((clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddrLen)) < 0)
-        {
-            std::perror("In accept");
-            exit(EXIT_FAILURE);
-        }
+////////////////////////////////////////////////////////////////
 
-        // std::thread(handleHttpRequest, clientSocket).detach();
 
-        handleHttpRequest(clientSocket);
-        
-        std::cout << "------------------Hello message sent-------------------\n";
+const char*
+Server::SocketCreationProblem::what()
+{
+    std::cout << "Error: "
+              << "server could not CREATE socket"
+              << std::endl;
+}
 
-        close(clientSocket);
-    }
-    close(serverSocket);
-    return EXIT_SUCCESS;
+const char*
+Server::SocketBindingProblem::what()
+{
+    std::cout << "Error: "
+              << "server could not BIND socket"
+              << std::endl;
+}
+
+const char*
+Server::ListeningProblem::what()
+{
+    std::cout << "Error: "
+              << "server had a problem while LISTENING"
+              << std::endl;
 }
