@@ -24,7 +24,14 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
 std::map<std::string, std::string>
 http::store_mime_types() {
     // open mime file
-    // read line by line
+    // std::iftream mimeFile("./conf/mime.types");
+    // if (!mimeFile.is_open())
+    //     std::cout << "Error: opening MIME file\n";
+    // // read line by line
+    // std::string line;
+    // while (std::getline(mimeFile, line)) {
+
+    // }
     // save in key value pairs in map
     // close mime file
     map<string, string> m;
@@ -62,7 +69,7 @@ operator<< (std::ostream& os, http::Response& rhs)
 }
 
 void
-http::Response::set_status(int code, std::string msg) {
+http::Response::set_status(std::string code, std::string msg) {
     _code = code;
     _message = msg;
 }

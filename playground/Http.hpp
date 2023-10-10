@@ -20,7 +20,7 @@
 
     typedef struct {
         std::string http_version;
-        int         code;
+        std::string code;
         std::string message;
     } status_line;
 
@@ -43,7 +43,7 @@
 
                 Response() {}
 
-                void set_status(int code, std::string msg);
+                void set_status(std::string code, std::string msg);
 
         };
 

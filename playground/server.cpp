@@ -84,7 +84,7 @@ Server::buildResponse()
 
     // TODO: check if request was processed
 
-    r.set_status(400, "OK");
+    r.set_status("400", "OK");
 
     ////////////////////////////////////////////////////
     // STATUS_LINE: version, status_code, status_text
@@ -92,7 +92,7 @@ Server::buildResponse()
     r._httpVersion = _request._version;
 
     if (!requestedFile.is_open())
-        r.set_status(400, "Bad Request");
+        r.set_status("400", "Bad Request");
 
     //////////////////////////////////////////////////////
     // BODY
@@ -115,6 +115,7 @@ Server::buildResponse()
     // Construct raw HTTP response
     r._raw = r._statusLine + r._header + BLANK_LINE + r._body;
 
+    std::cout << r;
     return r;
 }
 
