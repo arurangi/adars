@@ -3,37 +3,68 @@
 
     #define BUFFER_SIZE 1024
 
+    #include <string>
+    #include <iostream>
+    #include <sstream>
+    #include <map>
+
+    #define CBLUE    "\033[0;94m"
+    #define CYELLOW   "\033[0;33m"
+    #define CGREEN   "\033[0;32m"
+    #define CMAGENTA  "\033[0;35m"
+    #define CRED      "\033[0;31m"
+    #define CRESET    "\033[0m"
+
+    using std::string;
+    using std::map;
+
     typedef struct {
-        std::string version;
+        std::string http_version;
         int         code;
         std::string message;
     } status_line;
 
     namespace http {
 
-        #include <string>
-
         class Response {
             public:
-                status_line _statusLine;
+                std::string _statusLine;
+                std::string _httpVersion;
+                std::string _code;
+                std::string _message;
+
                 std::string _header;
-                std::string _body;
-                const void* _raw;
+                std::string _contentType;
                 int         _contentLength;
 
+                std::string _body;
+
+                std::string _raw;
+
                 Response() {}
+
+                void set_status(int code, std::string msg);
+
         };
 
         class Request {
             public:
-                std::string _method;
-                std::string _path;
-                std::string _version;
+                string _method;
+                string _path;
+                string _version;
                 char        _raw[BUFFER_SIZE];
-                std::string _body;
+                string _body;
         
                 Request() {}
         };
+
+        /////////////////////////////////////////////////////////////////////////////////////////
+
+        std::string          get_mime_type(std::string filepath, map<string, string> accepted_types);
+        std::map<std::string, std::string>  store_mime_types();
     }
+
+    std::ostream& operator<< (std::ostream& os, http::Request& rhs);
+    std::ostream& operator<< (std::ostream& os, http::Response& rhs);
 
 #endif

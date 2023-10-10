@@ -16,7 +16,7 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
     _port       = port;
     _backlog    = backlog;
 
-    _mimeType = http::get_mime_types();
+    _mimeTypes = http::store_mime_types();
 
     // Create socket
     _socket = socket(domain, service, protocol);
@@ -61,60 +61,65 @@ Server::processRequest(const int& client_socket)
     memset(_request._raw, 0, sizeof(_request._raw));
     if (read(client_socket, _request._raw, BUFFER_SIZE) < 0)
         std::cout << "No bytes are there to read\n\r";
-    std::cout << _request._raw << std::endl;
+    std::cout << _request;
     
-    // process _request [+ check errors]
     std::stringstream ss(_request._raw);
     ss >> _request._method >> _request._path >> _request._version;
-
-    // get_content_type()
-
+    // check for invalid: method, path and version
 }
 
 /** Build HTTP Response
  * **
  * - start-line (http-version, status-code, status-text)
- * - header (Content-Length, Content-Type, Date)
- * - body (html, css,..)
+ * - header     (Content-Length, Content-Type, Date)
+ * - body       (html, css,..)
 */
-Http::Response
-Server::buildResponse(const int& client_socket)
+Response
+Server::buildResponse()
 {
     // Server::Request _request
-    Http::Response rP;
-
-    std::string     buffer, body, header;
+    http::Response  r;
+    std::string     buffer;
     std::ifstream   requestedFile("." + _request._path);
 
+    // TODO: check if request was processed
+
+    r.set_status(400, "OK");
+
+    ////////////////////////////////////////////////////
+    // STATUS_LINE: version, status_code, status_text
+
+    r._httpVersion = _request._version;
+
     if (!requestedFile.is_open())
-        exit(EXIT_FAILURE);
+        r.set_status(400, "Bad Request");
 
-    // get content type (MIME)
-    size_t found = _request._path.find(".");
-    if (found == std::string::npos)
-        std::cout << "No extension found\n";
-    std::string extension = _request._path.substr(found+1, _request._path.size());
-    std::string _contentType = "text/" + extension;
+    //////////////////////////////////////////////////////
+    // BODY
 
-    // store response body
     while (std::getline(requestedFile, buffer))
-        body += buffer + "\n";
-    rP._contentLength = body.size() * BYTES_PER_CHAR;
+        r._body += buffer + "\n";
+    r._contentLength = r._body.size() * BYTES_PER_CHAR;
     requestedFile.close();
 
-    // construct HTTP r
-    rP._header   = "HTTP/1.1 200 OK\n";
-    rP._header   += "Content-Type: " + _contentType + "\n";
-    rP._header   += "Content-Length: " + Utils::to_str(rP._contentLength) + "\n";
-    rP._header   += "Connection: keep-alive\n"; // added for persistent connection
+    ////////////////////////////////////////////////////
+    // HEADER: Content-Type, Content-Length, Connection
+    r._contentType = http::get_mime_type(_request._path, _mimeTypes);
+    r._header   += "Content-Type: " + r._contentType + "\n";
+    r._header   += "Content-Length: " + Utils::to_str(r._contentLength) + "\n";
+    r._header   += "Connection: keep-alive\n"; // added for persistent connection
 
-    rP._raw = rP._header + "\n" + rP._body;
+    /////////////////////////////////////////////////////
+    r._statusLine = r._httpVersion + " " + r._code + " " + r._message + "\n";
 
-    return rP;
+    // Construct raw HTTP response
+    r._raw = r._statusLine + r._header + BLANK_LINE + r._body;
+
+    return r;
 }
 
 // Checks no errors happened
-void Server::check(int status, std::string error_msg)
+void Server::check(int status, string error_msg)
 {
     if (status < 0)
     {
@@ -125,27 +130,20 @@ void Server::check(int status, std::string error_msg)
 
 ////////////////////////////////////////////////////////////////
 
-
 const char*
-Server::SocketCreationProblem::what()
+Server::SocketCreationProblem::what() const throw()
 {
-    std::cout << "Error: "
-              << "server could not CREATE socket"
-              << std::endl;
+    return "server could not CREATE socket";
 }
 
 const char*
-Server::SocketBindingProblem::what()
+Server::SocketBindingProblem::what() const throw()
 {
-    std::cout << "Error: "
-              << "server could not BIND socket"
-              << std::endl;
+    return "server could not BIND socket";
 }
 
 const char*
-Server::ListeningProblem::what()
+Server::ListeningProblem::what() const throw()
 {
-    std::cout << "Error: "
-              << "server had a problem while LISTENING"
-              << std::endl;
+    return "server had a problem while LISTENING";
 }

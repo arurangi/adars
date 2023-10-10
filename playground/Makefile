@@ -1,7 +1,6 @@
 COMPILER	:=	c++ -std=c++98
 FLAGS		:=	-Wall -Werror -Wextra
-FILES	:=	server.cpp main.cpp client.cpp
-CLIENT_FILE	:=	client.cpp
+FILES		:=	http.cpp server.cpp main.cpp Utils.cpp
 BIN			:=	webserv
 
 all:
