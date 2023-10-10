@@ -4,24 +4,28 @@
 #include "Client.hpp"
 #include "Http.hpp"
 
-#define LOCALHOST   "127.0.0.1"
-#define PORT    8080
+#define LOCALHOST "127.0.0.1"
+#define PORT 8080
 #define BACKLOG 10
 
 int main()
 {
-    Server server;
-    Client client;
+    Server server; Client client;
 
+    // parse config file
+    // create and launch server
     try {
-        server.create(IPV4, TCP, DEFAULT, PORT);
-        server.listen(BACKLOG);
+        // create socket and start listening for incoming connections
+        server.init(IPV4, TCP, DEFAULT, PORT, BACKLOG);
+        // 
         while (isRunning)
         {
             client._socket = accept(server._socket, (struct sockaddr *)&client._address, &client._addrLength);
-            Server::check(client._socket, "Could not accept connection");
+            if (client._socket < 0)
+                throw Server::BadConnection();
             server.processRequest(client._socket);
-            server.sendResponse(client._socket);
+            http::Response r = server.buildResponse(client._socket);
+            write(client._socket, r._raw, r._contentLength);
             close(client._socket);
         }
     }

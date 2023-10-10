@@ -2,12 +2,15 @@
     #define SERVER_HPP
 
     #include <iostream>
-    #include <sys/socket.h>
-    #include <unistd.h>
-    #include <netinet/in.h>
     #include <string>
     #include <fstream>
     #include <iostream>
+    #include <map>
+
+    #include <sys/socket.h>
+    #include <unistd.h>
+    #include <netinet/in.h>
+
     #include "Http.hpp"
     #include "Utils.hpp"
 
@@ -34,7 +37,8 @@
             int _port;
             int _backlog;
             struct sockaddr_in _address;
-            Http::Request _request;
+            http::Request _request;
+            std::map<std::string, std::string> _mimeTypes;
 
         public:
 
@@ -45,12 +49,10 @@
             ~Server() {}
 
             // member functions
-            void create(int domain, int service, int protocol, int port);
-            void listen(int backlog);
+            void init(int domain, int service, int protocol, int port, int backlog);
             void processRequest(const int& client_socket);
-            void sendResponse(const int& client_socket);
-            std::string respond(std::string file);
-            int getContentLength();
+            http::Response buildResponse(const int& client_socket);
+
             static void check(int status, std::string error_msg);
 
             // Exceptions
@@ -63,6 +65,10 @@
                     const char* what() const throw();
             };
             class ListeningProblem : public std::exception {
+                public:
+                    const char* what() const throw();
+            };
+            class BadConnection : public std::exception {
                 public:
                     const char* what() const throw();
             };

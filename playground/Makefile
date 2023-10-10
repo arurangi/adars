@@ -1,21 +1,21 @@
-COMPILER	:=	c++ -std=c++11
+COMPILER	:=	c++ -std=c++98
 FLAGS		:=	-Wall -Werror -Wextra
-SERVER_FILE	:=	server.cpp
+FILES	:=	server.cpp main.cpp client.cpp
 CLIENT_FILE	:=	client.cpp
+BIN			:=	webserv
 
 all:
-	@$(COMPILER) $(FLAGS) $(SERVER_FILE) -o server
-	@./server
+	@$(COMPILER) $(FLAGS) $(FILES) -o $(BIN)
+	@./$(BIN)
 
-run_server:
+run:
 	./server
 
-run_client:
-	./client
-
 clean:
-	rm server client
+	rm -f $(BIN)
+
+fclean: clean
 
 re: clean all
 
-.PHONY:	all run_client run_server clean re
+.PHONY:	all run clean fclean re

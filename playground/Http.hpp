@@ -9,7 +9,7 @@
         std::string message;
     } status_line;
 
-    namespace Http {
+    namespace http {
 
         #include <string>
 
@@ -25,15 +25,13 @@
         };
 
         class Request {
-            private:
+            public:
                 std::string _method;
                 std::string _path;
                 std::string _version;
                 char        _raw[BUFFER_SIZE];
-
                 std::string _body;
         
-            public:
                 Request() {}
         };
     }
