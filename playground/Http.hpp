@@ -6,6 +6,7 @@
     #include <string>
     #include <iostream>
     #include <sstream>
+    #include <fstream>
     #include <map>
 
     #define CBLUE    "\033[0;94m"
@@ -44,7 +45,6 @@
                 Response() {}
 
                 void set_status(std::string code, std::string msg);
-
         };
 
         class Request {

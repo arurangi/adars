@@ -2,6 +2,8 @@
 
 #include "Server.hpp"
 
+#define DEBUG_MODE
+
 Server::Server() {}
 Server::~Server() {}
 
@@ -42,6 +44,8 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
     // start listening
     if (listen(_socket, _backlog) < 0)
         throw Server::ListeningProblem();
+    
+    // std::system("clear");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -80,27 +84,34 @@ Server::buildResponse()
     // Server::Request _request
     http::Response  r;
     std::string     buffer;
-    std::ifstream   requestedFile("." + _request._path);
 
     // TODO: check if request was processed
 
-    r.set_status("400", "OK");
+
+    r.set_status("200", "OK");
+    r._httpVersion = _request._version;
 
     ////////////////////////////////////////////////////
     // STATUS_LINE: version, status_code, status_text
 
-    r._httpVersion = _request._version;
-
-    if (!requestedFile.is_open())
-        r.set_status("400", "Bad Request");
-
     //////////////////////////////////////////////////////
     // BODY
 
-    while (std::getline(requestedFile, buffer))
-        r._body += buffer + "\n";
-    r._contentLength = r._body.size() * BYTES_PER_CHAR;
-    requestedFile.close();
+    // handle invalid requests (location)
+    if (_request._path != "/index.html" && _request._path != "/styles.css") {
+        r.set_status("404", "Not Allowed");
+        r._contentLength = 0;
+    }
+    else
+    {
+        std::ifstream   requestedFile("." + _request._path);
+        if (!requestedFile.is_open())
+            r.set_status("400", "Bad Request");
+        while (std::getline(requestedFile, buffer))
+            r._body += buffer + "\n";
+        r._contentLength = r._body.size() * BYTES_PER_CHAR;
+        requestedFile.close();
+    }
 
     ////////////////////////////////////////////////////
     // HEADER: Content-Type, Content-Length, Connection
