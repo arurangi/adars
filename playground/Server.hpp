@@ -5,6 +5,7 @@
     #include <string>
     #include <fstream>
     #include <map>
+    #include <thread>
 
     #include <sys/socket.h>
     #include <unistd.h>
@@ -45,9 +46,14 @@
             Request             _request;
             map<string, string> _mimeTypes;
 
+
         public:
 
             int _socket;
+
+            int                 _cSocket;
+            struct sockaddr_in  _cAddr;
+            socklen_t  _cAddrLength;
 
             // constructors
             Server();

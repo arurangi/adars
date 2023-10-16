@@ -56,7 +56,7 @@ operator<< (std::ostream& os, http::Request& rhs)
     std::string curr;
     std::stringstream ss(raw);
 
-    os << "---\n| Request\n";
+    os << "---\n| Request " << pthread_self() << std::endl;
     while (std::getline(ss, curr)) {
         os << CBLUE << "> " << CRESET << curr << std::endl;
     }

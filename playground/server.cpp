@@ -4,7 +4,7 @@
 
 #define DEBUG_MODE
 
-Server::Server() {}
+Server::Server() : _cAddrLength(sizeof(_cAddr)) {}
 Server::~Server() {}
 
 //////////////////////////////////////////////////////////////////////////////////

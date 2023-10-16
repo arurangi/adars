@@ -4,6 +4,8 @@
 #include "Client.hpp"
 #include "http.hpp"
 
+#include <pthread.h>
+
 #define LOCALHOST "127.0.0.1"
 #define PORT 8080
 #define BACKLOG 10
@@ -16,6 +18,24 @@ class UserInterface {
 };
 UserInterface ui;
 
+// void* handleHttpRequest(Server* server) {
+//     server->processRequest(server->_cSocket);
+//     http::Response r = server->buildResponse();
+//     write(server->_cSocket, (r._raw).c_str(), r._contentLength);
+//     close(server->_cSocket);
+//     return NULL;
+// }
+
+void* routine(void* arg) {
+    Server* server = (Server*) arg;
+
+    server->processRequest(server->_cSocket);
+    http::Response r = server->buildResponse();
+    write(server->_cSocket, (r._raw).c_str(), r._contentLength);
+    close(server->_cSocket);
+    return NULL;
+}
+
 int main()
 {
     Server server; Client client;
@@ -25,16 +45,14 @@ int main()
         while (isRunning)
         {
             ui.status("Waiting for new connections..");
-            client._socket = accept(server._socket, (struct sockaddr *)&client._address, &client._addrLength);
-            if (client._socket < 0)
+            server._cSocket = accept(server._socket, (struct sockaddr *)&server._cAddr, &server._cAddrLength);
+            if (server._cSocket < 0)
                 std::cout << "Bad Connection\n";
-            ui.status("Processing Request");
-            server.processRequest(client._socket);
-            ui.status("Building Response");
-            http::Response r = server.buildResponse();
-            ui.status("Sending Response");
-            write(client._socket, (r._raw).c_str(), r._contentLength);
-            close(client._socket);
+
+            // create thread to process request and send response
+            pthread_t thread;
+            pthread_create(&thread, NULL, &routine, (void *)&server);
+            pthread_join(thread, NULL);
         }
     }
     catch (std::exception& e) { // only catches initialization bugs
