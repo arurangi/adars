@@ -57,19 +57,21 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
  * - header ()
  * - body (..)
 */
-void
+http::Request
 Server::processRequest(const int& client_socket)
 {
-    // Http::Request _request;
+    http::Request req;
 
-    memset(_request._raw, 0, sizeof(_request._raw));
-    if (read(client_socket, _request._raw, BUFFER_SIZE) < 0)
+    memset(req._raw, 0, sizeof(req._raw));
+    if (recv(client_socket, req._raw, BUFFER_SIZE, 0) < 0)
         std::cout << "No bytes are there to read\n\r";
-    std::cout << _request;
+    std::cout << req;
 
-    std::stringstream ss(_request._raw);
-    ss >> _request._method >> _request._path >> _request._version;
+    std::stringstream ss(req._raw);
+    ss >> req._method >> req._path >> req._version;
     // check for invalid: method, path and version
+
+    return req;
 }
 
 /** Build HTTP Response
@@ -79,16 +81,15 @@ Server::processRequest(const int& client_socket)
  * - body       (html, css,..)
 */
 Response
-Server::buildResponse()
+Server::buildResponse(Request req, std::map<string, string> mimeType)
 {
-    // Server::Request _request
-    http::Response  r;
+    http::Response  res;
     std::string     buffer;
 
     // TODO: check if request was processed
 
-    r.set_status("200", "OK");
-    r._httpVersion = _request._version;
+    res.set_status("200", "OK");
+    res._httpVersion = req._version;
 
     ////////////////////////////////////////////////////
     // STATUS_LINE: version, status_code, status_text
@@ -98,36 +99,37 @@ Server::buildResponse()
 
     // TODO: make it dynamic instead of manually adding files
     // handle invalid requests (location)
-    if (_request._path != "/index.html" && _request._path != "/styles.css" && _request._path != "/favicon.ico") {
-        r.set_status("404", "Not Allowed");
-        r._contentLength = 0;
+    if (req._path != "/index.html" && req._path != "/styles.css" && req._path != "/favicon.ico") {
+        res.set_status("404", "Not Allowed");
+        res._contentLength = 0;
     }
     else
     {
-        std::ifstream   requestedFile("." + _request._path);
+        std::ifstream   requestedFile("." + req._path);
         if (!requestedFile.is_open())
-            r.set_status("400", "Bad Request");
+            res.set_status("400", "Bad Request");
         while (std::getline(requestedFile, buffer))
-            r._body += buffer + "\n";
-        r._contentLength = r._body.size() * BYTES_PER_CHAR;
+            res._body += buffer + "\n";
+        res._contentLength = res._body.size() * BYTES_PER_CHAR;
         requestedFile.close();
     }
 
     ////////////////////////////////////////////////////
     // HEADER: Content-Type, Content-Length, Connection
-    r._contentType = http::get_mime_type(_request._path, _mimeTypes);
-    r._header   += "Content-Type: " + r._contentType + "\n";
-    r._header   += "Content-Length: " + Utils::to_str(r._contentLength) + "\n";
-    r._header   += "Connection: keep-alive\n"; // added for persistent connection
+
+    res._contentType = http::get_mime_type(req._path, mimeType);
+    res._header   += "Content-Type: " + res._contentType + "\n";
+    res._header   += "Content-Length: " + Utils::to_str(res._contentLength) + "\n";
+    res._header   += "Connection: keep-alive\n"; // added for persistent connection
 
     /////////////////////////////////////////////////////
-    r._statusLine = r._httpVersion + " " + r._code + " " + r._message + "\n";
+    res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\n";
 
     // Construct raw HTTP response
-    r._raw = r._statusLine + r._header + BLANK_LINE + r._body;
+    res._raw = res._statusLine + res._header + BLANK_LINE + res._body;
 
-    std::cout << r;
-    return r;
+    std::cout << res;
+    return res;
 }
 
 // Checks no errors happened

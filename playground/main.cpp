@@ -3,7 +3,6 @@
 #include "Server.hpp"
 #include "Client.hpp"
 #include "http.hpp"
-
 #include <pthread.h>
 
 #define LOCALHOST "127.0.0.1"
@@ -18,22 +17,21 @@ class UserInterface {
 };
 UserInterface ui;
 
-// void* handleHttpRequest(Server* server) {
-//     server->processRequest(server->_cSocket);
-//     http::Response r = server->buildResponse();
-//     write(server->_cSocket, (r._raw).c_str(), r._contentLength);
-//     close(server->_cSocket);
-//     return NULL;
-// }
-
 void* routine(void* arg) {
     Server* server = (Server*) arg;
 
-    server->processRequest(server->_cSocket);
-    http::Response r = server->buildResponse();
-    write(server->_cSocket, (r._raw).c_str(), r._contentLength);
+    Request req = Server::processRequest(server->_cSocket);
+    http::Response res = Server::buildResponse(req, server->_mimeTypes);
+    send(server->_cSocket, (res._raw).c_str(), res._contentLength, 0);
     close(server->_cSocket);
     return NULL;
+}
+
+void handleHttpRequest(int client_socket, std::map<string, string> mimeType) {
+    Request req = Server::processRequest(client_socket); // print
+    Response res = Server::buildResponse(req, mimeType); // print
+    send(client_socket, (res._raw).c_str(), res._contentLength, 0);
+    close(client_socket);
 }
 
 int main()
@@ -42,17 +40,34 @@ int main()
 
     try {
         server.init(IPV4, TCP, DEFAULT, PORT, BACKLOG);
+
+        std::vector<std::thread> threads;
+
         while (isRunning)
         {
             ui.status("Waiting for new connections..");
-            server._cSocket = accept(server._socket, (struct sockaddr *)&server._cAddr, &server._cAddrLength);
-            if (server._cSocket < 0)
+            client._socket = accept(server._socket, (struct sockaddr *)&client._address, &client._addrLength);
+            if (client._socket < 0) {
                 std::cout << "Bad Connection\n";
+                exit(1);
+            }
 
-            // create thread to process request and send response
-            pthread_t thread;
-            pthread_create(&thread, NULL, &routine, (void *)&server);
-            // pthread_detach(thread);
+            // Using threads
+            // threads.push_back(std::thread(handleHttpRequest, client._socket, server._mimeTypes));
+            // threads.back().detach();
+
+            // Using processes
+            int pid = fork();
+            if (pid == 0) {
+                ui.status("Created a process");
+                std::map<string, string> mt = server._mimeTypes;
+                close(server._socket);
+                handleHttpRequest(client._socket, mt);
+                close(client._socket);
+                ui.status("Killing process");
+                exit(0);
+            }
+            close(client._socket);
         }
     }
     catch (std::exception& e) { // only catches initialization bugs

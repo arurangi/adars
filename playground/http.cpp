@@ -56,7 +56,8 @@ operator<< (std::ostream& os, http::Request& rhs)
     std::string curr;
     std::stringstream ss(raw);
 
-    os << CBLUE << "---\n| Request " << pthread_self() << CRESET << std::endl;
+    os << CBLUE CBOLD << "---\n| Request " << CRESET
+       << CYELLOW << std::this_thread::get_id() << CRESET << std::endl;
     while (std::getline(ss, curr)) {
         os << CBLUE << "> " << CRESET << curr << std::endl;
     }
@@ -70,7 +71,9 @@ operator<< (std::ostream& os, http::Response& rhs)
     std::string currentLine;
     std::stringstream ss(content);
 
-    os << CGREEN << "---\n| Response" << CRESET << std::endl;
+    std::thread::id threadId = std::this_thread::get_id();
+    os << CGREEN CBOLD << "---\n| Response" << CRESET
+       << CYELLOW << threadId << CRESET << std::endl;
     while (std::getline(ss, currentLine)) {
         os << CGREEN << "< " << CRESET << currentLine << std::endl;
     }

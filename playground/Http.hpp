@@ -1,7 +1,7 @@
 #ifndef HTTP_HPP
     #define HTTP_HPP
 
-    #define BUFFER_SIZE 1024
+    #define BUFFER_SIZE 2047
 
     #include <string>
     #include <iostream>
@@ -9,6 +9,7 @@
     #include <fstream>
     // #include <thread>
     #include <pthread.h>
+    #include <thread> // TODO: delete this. Not in c++98
     #include <map>
 
     #define CBLUE    "\033[0;94m"
