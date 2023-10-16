@@ -46,7 +46,6 @@
             Request             _request;
             map<string, string> _mimeTypes;
 
-
         public:
 
             int _socket;

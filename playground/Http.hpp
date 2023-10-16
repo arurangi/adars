@@ -17,6 +17,9 @@
     #define CMAGENTA  "\033[0;35m"
     #define CRED      "\033[0;31m"
     #define CRESET    "\033[0m"
+    #define CBOLD   "\x1b[1m"
+
+    #define BKBLUE  "\x1B[34m"
 
     using std::string;
     using std::map;

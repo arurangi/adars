@@ -52,7 +52,7 @@ int main()
             // create thread to process request and send response
             pthread_t thread;
             pthread_create(&thread, NULL, &routine, (void *)&server);
-            pthread_join(thread, NULL);
+            // pthread_detach(thread);
         }
     }
     catch (std::exception& e) { // only catches initialization bugs

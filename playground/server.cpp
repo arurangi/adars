@@ -66,7 +66,7 @@ Server::processRequest(const int& client_socket)
     if (read(client_socket, _request._raw, BUFFER_SIZE) < 0)
         std::cout << "No bytes are there to read\n\r";
     std::cout << _request;
-    
+
     std::stringstream ss(_request._raw);
     ss >> _request._method >> _request._path >> _request._version;
     // check for invalid: method, path and version
@@ -87,7 +87,6 @@ Server::buildResponse()
 
     // TODO: check if request was processed
 
-
     r.set_status("200", "OK");
     r._httpVersion = _request._version;
 
@@ -97,8 +96,9 @@ Server::buildResponse()
     //////////////////////////////////////////////////////
     // BODY
 
+    // TODO: make it dynamic instead of manually adding files
     // handle invalid requests (location)
-    if (_request._path != "/index.html" && _request._path != "/styles.css") {
+    if (_request._path != "/index.html" && _request._path != "/styles.css" && _request._path != "/favicon.ico") {
         r.set_status("404", "Not Allowed");
         r._contentLength = 0;
     }
