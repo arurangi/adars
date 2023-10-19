@@ -61,7 +61,7 @@ int main()
     int socket_connection_fd;
 
     try {
-        server.init(IPV4, TCP, DEFAULT, PORT, BACKLOG);
+        server.setup(IPV4, TCP, DEFAULT, PORT, BACKLOG);
         ui.status("Listening on 127.0.0.1:8080");
 
         // Create kqueue

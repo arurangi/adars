@@ -12,9 +12,8 @@
     #define CRED      "\033[0;31m"
     #define CRESET    "\033[0m"
 
-    class Utils {
-        public:
-        static std::string to_str(int num);
+    namespace utils {
+        std::string to_str(int num);
     };
 
 #endif

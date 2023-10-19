@@ -12,6 +12,8 @@
     #include <thread> // TODO: delete this. Not in c++98
     #include <map>
 
+    class Client;
+
     #define CBLUE    "\033[0;94m"
     #define CYELLOW   "\033[0;33m"
     #define CGREEN   "\033[0;32m"
@@ -25,12 +27,6 @@
 
     using std::string;
     using std::map;
-
-    typedef struct {
-        std::string http_version;
-        std::string code;
-        std::string message;
-    } status_line;
 
     namespace http {
 
@@ -49,9 +45,12 @@
 
                 std::string _raw;
 
-                Response() {}
+                Response();
+                ~Response();
 
-                void set_status(std::string code, std::string msg);
+                void        set_status(std::string code, std::string msg);
+                std::string get_gmt_time();
+                void        reset();
         };
 
         class Request {
@@ -64,12 +63,9 @@
         
                 Request() {}
         };
+        std::string get_mime_type(std::string filepath, map<string, string> accepted_types);
 
         /////////////////////////////////////////////////////////////////////////////////////////
-
-        std::string                         get_mime_type(std::string filepath, map<string, string> accepted_types);
-        std::map<std::string, std::string>  store_mime_types();
-        std::string get_gmt_time();
     }
 
     std::ostream& operator<< (std::ostream& os, http::Request& rhs);

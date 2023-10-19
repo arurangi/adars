@@ -1,5 +1,26 @@
 #include "Http.hpp"
 
+http::Response::Response() { reset(); }
+http::Response::~Response() { reset(); }
+
+//////////////////////////////////////////////////////////////////////////
+
+void
+http::Response::reset()
+{
+    _statusLine = "";
+    _httpVersion = "";
+    _code = "";
+    _message = "";
+    _header = "";
+    _contentType = "";
+    _contentLength = -1;
+    _body = "";
+    _raw = "";
+}
+
+///////////////// UTILS //////////////////////////////////////////////////
+
 std::string
 http::get_mime_type(std::string filepath, map<string, string> accepted_types)
 {
@@ -24,30 +45,7 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
     return defaultMime;
 }
 
-std::map<std::string, std::string>
-http::store_mime_types() {
-    std::map<std::string, std::string> tmp;
-
-    // open mime file
-    std::ifstream mimeFile("./conf/mime.types");
-    if (!mimeFile.is_open())
-        std::cout << "Error: opening MIME file\n";
-    // read line by line
-    std::string line;
-    while (std::getline(mimeFile, line)) {
-        // save in key value pairs in map
-        int pos = line.find(",");
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos+1, line.size());
-        tmp[key] = value;
-    }
-    // close mime file
-    mimeFile.close();
-
-    return tmp;
-}
-
-std::string http::get_gmt_time()
+std::string http::Response::get_gmt_time()
 {
     time_t      rawtime;
     struct tm*  timeinfo;
