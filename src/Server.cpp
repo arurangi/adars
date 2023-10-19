@@ -66,20 +66,11 @@ int Server::get_client()
 }
 
 void
-Server::handle_request(Client& c, Server& s) {
-    http::Request     req = this->process_request(c._socket); // print
-    http::Response    res = this->build_response(req, s._mimeTypes);  // print
-
-    int bytes_sent = 0;
-    bytes_sent = send(c._socket, (res._raw).c_str(), res._raw.size(), 0);
-    if (bytes_sent < 0)
-        std::cout << "in handleHttpRequest(): send(): No bytes to send";
-
-    std::cout << CGREEN << "••• Bytes transmitted: "
-            << CBOLD << bytes_sent
-            << "/" << res._contentLength << CRESET << std::endl;
-            
-    close(c._socket);
+Server::handle_request(Client& c, Server& s)
+{
+    http::Request req = this->process_request(c._socket);
+    http::Response res = this->build_response(req, s._mimeTypes);
+    this->send_response(c, res);
 }
 
 /** Process HTTP Request:
@@ -156,12 +147,10 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
      * - is it a location, home page?
      * - or a specific file, image or other
      */
-    if (req._path == "/") { // or other locations
-        requestedFile.open("./public/index.html", std::ifstream::in);
-    } else {
-        // std::string dir = get_asset_folder(req._path);
-        requestedFile.open("./public" + req._path, std::ifstream::in);
-    }
+    if (req._path == "/") // or other locations
+        req._path = "index.html";
+    // std::string dir = get_asset_folder(req._path);
+    requestedFile.open("./public" + req._path, std::ifstream::in);
 
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
@@ -202,6 +191,20 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
 
     std::cout << res;
     return res;
+}
+
+void Server::send_response(Client& c, http::Response& res)
+{
+    int bytes_sent = 0;
+    bytes_sent = send(c._socket, (res._raw).c_str(), res._raw.size(), 0);
+    if (bytes_sent < 0)
+        std::cout << "in handleHttpRequest(): send(): No bytes to send";
+
+    std::cout << CGREEN << "••• Bytes transmitted: "
+            << CBOLD << bytes_sent
+            << "/" << res._contentLength << CRESET << std::endl;
+            
+    close(c._socket);
 }
 
 // Checks no errors happened

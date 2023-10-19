@@ -62,6 +62,7 @@
             void handle_request(Client& c, Server& s);
             http::Request process_request(const int& client_socket);
             http::Response build_response(http::Request& req, std::map<string, string>& mimeType);
+            void send_response(Client& c, http::Response& res);
 
             std::map<std::string, std::string>  store_mime_types(std::string mimesFilePath);
             static void check(int status, string error_msg);
