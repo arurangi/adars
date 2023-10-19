@@ -159,8 +159,8 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     if (req._path == "/") { // or other locations
         requestedFile.open("./public/index.html", std::ifstream::in);
     } else {
-        std::string dir = get_asset_folder(req._path);
-        requestedFile.open(dir + req._path, std::ifstream::in);
+        // std::string dir = get_asset_folder(req._path);
+        requestedFile.open("./public" + req._path, std::ifstream::in);
     }
 
     if (!requestedFile.is_open()) {
