@@ -1,3 +1,5 @@
+.vscode/**/*
+
 # private
 netstat.txt
 
