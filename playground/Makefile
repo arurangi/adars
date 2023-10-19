@@ -1,6 +1,6 @@
 COMPILER	:=	c++ -std=c++11
 FLAGS		:=	-Wall -Werror -Wextra
-FILES		:=	http.cpp server.cpp main.cpp Utils.cpp
+FILES		:=	http.cpp server.cpp main_kqueue.cpp Utils.cpp
 BIN			:=	webserv
 
 all:

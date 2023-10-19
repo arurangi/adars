@@ -1,4 +1,4 @@
-#include "http.hpp"
+#include "Http.hpp"
 
 std::string
 http::get_mime_type(std::string filepath, map<string, string> accepted_types)
@@ -16,7 +16,7 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
     while (it != accepted_types.end())
     {
         if (it->first == extension) {
-            std::cout << "Type = " << CGREEN << it->second << CRESET << std::endl;
+            // std::cout << "Type = " << CGREEN << it->second << CRESET << std::endl;
             return it->second;
         }
         it++;
@@ -47,6 +47,26 @@ http::store_mime_types() {
     return tmp;
 }
 
+std::string http::get_gmt_time()
+{
+    time_t      rawtime;
+    struct tm*  timeinfo;
+    char        buffer[80];
+    std::string formated_time;
+
+    time(&rawtime);
+    timeinfo = gmtime(&rawtime);
+
+    // Define the format string for output with abbreviated day name
+    const char* format = "%a, %d %B %Y %H:%M:%S GMT";
+
+    // Format the time and print
+    strftime(buffer, sizeof(buffer), format, timeinfo);
+
+    formated_time = buffer;
+    return formated_time;
+}
+
 //////// OPERATOR OVERLOADING /////////////////////////////////
 
 std::ostream&
@@ -56,7 +76,7 @@ operator<< (std::ostream& os, http::Request& rhs)
     std::string curr;
     std::stringstream ss(raw);
 
-    os << CBLUE CBOLD << "---\n| Request " << CRESET
+    os << CBLUE CBOLD << "\n---\n| Request " << CRESET
        << CYELLOW << std::this_thread::get_id() << CRESET << std::endl;
     while (std::getline(ss, curr)) {
         os << CBLUE << "> " << CRESET << curr << std::endl;
@@ -72,11 +92,11 @@ operator<< (std::ostream& os, http::Response& rhs)
     std::stringstream ss(content);
 
     std::thread::id threadId = std::this_thread::get_id();
-    os << CGREEN CBOLD << "---\n| Response" << CRESET
+    os << CGREEN CBOLD << "\n---\n| Response " << CRESET
        << CYELLOW << threadId << CRESET << std::endl;
-    while (std::getline(ss, currentLine)) {
+    
+    while (std::getline(ss, currentLine))
         os << CGREEN << "< " << CRESET << currentLine << std::endl;
-    }
     return os;
 }
 

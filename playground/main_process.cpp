@@ -2,7 +2,7 @@
 
 #include "Server.hpp"
 #include "Client.hpp"
-#include "http.hpp"
+#include "Http.hpp"
 #include <pthread.h>
 
 #define LOCALHOST "127.0.0.1"
@@ -12,25 +12,36 @@
 class UserInterface {
     public:
         void status(std::string msg) {
-            std::cout << CYELLOW << "◌ " << CRESET << msg << std::endl;
+            std::cout << std::endl << CYELLOW CBOLD
+                      << "◌" 
+                      << " " << msg << " " << CRESET << std::endl;
         }
 };
 UserInterface ui;
 
-void* routine(void* arg) {
-    Server* server = (Server*) arg;
+// void* routine(void* arg) {
+//     Server* server = (Server*) arg;
 
-    Request req = Server::processRequest(server->_cSocket);
-    http::Response res = Server::buildResponse(req, server->_mimeTypes);
-    send(server->_cSocket, (res._raw).c_str(), res._contentLength, 0);
-    close(server->_cSocket);
-    return NULL;
-}
+//     Request req = Server::processRequest(server->_cSocket);
+//     http::Response res = Server::buildResponse(req, server->_mimeTypes);
+//     send(server->_cSocket, (res._raw).c_str(), res._contentLength, 0);
+//     close(server->_cSocket);
+//     return NULL;
+// }
 
 void handleHttpRequest(int client_socket, std::map<string, string> mimeType) {
     Request req = Server::processRequest(client_socket); // print
     Response res = Server::buildResponse(req, mimeType); // print
-    send(client_socket, (res._raw).c_str(), res._contentLength, 0);
+
+    int bytes_sent = 0;
+    bytes_sent = send(client_socket, (res._raw).c_str(), res._contentLength, 0);
+    if (bytes_sent < 0)
+        std::cout << "in handleHttpRequest(): send(): No bytes to send";
+
+    std::cout << CGREEN << "••• Bytes transmitted: "
+            << CBOLD << bytes_sent
+            << "/" << res._contentLength << CRESET << std::endl;
+            
     close(client_socket);
 }
 
@@ -40,6 +51,7 @@ int main()
 
     try {
         server.init(IPV4, TCP, DEFAULT, PORT, BACKLOG);
+        ui.status("Listening on 127.0.0.1:8080");
 
         std::vector<std::thread> threads;
 
@@ -59,12 +71,10 @@ int main()
             // Using processes
             int pid = fork();
             if (pid == 0) {
-                ui.status("Created a process");
                 std::map<string, string> mt = server._mimeTypes;
                 close(server._socket);
                 handleHttpRequest(client._socket, mt);
                 close(client._socket);
-                ui.status("Killing process");
                 exit(0);
             }
             close(client._socket);

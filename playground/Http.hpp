@@ -17,6 +17,7 @@
     #define CGREEN   "\033[0;32m"
     #define CMAGENTA  "\033[0;35m"
     #define CRED      "\033[0;31m"
+    #define CB_YELLOW      "\033[0;43m"
     #define CRESET    "\033[0m"
     #define CBOLD   "\x1b[1m"
 
@@ -42,7 +43,7 @@
 
                 std::string _header;
                 std::string _contentType;
-                int         _contentLength;
+                size_t      _contentLength;
 
                 std::string _body;
 
@@ -66,8 +67,9 @@
 
         /////////////////////////////////////////////////////////////////////////////////////////
 
-        std::string          get_mime_type(std::string filepath, map<string, string> accepted_types);
+        std::string                         get_mime_type(std::string filepath, map<string, string> accepted_types);
         std::map<std::string, std::string>  store_mime_types();
+        std::string get_gmt_time();
     }
 
     std::ostream& operator<< (std::ostream& os, http::Request& rhs);

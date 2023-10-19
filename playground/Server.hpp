@@ -12,7 +12,7 @@
     #include <unistd.h>
     #include <netinet/in.h>
 
-    #include "http.hpp"
+    #include "Http.hpp"
     #include "Utils.hpp"
 
     using std::string;
@@ -28,7 +28,7 @@
     #define BACKLOG_LISTENING   3
     #define BUFFER_SIZE         2047
     #define BYTES_PER_CHAR 2
-    #define BLANK_LINE "\n"
+    #define BLANK_LINE "\r\n"
 
     enum states {
         isOff,
@@ -41,7 +41,6 @@
             int _domain;
             int _service;
             int _protocol;
-            int _port;
             int _backlog;
             struct sockaddr_in  _address;
             Request             _request;
@@ -49,6 +48,8 @@
         public:
 
             int _socket;
+            uint32_t _host;
+            int _port;
 
             int                 _cSocket;
             struct sockaddr_in  _cAddr;

@@ -17,6 +17,7 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
     _protocol   = protocol;
     _port       = port;
     _backlog    = backlog;
+    _host       = INADDR_ANY;
 
     _mimeTypes = http::store_mime_types();
 
@@ -27,7 +28,8 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
     
     // Enable SO_REUSEADDR option
     #ifdef DEBUG_MODE
-        std::cout << "==== Debug mode is ON\n";
+        std::cout << CGREEN << "⏻ " << CRESET CBOLD << "Debug mode activated\n" << CRESET;
+        std::cout << "  this allows to relaunch server immediately after shutdown\n  thus reusing the same socket before all ressources have been freed\n";
         int reuse = 1;
         if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
             throw Server::SocketCreationProblem();
@@ -37,7 +39,7 @@ Server::init(int domain, int service, int protocol, int port, int backlog)
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = _domain;
     _address.sin_port = htons(_port);
-    _address.sin_addr.s_addr = htonl(INADDR_ANY);
+    _address.sin_addr.s_addr = htonl(_host); // INADDR_ANY
     if (bind(_socket, (struct sockaddr*)&_address, sizeof(_address)))
         throw Server::SocketBindingProblem();
     
@@ -61,11 +63,18 @@ http::Request
 Server::processRequest(const int& client_socket)
 {
     http::Request req;
+    int bytes_received;
 
     memset(req._raw, 0, sizeof(req._raw));
-    if (recv(client_socket, req._raw, BUFFER_SIZE, 0) < 0)
+    if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) < 0)
         std::cout << "No bytes are there to read\n\r";
+    req._raw[bytes_received] = '\0';
     std::cout << req;
+    std::cout << CBLUE << "••• Bytes received: "
+              << CBOLD << bytes_received
+              << CRESET << std::endl;
+    
+
 
     std::stringstream ss(req._raw);
     ss >> req._method >> req._path >> req._version;
@@ -99,36 +108,50 @@ Server::buildResponse(Request req, std::map<string, string> mimeType)
 
     // TODO: make it dynamic instead of manually adding files
     // handle invalid requests (location)
-    if (req._path != "/index.html" && req._path != "/styles.css" && req._path != "/favicon.ico") {
+    if (req._path != "/index.html" && req._path != "/styles.css" && req._path != "/favicon.ico")
+    {
         res.set_status("404", "Not Allowed");
         res._contentLength = 0;
     }
     else
     {
+        // open requested file
         std::ifstream   requestedFile("." + req._path);
         if (!requestedFile.is_open())
             res.set_status("400", "Bad Request");
+        
+        // store content in `response._body`
+        res._body = "";
         while (std::getline(requestedFile, buffer))
             res._body += buffer + "\n";
-        res._contentLength = res._body.size() * BYTES_PER_CHAR;
+        res._body += '\0';
+        // calc Content-Length
+        res._contentLength = res._body.size();
+
         requestedFile.close();
     }
 
     ////////////////////////////////////////////////////
     // HEADER: Content-Type, Content-Length, Connection
 
-    res._contentType = http::get_mime_type(req._path, mimeType);
-    res._header   += "Content-Type: " + res._contentType + "\n";
-    res._header   += "Content-Length: " + Utils::to_str(res._contentLength) + "\n";
-    res._header   += "Connection: keep-alive\n"; // added for persistent connection
+    res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\r\n";
 
-    /////////////////////////////////////////////////////
-    res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\n";
+    res._contentType = http::get_mime_type(req._path, mimeType);
+    res._header   += "Content-Type: " + res._contentType + "\r\n";
+    res._header   += "Content-Length: " + Utils::to_str(res._contentLength) + "\r\n";
+    res._header   += "Date: " + http::get_gmt_time() + "\r\n";
+    res._header   += "Connection: keep-alive\r\n";
+    res._header   += "Server: Adars\r\n";
+    res._header   += "\r\n";
 
     // Construct raw HTTP response
-    res._raw = res._statusLine + res._header + BLANK_LINE + res._body;
+    res._raw = res._statusLine + res._header + res._body + "\0";
 
-    std::cout << res;
+    if (res._contentType != "image/x-icon")
+        std::cout << res;
+    else {
+        res.set_status("204", "No Content");
+    }
     return res;
 }
 
