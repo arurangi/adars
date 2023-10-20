@@ -10,6 +10,9 @@ int main()
 
     try {
         server.setup(IPV4, TCP, DEFAULT, PORT, BACKLOG);
+        // TODO: 
+        // - cluster of servers listening on different ports
+        // - NON-BLOCKING when handling multiple clients
         while (isRunning)
         {
             client._socket = server.get_client();

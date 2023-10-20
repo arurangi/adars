@@ -87,7 +87,7 @@ Server::process_request(const int& client_socket)
     int bytes_received;
 
     memset(req._raw, 0, sizeof(req._raw));
-    if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) < 0)
+    if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) <= 0)
         std::cout << "No bytes are there to read\n\r";
     req._raw[bytes_received] = '\0';
 
@@ -98,7 +98,10 @@ Server::process_request(const int& client_socket)
     
     std::stringstream ss(req._raw);
     ss >> req._method >> req._path >> req._version;
-    // check for invalid: method, path and version
+    // TODO: 
+    // - method is GET, POST or DELETE
+    // - path is not empty
+    // - version is HTTP:1.1 or HTTP:1.2
 
     return req;
 }
@@ -142,13 +145,18 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     std::string     buffer;
     std::ifstream   requestedFile;
 
+    // TODO: 
+    // GET request, do this
+    // POST request, do this
+    // DELETE request, do this
+
     /**
      * Figure out which file to open
      * - is it a location, home page?
      * - or a specific file, image or other
      */
     if (req._path == "/") // or other locations
-        req._path = "index.html";
+        req._path = "/index.html";
     // std::string dir = get_asset_folder(req._path);
     requestedFile.open("./public" + req._path, std::ifstream::in);
 
