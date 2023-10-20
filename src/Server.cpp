@@ -84,25 +84,33 @@ http::Request
 Server::process_request(const int& client_socket)
 {
     http::Request req;
-    int bytes_received;
+    int bytes_received = 0;
 
+    // READ HEADER
     memset(req._raw, 0, sizeof(req._raw));
     if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) <= 0)
         std::cout << "No bytes are there to read\n\r";
     req._raw[bytes_received] = '\0';
 
-    std::cout << req;
-    std::cout << CBLUE << "••• Bytes received: "
-              << CBOLD << bytes_received
-              << CRESET << std::endl;
+    /////////////////////////////////////////////////// TODO
+    // LOOK FOR CONTENT-LENGTH
+    std::string partial_request(req._raw);
+    std::string line;
+    while (std::getline(partial_request, line)) {
+        if ()
+            ;
+    }
+    ////////////////////////////////////////////////// TODO
+
     
     std::stringstream ss(req._raw);
     ss >> req._method >> req._path >> req._version;
+
+
     // TODO: 
     // - method is GET, POST or DELETE
     // - path is not empty
     // - version is HTTP:1.1 or HTTP:1.2
-
     return req;
 }
 
@@ -149,6 +157,11 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     // GET request, do this
     // POST request, do this
     // DELETE request, do this
+
+    // if (req._method != "GET") {
+    //     Log::status("POST method hasn't been implemented yet.");
+    //     exit(0);
+    // }
 
     /**
      * Figure out which file to open

@@ -8,13 +8,27 @@
     <link rel="stylesheet" href="stylesheets/styles.css">
 </head>
 <body>
-    <h1>Contact us</h1>    
+  <section class="wrapper">
+
+    <h1>Contact us</h1>
+    <form method="post" enctype="multipart/form-data" action="/public/storage/">
+      <label for="name">Name: </label>
+      <input name="name" type="text">
+      <label for="comment">Comment: </label>
+      <input name="comment" type="text">
+      <label for="File">File: </label>
+      <input name="file" type="file">
+      <label for="submit">Submit: </label>
+      <input type="submit" value="Submit">
+    </form>
     <nav >
       <ul class="navbar">
         <li><a href="index.html">Home</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="contact.html">Contact</a></li>
+        <li><a href="upload.html">Send files</a></li>
       </ul>
     </nav>
+  </section>
 </body>
 </html>

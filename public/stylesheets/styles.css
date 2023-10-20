@@ -8,20 +8,33 @@
 
  html {
    font-family: 'Inter', sans-serif;
+   background-color: black;
+   color: white;
  }
 
  body {
-     max-width: 756px;
-     margin: auto;
-     background-color: black;
-     color: white;
-     margin-top: 20px;
-     text-align: center;
+      height: 100vh;
+      
+      /* margin: auto; */
+      margin: 20px;
+      text-align: center;
+      flex-direction: column;
+      display: flex;
+      justify-content: center;
+      align-items: center;
  }
 
- /* .wrapper {
-    ;
- } */
+ .wrapper {
+   /* max-width: 756px;
+   position: absolute; */
+/*    
+   top:0;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   
+   margin: auto; */
+ }
 
  a {
     text-decoration: none;
@@ -71,4 +84,21 @@
  .gallery div {
     background-color: blue;
 
+ }
+
+ form {
+   display: flex;
+   flex-direction: column;
+   max-width: 500px;
+   margin: auto;
+   text-align: left;
+   margin-bottom: 24px;
+ }
+
+ input {
+   margin-bottom: 15px;
+ }
+
+ label {
+   margin-bottom: 5px;
  }
