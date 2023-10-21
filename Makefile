@@ -6,7 +6,7 @@
 #    By: arurangi <arurangi@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/27 19:36:10 by arurangi          #+#    #+#              #
-#    Updated: 2023/10/03 15:52:29 by arurangi         ###   ########.fr        #
+#    Updated: 2023/10/21 13:04:04 by arurangi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,8 +26,9 @@ CONFIG_FILE	:=	.config
 COMPILER	=   c++ -std=c++98 $(OPTIMIZE)
 OPTIMIZE	=	-O2
 INCLUDES	=	-I ./includes
-FLAGS       =	-Wall -Wextra -Werror
-DFLAGS		=	-g -fsanitize=address -Wconversion
+FLAGS       =	-Wall -Wextra -Werror 
+FLAGS		+=	-g -fsanitize=address
+# -Wconversion
 
 ### rules
 all:		$(BIN)

@@ -58,10 +58,13 @@
                 string _method;
                 string _path;
                 string _version;
-                char        _raw[BUFFER_SIZE];
-                string _body;
+                char _raw[BUFFER_SIZE];
+                char _header[BUFFER_SIZE];
+                char _body[BUFFER_SIZE];
+                int _contentLength;
         
-                Request() {}
+                Request();
+                ~Request();
         };
         std::string get_mime_type(std::string filepath, map<string, string> accepted_types);
 

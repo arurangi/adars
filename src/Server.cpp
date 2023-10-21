@@ -91,21 +91,52 @@ Server::process_request(const int& client_socket)
     if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) <= 0)
         std::cout << "No bytes are there to read\n\r";
     req._raw[bytes_received] = '\0';
-
-    /////////////////////////////////////////////////// TODO
-    // LOOK FOR CONTENT-LENGTH
-    std::string partial_request(req._raw);
-    std::string line;
-    while (std::getline(partial_request, line)) {
-        if ()
-            ;
-    }
-    ////////////////////////////////////////////////// TODO
-
-    
+    // -- save status line (method, path, HTTP version)
     std::stringstream ss(req._raw);
     ss >> req._method >> req._path >> req._version;
 
+    /////////////////////////////////////////////////// TODO
+    // LOOK FOR CONTENT-LENGTH
+    // -- find line at which Content-Length is
+    //      -- skip the title
+    //      -- convert number string to int
+    // 
+    std::cout << req << std::endl;
+
+    if (req._method == "POST")
+    {
+        std::string header(req._raw);
+        std::string line;
+        while (std::getline(ss, line)) {
+
+            if (line.find("Content-Length: ") != std::string::npos) {
+                std::string length = line.substr(16, line.size());
+                req._contentLength = std::atoi(length.c_str());
+                // std::cout << CMAGENTA << "Length as integer: " << req._contentLength << CRESET << std::endl;
+            }
+        }
+
+        // TODO: exception when do not find content-length
+
+        int bytesRead = 0, totalBytes = 0;
+        while (totalBytes < req._contentLength)
+        {
+            bytesRead = recv(client_socket, req._body, BUFFER_SIZE, 0);
+            if (bytesRead < 0) {
+                std::cout << CRED << "Error while reading POST request\n" << CRESET << std::endl;
+                exit(1);
+            }
+            totalBytes += bytesRead;
+        }
+        req._body[totalBytes-1] = '\0';
+        std::cout << "///////////////////////\n";
+        std::cout << CMAGENTA << req._body << CRESET << std::endl;
+        std::cout << "///////////////////////\n";
+        
+    }
+    ////////////////////////////////////////////////// TODO
+
+    // READ BODY
 
     // TODO: 
     // - method is GET, POST or DELETE

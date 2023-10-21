@@ -3,7 +3,11 @@
 http::Response::Response() { reset(); }
 http::Response::~Response() { reset(); }
 
+http::Request::Request() { _contentLength = 0; }
+http::Request::~Request() { _contentLength = 0; }
+
 //////////////////////////////////////////////////////////////////////////
+
 
 void
 http::Response::reset()
