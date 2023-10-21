@@ -11,15 +11,9 @@
   <section class="wrapper">
 
     <h1>Contact us</h1>
-    <form method="post" enctype="multipart/form-data" action="/public/storage/">
-      <label for="name">Name: </label>
-      <input name="name" type="text">
-      <label for="comment">Comment: </label>
-      <input name="comment" type="text">
-      <label for="File">File: </label>
-      <input name="file" type="file">
-      <label for="submit">Submit: </label>
-      <input type="submit" value="Submit">
+    <form method="post" action="/public/storage/" enctype="multipart/form-data">
+      <input type="file" name="file">
+      <input type="submit" value="Upload">
     </form>
     <nav >
       <ul class="navbar">

@@ -17,6 +17,10 @@
     #include "Logger.hpp"
     #include "Client.hpp"
 
+    using std::string;
+    using http::Request;
+    using http::Response;
+
     #define IPV4                AF_INET
     #define IPV6                AF_INET6
     #define TCP                 SOCK_STREAM
@@ -42,6 +46,7 @@
             int _protocol;
             int _backlog;
             struct sockaddr_in _address;
+            std::string _storageDir;
 
         public:
             int _socket;

@@ -62,6 +62,9 @@
                 char _header[BUFFER_SIZE];
                 char _body[BUFFER_SIZE];
                 int _contentLength;
+
+                std::string _filename;
+                std::string _data;
         
                 Request();
                 ~Request();

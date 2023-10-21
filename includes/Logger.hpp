@@ -24,6 +24,12 @@
                       << "◌" 
                       << " " << msg << " " << CRESET << std::endl;
             }
+            static void error(std::string msg) {
+            std::cout << std::endl << CRED CBOLD
+                      << "✗ Error: " << CRESET 
+                    << msg << " " << std::endl;
+
+            }
 
     };
 
