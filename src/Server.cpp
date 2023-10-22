@@ -131,8 +131,8 @@ Server::process_request(const int& client_socket)
     }
 
     Log::param("Method", req._method);
-    Log::param("Path", req._path);
-    Log::param("HTTP version", req._version);
+    Log::param("Path", req._uri);
+    Log::param("HTTP version", req._httpVersion);
     Log::param("Content-Length", utils::to_str(req._contentLength));
     Log::param("Filename", req._filename);
     Log::param("Data", req._payload);
@@ -159,7 +159,7 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     // DELETE request, do this
 
     if (req._method == "POST") {
-        std::string path = "." + req._path + req._filename;
+        std::string path = "." + req._uri + req._filename;
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
             outputFile.write(req._payload.c_str(), req._payload.size());
@@ -178,10 +178,10 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
      * - is it a location, home page?
      * - or a specific file, image or other
      */
-    if (req._path == "/") // or other locations
-        req._path = "/index.html";
-    // std::string dir = get_asset_folder(req._path);
-    requestedFile.open("./public" + req._path, std::ios::in);
+    if (req._uri == "/") // or other locations
+        req._uri = "/index.html";
+    // std::string dir = get_asset_folder(req._uri);
+    requestedFile.open("./public" + req._uri, std::ios::in);
 
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
@@ -203,13 +203,13 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     ////////////////////////////////////////////////////
     // STATUS_LINE
     // : version, status_code, status_text
-    res._httpVersion = req._version;
+    res._httpVersion = req._httpVersion;
     res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\r\n";
 
     ////////////////////////////////////////////////////
     // HEADER:
     // : Content-Type, Content-Length, Connection
-    res._contentType = http::get_mime_type(req._path, mimeType);
+    res._contentType = http::get_mime_type(req._uri, mimeType);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + utils::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";

@@ -28,6 +28,7 @@
     #define BKBLUE  "\x1B[34m"
 
     #define CRLFCRLF "\r\n\r\n"
+    #define LF "\n"
     #define CRLF_SIZE 4
     #define END_OF_HEADER CRLFCRLF
 
@@ -38,16 +39,16 @@
 
         class Response {
             public:
-                std::string _statusLine;
                 std::string _httpVersion;
                 std::string _code;
                 std::string _message;
 
+                std::string _statusLine;
                 std::string _header;
+                std::string _body;
+
                 std::string _contentType;
                 size_t      _contentLength;
-
-                std::string _body;
 
                 std::string _raw;
 
@@ -62,12 +63,15 @@
         class Request {
             public:
                 string _method;
-                string _path;
-                string _version;
-                char _raw[BUFFER_SIZE];
+                string _uri;
+                string _httpVersion;
+
+                std::string _startline;
                 char _header[BUFFER_SIZE];
                 char _body[BUFFER_SIZE];
+
                 int _contentLength;
+                char _raw[BUFFER_SIZE];
 
                 std::string _filename;
                 std::string _payload;

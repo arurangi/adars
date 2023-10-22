@@ -155,10 +155,10 @@ http::Request::setPayload(string& body)
         {
             std::getline(ss, line);
             std::getline(ss, line);
-            this->_payload += line;
+            this->_payload += line + LF;
         }
         else
-            this->_payload += line;
+            this->_payload += line + LF;
     }
 }
 
@@ -171,8 +171,8 @@ http::Request::setStatusLine(std::string& request)
     ss >> method >> path >> version;
 
     this->_method = method;
-    this->_path = path;
-    this->_version = version;
+    this->_uri = path;
+    this->_httpVersion = version;
 }
 
 void
