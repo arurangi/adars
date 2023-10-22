@@ -1,0 +1,137 @@
+/**
+ * get_asset_folder()
+ * : in order to access ressources, I need to figure out in which folder they are placed
+ */
+std::string get_asset_folder(std::string path) {
+
+    int pos = 0;
+    std::string extension;
+
+    for (pos = path.size()-1; pos > 0; pos--) {
+        if (path[pos] == '.')
+            break ;
+    }
+    if (pos == 0)
+        return "./public";
+    extension = path.substr(pos, path.size());
+    
+    if (extension == ".css")
+        return "./public/stylesheets";
+    else if (extension == ".svg" || extension == ".jpeg" || extension == "jpg" || extension == ".png" || extension == ".ico")
+        return "./public/images";
+    else
+        // either file hasn't extension above, or not extension, or wrong extension
+        return "./public";
+}
+
+/** Process HTTP Request:
+ *      Store all informations in classes/structures for easier access
+ * **
+ * - start-line (method, path, http-version)
+ * - header ()
+ * - body (..)
+*/
+// http::Request
+// Server::process_request(const int& client_socket)
+// {
+//     http::Request req;
+//     // int bytes_received = 0;
+
+//     struct timeval timeout;
+//     timeout.tv_sec = 10; // 10 seconds timeout (adjust as needed)
+//     timeout.tv_usec = 0;
+//     setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+
+//     // READ HEADER
+//     // memset(req._raw, 0, sizeof(req._raw));
+//     // if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) != 0)
+//     // {
+//     //     if (bytes_received < 0)
+//     //         std::cout << "No bytes are there to read\n\r";
+
+//     // }
+//     // req._raw[bytes_received] = '\0';
+//     // -- save status line (method, path, HTTP version)
+//     // std::stringstream ss(req._raw);
+//     // ss >> req._method >> req._path >> req._version;
+
+//     /////////////////////////////////////////////////////////////////
+
+//     char buffer[1024];
+//     std::string request;
+
+//     while (true) {
+//         int bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
+//         if (bytesRead <= 0) {
+//             break;  // Connection closed or error
+//         }
+//         request += std::string(buffer, bytesRead);
+
+//         std::stringstream ss(buffer);
+//         ss >> req._method >> req._path >> req._version;
+        
+//         // Check for the end of the headers (double CRLF)
+//         size_t found = request.find("\r\n\r\n");
+//         if (found != std::string::npos) {
+//             // Headers found, process request
+//             std::string requestBody = request.substr(found + 4); // +4 to skip the CRLFCRLF
+//             // Process requestBody
+//             std::cout << CMAGENTA << requestBody << CRESET << std::endl;
+//             break;
+//         }
+//     }
+//     /*
+    
+//     {
+//         /////////////////////////////////////////////////// TODO
+//         // LOOK FOR CONTENT-LENGTH
+//         // -- find line at which Content-Length is
+//         //      -- skip the title
+//         //      -- convert number string to int
+//         // 
+//         std::cout << req << std::endl;
+
+//         if (req._method == "POST")
+//         {
+//             std::string header(req._raw);
+//             std::string line;
+//             while (std::getline(ss, line)) {
+
+//                 if (line.find("Content-Length: ") != std::string::npos) {
+//                     std::string length = line.substr(16, line.size());
+//                     req._contentLength = std::atoi(length.c_str());
+//                     // std::cout << CMAGENTA << "Length as integer: " << req._contentLength << CRESET << std::endl;
+//                 }
+//             }
+
+//             // TODO: exception when do not find content-length
+
+//             int bytesRead = 0, totalBytes = 0;
+//             while (totalBytes < req._contentLength)
+//             {
+//                 bytesRead = recv(client_socket, req._body, BUFFER_SIZE, 0);
+//                 if (bytesRead < 0) {
+//                     std::cout << CRED << "Error while reading POST request\n" << CRESET << std::endl;
+//                     exit(1);
+//                 }
+//                 totalBytes += bytesRead;
+//             }
+//             req._body[totalBytes-1] = '\0';
+//             std::cout << "///////////////////////\n";
+//             std::cout << CMAGENTA << req._body << CRESET << std::endl;
+//             std::cout << "///////////////////////\n";
+            
+//         }
+//     }
+//     */
+//     ////////////////////////////////////////////////// TODO
+
+//     // READ BODY
+
+//     // TODO: 
+//     // - method is GET, POST or DELETE
+//     // - path is not empty
+//     // - version is HTTP:1.1 or HTTP:1.2
+//     return req;
+// }

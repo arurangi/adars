@@ -4,9 +4,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Images</title>
+    <title>Adars - Contact us</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
 </head>
 <body>
-    
+  <section class="wrapper">
+
+    <h1>Contact us</h1>
+    <form method="post" action="/public/storage/" enctype="multipart/form-data">
+      <input type="file" name="file">
+      <input type="submit" value="Upload">
+    </form>
+    <nav >
+      <ul class="navbar">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="upload.html">Send files</a></li>
+      </ul>
+    </nav>
+  </section>
 </body>
 </html>

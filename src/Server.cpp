@@ -66,28 +66,27 @@ int Server::get_client()
     return client_socket;
 }
 
+/**
+ * This function parses requests, store useful data in an object,
+ * then builds a response based on acquired data. And finally it sends
+ * an HTTP response to the client.
+ * 
+ * questions:
+ * - what type of exception need to be raised?
+ * - 
+*/
 void
 Server::handle_request(Client& c, Server& s)
 {
-    http::Request req = this->process_request(c._socket);
-    http::Response res = this->build_response(req, s._mimeTypes);
-    this->send_response(c, res);
+    try {
+        http::Request req = this->process_request(c._socket);
+        http::Response res = this->build_response(req, s._mimeTypes);
+        this->send_response(c, res);
+    }
+    catch (std::exception& e) {
+        std::cout << e.what();
+    }
 }
-
-// int
-// get_size()
-// {
-//     std::string header(req._raw);
-//     std::string line;
-//     while (std::getline(ss, line)) {
-
-//         if (line.find("Content-Length: ") != std::string::npos) {
-//             std::string length = line.substr(16, line.size());
-//             req._contentLength = std::atoi(length.c_str());
-//             // std::cout << CMAGENTA << "Length as integer: " << req._contentLength << CRESET << std::endl;
-//         }
-//     }
-// }
 
 /*
  * This function goes through the body of a POST request
@@ -110,21 +109,22 @@ extract_bodyInfo(http::Request& req, std::string body)
     std::string line;
     while (std::getline(ss, line)) {
 
-        std::cout << CYELLOW << line << CRESET << std::endl;
+        // std::cout << CYELLOW << line << CRESET << std::endl;
 
         // -- advance till `filename`
         if ((pos = line.find("filename=\"")) != std::string::npos)
         {
             std::string filename = line.substr(pos+10, line.size());
             req._filename = filename.substr(0, filename.size()-2); // remove quote at end of line
-        }
-        if ((pos = line.find("Content-Type:")) != std::string::npos) {
+        } else if ((pos = line.find("Content-Type:")) != std::string::npos) {
             std::getline(ss, line); // skip Content-Type
-            std::getline(ss, line); // skip empty line (seperation)
-            break ;
+            std::getline(ss, line); // skip empty line (seperation) 
+            req._data += line;           
+        } else {
+            req._data += line;
         }
     }
-    req._data = line;
+    // req._data = line;
 }
 
 int
@@ -152,9 +152,12 @@ Server::process_request(const int& client_socket)
     while (true) {
         int bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead <= 0) {
+            throw Server::RequestProcessingIssue();
             break;  // Connection closed or error
         }
         request += std::string(buffer, bytesRead);
+
+        std::cout << CMAGENTA << request << CRESET << std::endl;
 
         std::stringstream ss(request);
         ss >> req._method >> req._path >> req._version;
@@ -164,6 +167,15 @@ Server::process_request(const int& client_socket)
         if (req._method != "POST")
             break ;
         
+        bytesRead = read(client_socket, buffer, sizeof(buffer));
+        if (bytesRead == 0)
+            break ;
+        else {
+            request += std::string(buffer, bytesRead);
+        }
+    
+        std::cout << CYELLOW << request << CRESET << std::endl;
+
         // Check for the end of the headers (double CRLF)
         size_t found = request.find("\r\n\r\n");
         if (found != std::string::npos) {
@@ -175,152 +187,14 @@ Server::process_request(const int& client_socket)
         }
     }
 
-    std::cout << CMAGENTA << req._method << CRESET << std::endl;
-    std::cout << CMAGENTA << req._path << CRESET << std::endl;
-    std::cout << CMAGENTA << req._version << CRESET << std::endl;
-    std::cout << CMAGENTA << req._contentLength << CRESET << std::endl;
-    std::cout << CMAGENTA << req._filename << CRESET << std::endl;
-    std::cout << CMAGENTA << req._data << CRESET << std::endl;
+    Log::param("Method", req._method);
+    Log::param("Path", req._path);
+    Log::param("HTTP version", req._version);
+    Log::param("Content-Length", utils::to_str(req._contentLength));
+    Log::param("Filename", req._filename);
+    Log::param("Data", req._data);
     
     return req;
-}
-
-/** Process HTTP Request:
- *      Store all informations in classes/structures for easier access
- * **
- * - start-line (method, path, http-version)
- * - header ()
- * - body (..)
-*/
-// http::Request
-// Server::process_request(const int& client_socket)
-// {
-//     http::Request req;
-//     // int bytes_received = 0;
-
-//     struct timeval timeout;
-//     timeout.tv_sec = 10; // 10 seconds timeout (adjust as needed)
-//     timeout.tv_usec = 0;
-//     setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-
-//     // READ HEADER
-//     // memset(req._raw, 0, sizeof(req._raw));
-//     // if ((bytes_received = recv(client_socket, req._raw, BUFFER_SIZE, 0)) != 0)
-//     // {
-//     //     if (bytes_received < 0)
-//     //         std::cout << "No bytes are there to read\n\r";
-
-//     // }
-//     // req._raw[bytes_received] = '\0';
-//     // -- save status line (method, path, HTTP version)
-//     // std::stringstream ss(req._raw);
-//     // ss >> req._method >> req._path >> req._version;
-
-//     /////////////////////////////////////////////////////////////////
-
-//     char buffer[1024];
-//     std::string request;
-
-//     while (true) {
-//         int bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-//         if (bytesRead <= 0) {
-//             break;  // Connection closed or error
-//         }
-//         request += std::string(buffer, bytesRead);
-
-//         std::stringstream ss(buffer);
-//         ss >> req._method >> req._path >> req._version;
-        
-//         // Check for the end of the headers (double CRLF)
-//         size_t found = request.find("\r\n\r\n");
-//         if (found != std::string::npos) {
-//             // Headers found, process request
-//             std::string requestBody = request.substr(found + 4); // +4 to skip the CRLFCRLF
-//             // Process requestBody
-//             std::cout << CMAGENTA << requestBody << CRESET << std::endl;
-//             break;
-//         }
-//     }
-//     /*
-    
-//     {
-//         /////////////////////////////////////////////////// TODO
-//         // LOOK FOR CONTENT-LENGTH
-//         // -- find line at which Content-Length is
-//         //      -- skip the title
-//         //      -- convert number string to int
-//         // 
-//         std::cout << req << std::endl;
-
-//         if (req._method == "POST")
-//         {
-//             std::string header(req._raw);
-//             std::string line;
-//             while (std::getline(ss, line)) {
-
-//                 if (line.find("Content-Length: ") != std::string::npos) {
-//                     std::string length = line.substr(16, line.size());
-//                     req._contentLength = std::atoi(length.c_str());
-//                     // std::cout << CMAGENTA << "Length as integer: " << req._contentLength << CRESET << std::endl;
-//                 }
-//             }
-
-//             // TODO: exception when do not find content-length
-
-//             int bytesRead = 0, totalBytes = 0;
-//             while (totalBytes < req._contentLength)
-//             {
-//                 bytesRead = recv(client_socket, req._body, BUFFER_SIZE, 0);
-//                 if (bytesRead < 0) {
-//                     std::cout << CRED << "Error while reading POST request\n" << CRESET << std::endl;
-//                     exit(1);
-//                 }
-//                 totalBytes += bytesRead;
-//             }
-//             req._body[totalBytes-1] = '\0';
-//             std::cout << "///////////////////////\n";
-//             std::cout << CMAGENTA << req._body << CRESET << std::endl;
-//             std::cout << "///////////////////////\n";
-            
-//         }
-//     }
-//     */
-//     ////////////////////////////////////////////////// TODO
-
-//     // READ BODY
-
-//     // TODO: 
-//     // - method is GET, POST or DELETE
-//     // - path is not empty
-//     // - version is HTTP:1.1 or HTTP:1.2
-//     return req;
-// }
-
-/**
- * get_asset_folder()
- * : in order to access ressources, I need to figure out in which folder they are placed
- */
-std::string get_asset_folder(std::string path) {
-
-    int pos = 0;
-    std::string extension;
-
-    for (pos = path.size()-1; pos > 0; pos--) {
-        if (path[pos] == '.')
-            break ;
-    }
-    if (pos == 0)
-        return "./public";
-    extension = path.substr(pos, path.size());
-    
-    if (extension == ".css")
-        return "./public/stylesheets";
-    else if (extension == ".svg" || extension == ".jpeg" || extension == "jpg" || extension == ".png" || extension == ".ico")
-        return "./public/images";
-    else
-        // either file hasn't extension above, or not extension, or wrong extension
-        return "./public";
 }
 
 /** Build HTTP Response
@@ -362,7 +236,7 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     if (req._path == "/") // or other locations
         req._path = "/index.html";
     // std::string dir = get_asset_folder(req._path);
-    requestedFile.open("./public" + req._path, std::ifstream::in);
+    requestedFile.open("./public" + req._path, std::ios::in);
 
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
@@ -432,27 +306,30 @@ void Server::check(int status, string error_msg)
 std::map<std::string, std::string>
 Server::store_mime_types(std::string mimesFilePath) {
     std::map<std::string, std::string> tmp;
+    std::string line, key, value;
+    std::ifstream mimeFile;
+    int seperator;
 
     // open mime file
-    std::ifstream mimeFile(mimesFilePath);
-    if (!mimeFile.is_open())
-        std::cout << "Error: opening MIME file\n";
+    mimeFile.open(mimesFilePath, std::ios::in);
+    if (!mimeFile.is_open()) {
+        Log::error("Error: opening MIME file");
+        throw Server::SetupIssue();
+    }
+    
     // read line by line
-    std::string line;
     while (std::getline(mimeFile, line)) {
-        // save in key value pairs in map
-        int pos = line.find(",");
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos+1, line.size());
+        seperator = line.find(",");
+        key = line.substr(0, seperator);
+        value = line.substr(seperator+1, line.size());
         tmp[key] = value;
     }
-    // close mime file
     mimeFile.close();
 
     return tmp;
 }
 
-////////////////////////////////////////////////////////////////
+/* -------------------------------- Exception ------------------------------- */
 
 const char*
 Server::SocketCreationProblem::what() const throw()
@@ -470,4 +347,16 @@ const char*
 Server::ListeningProblem::what() const throw()
 {
     return "server had a problem while LISTENING";
+}
+
+const char*
+Server::SetupIssue::what() const throw()
+{
+    return "couldn't setup the server";
+}
+
+const char*
+Server::RequestProcessingIssue::what() const throw()
+{
+    return "request processing issue";
 }

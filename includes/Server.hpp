@@ -90,6 +90,15 @@
                 public:
                     const char* what() const throw();
             };
+            class SetupIssue : public std::exception {
+                public:
+                    const char* what() const throw();
+            };
+            class RequestProcessingIssue : public std::exception {
+                public:
+                    const char* what() const throw();
+            };
+
     };
 
 #endif
