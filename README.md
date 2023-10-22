@@ -11,7 +11,8 @@ This project is about building an HTTP server from scratch (without libraries) i
 - locate ressource
 - build and send response
 
-## Bugs:
+## Bugs & Hints:
+Here are a few bugs I had a hints on how to solve them.
 - Bind failed: Address already in use. ([stackoverflow](https://stackoverflow.com/questions/15198834/bind-failed-address-already-in-use))
 - ERR_CONTENT_LENGTH_MISMATCH => Content-Length = `body.size()` and `send()` needs `entierResponse.size()`
 - Data loss in uploaded file => `2 recv, 1 w/loop` and `0A`
