@@ -12,6 +12,8 @@
     #include <thread> // TODO: delete this. Not in c++98
     #include <map>
 
+    #include "Logger.hpp"
+
     class Client;
 
     #define CBLUE    "\033[0;94m"
@@ -24,6 +26,10 @@
     #define CBOLD   "\x1b[1m"
 
     #define BKBLUE  "\x1B[34m"
+
+    #define CRLFCRLF "\r\n\r\n"
+    #define CRLF_SIZE 4
+    #define END_OF_HEADER CRLFCRLF
 
     using std::string;
     using std::map;
@@ -64,10 +70,15 @@
                 int _contentLength;
 
                 std::string _filename;
-                std::string _data;
+                std::string _payload;
         
                 Request();
                 ~Request();
+
+                void setStatusLine(std::string& request);
+                void setContentLength(std::string& request);
+                void setFilename(string& body);
+                void setPayload(string& body);
         };
         std::string get_mime_type(std::string filepath, map<string, string> accepted_types);
 

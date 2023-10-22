@@ -1,6 +1,6 @@
 // Server side C program to demonstrate Socket programming
 
-#include "Server.hpp"
+#include "../includes/Server.hpp"
 
 #define DEBUG_MODE
 
@@ -88,103 +88,46 @@ Server::handle_request(Client& c, Server& s)
     }
 }
 
-/*
- * This function goes through the body of a POST request
- * and extracts two informations needed to save data on server: 
- * 1. filename
- * 2. data
-*/
-void
-extract_bodyInfo(http::Request& req, std::string body)
-{
-    (void)req;
-    // Locate Content-Disposition line
-    size_t pos;
-    if ((pos = body.find("Content-Disposition")) == std::string::npos) {
-        Log::error("No `Content-Disposition` in POST request");
-        return ; // TODO: handle this better
-    }
-    std::string s = body.substr(pos);
-    std::stringstream ss(s);
-    std::string line;
-    while (std::getline(ss, line)) {
-
-        // std::cout << CYELLOW << line << CRESET << std::endl;
-
-        // -- advance till `filename`
-        if ((pos = line.find("filename=\"")) != std::string::npos)
-        {
-            std::string filename = line.substr(pos+10, line.size());
-            req._filename = filename.substr(0, filename.size()-2); // remove quote at end of line
-        } else if ((pos = line.find("Content-Type:")) != std::string::npos) {
-            std::getline(ss, line); // skip Content-Type
-            std::getline(ss, line); // skip empty line (seperation) 
-            req._data += line;           
-        } else {
-            req._data += line;
-        }
-    }
-    // req._data = line;
-}
-
-int
-extract_contentLength(std::string request)
-{
-    std::stringstream ss(request);
-    std::string line;
-    while (std::getline(ss, line)) {
-        std::string keyword = "Content-Length: ";
-        if (line.find(keyword) != std::string::npos) {
-            std::string length = line.substr(keyword.size(), line.size());
-            return std::atoi(length.c_str());
-        }
-    }
-    return 0;
-}
-
 http::Request
 Server::process_request(const int& client_socket)
 {
     http::Request req;
     char buffer[1024];
     std::string request;
+    size_t found;
+    size_t bytesRead;
 
-    while (true) {
-        int bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytesRead <= 0) {
+    bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
+    if (bytesRead <= 0)
+        throw Server::RequestProcessingIssue();
+    request += std::string(buffer, bytesRead);
+
+    Log::simple(request, CMAGENTA);
+
+    req.setStatusLine(request);
+    req.setContentLength(request);
+
+    /////// POST REQUESTS //////////
+
+    if (req._method != "POST")
+        return req;
+
+    while (1) {
+        bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
+        if (bytesRead <= 0)
             throw Server::RequestProcessingIssue();
-            break;  // Connection closed or error
-        }
         request += std::string(buffer, bytesRead);
-
-        std::cout << CMAGENTA << request << CRESET << std::endl;
-
-        std::stringstream ss(request);
-        ss >> req._method >> req._path >> req._version;
-        
-        req._contentLength = extract_contentLength(request);
-
-        if (req._method != "POST")
+        Log::status(utils::to_str(bytesRead) + " bytes read");
+        if (bytesRead < sizeof(buffer))
             break ;
-        
-        bytesRead = read(client_socket, buffer, sizeof(buffer));
-        if (bytesRead == 0)
-            break ;
-        else {
-            request += std::string(buffer, bytesRead);
-        }
+    }
 
-        std::cout << CYELLOW << request << CRESET << std::endl;
+    Log::simple(request, CYELLOW);
 
-        // Check for the end of the headers (double CRLF)
-        size_t found = request.find("\r\n\r\n");
-        if (found != std::string::npos) {
-            // Headers found, process request
-            std::string requestBody = request.substr(found + 4); // +4 to skip the CRLFCRLF
-            // Process requestBody
-            extract_bodyInfo(req, requestBody);
-            break;
-        }
+    if ((found = request.find(CRLFCRLF)) != std::string::npos) {
+        std::string body = request.substr(found + CRLF_SIZE);
+        req.setFilename(body);
+        req.setPayload(body);
     }
 
     Log::param("Method", req._method);
@@ -192,7 +135,7 @@ Server::process_request(const int& client_socket)
     Log::param("HTTP version", req._version);
     Log::param("Content-Length", utils::to_str(req._contentLength));
     Log::param("Filename", req._filename);
-    Log::param("Data", req._data);
+    Log::param("Data", req._payload);
     
     return req;
 }
@@ -219,7 +162,7 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
         std::string path = "." + req._path + req._filename;
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
-            outputFile.write(req._data.c_str(), req._data.size());
+            outputFile.write(req._payload.c_str(), req._payload.size());
             outputFile.close();
             std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
         } else {

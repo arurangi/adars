@@ -1,4 +1,4 @@
-#include "Http.hpp"
+#include "../includes/Http.hpp"
 
 http::Response::Response() { reset(); }
 http::Response::~Response() { reset(); }
@@ -69,7 +69,9 @@ std::string http::Response::get_gmt_time()
     return formated_time;
 }
 
-//////// OPERATOR OVERLOADING /////////////////////////////////
+/* -------------------------------------------------------------------------- */
+/*                            OPERATOR OVERLOADING                            */
+/* -------------------------------------------------------------------------- */
 
 std::ostream&
 operator<< (std::ostream& os, http::Request& rhs)
@@ -102,8 +104,88 @@ operator<< (std::ostream& os, http::Response& rhs)
     return os;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                         Response: Member Functions                         */
+/* -------------------------------------------------------------------------- */
+
 void
 http::Response::set_status(std::string code, std::string msg) {
     _code = code;
     _message = msg;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Request: Member Functions                         */
+/* -------------------------------------------------------------------------- */
+
+void http::Request::setFilename(std::string& body)
+{
+    size_t pos;
+    string line, tmp, keyword = "filename=\"";
+    
+    if ((pos = body.find("Content-Disposition")) == std::string::npos) {
+        Log::error("No `Content-Disposition` in POST request");
+        return ;
+    }
+    std::stringstream ss(body.substr(pos));
+    while (std::getline(ss, line)) {
+        if ((pos = line.find(keyword)) != std::string::npos) {
+            tmp = line.substr(pos+keyword.size(), line.size());
+            this->_filename = tmp.substr(0, tmp.size()-2);
+            break ;
+        }
+    }
+}
+
+void
+http::Request::setPayload(string& body)
+{
+    size_t pos;
+    string line;
+    
+    if ((pos = body.find("Content-Disposition")) == std::string::npos) {
+        Log::error("No `Content-Disposition` in POST request");
+        return ;
+    }
+    std::stringstream ss(body.substr(pos));
+    while (std::getline(ss, line)) {
+        if ((pos = line.find("filename=\"")) != std::string::npos)
+            continue ;
+        else if ((pos = line.find("Content-Type:")) != std::string::npos)
+        {
+            std::getline(ss, line);
+            std::getline(ss, line);
+            this->_payload += line;
+        }
+        else
+            this->_payload += line;
+    }
+}
+
+void
+http::Request::setStatusLine(std::string& request)
+{
+    std::stringstream ss(request);
+    std::string method, path, version;
+    
+    ss >> method >> path >> version;
+
+    this->_method = method;
+    this->_path = path;
+    this->_version = version;
+}
+
+void
+http::Request::setContentLength(std::string& request)
+{
+    std::stringstream ss(request);
+    std::string line;
+    while (std::getline(ss, line)) {
+        std::string keyword = "Content-Length: ";
+        if (line.find(keyword) != std::string::npos) {
+            std::string length = line.substr(keyword.size(), line.size());
+            this->_contentLength = std::atoi(length.c_str());
+            break ;
+        }
+    }
 }

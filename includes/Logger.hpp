@@ -39,6 +39,12 @@
 
             }
 
+            static void simple(std::string msg, std::string color) {
+            std::cout << std::endl << color << CBOLD
+                      << msg << CRESET 
+                      << std::endl;
+
+            }
     };
 
 #endif
