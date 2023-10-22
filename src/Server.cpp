@@ -173,7 +173,7 @@ Server::process_request(const int& client_socket)
         else {
             request += std::string(buffer, bytesRead);
         }
-    
+
         std::cout << CYELLOW << request << CRESET << std::endl;
 
         // Check for the end of the headers (double CRLF)
@@ -216,15 +216,17 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     // DELETE request, do this
 
     if (req._method == "POST") {
-        std::ofstream outputFile("."+req._filename, std::ios::binary);
+        std::string path = "." + req._path + req._filename;
+        std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
             outputFile.write(req._data.c_str(), req._data.size());
             outputFile.close();
             std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
         } else {
-            std::cerr << "Error saving the image." << std::endl;
+            std::cerr << "♨ Error saving the image." << std::endl;
         }
         // get_fileTransmittedPage()
+        // sendPage_fileUploaded()
         return res;
     }
 
@@ -246,7 +248,7 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
         //////////////////////////////////////////////////////
         // BODY
         // : store content in `response._body`
-        res._body = "";
+        res._body = ""; // get_ressource()
         while (std::getline(requestedFile, buffer))
             res._body += buffer + "\n";
         res._body += '\0';
