@@ -83,6 +83,7 @@
                 void setContentLength(std::string& request);
                 void setFilename(string& body);
                 void setPayload(string& body);
+                std::string getPathToRequestedFile();
         };
         std::string get_mime_type(std::string filepath, map<string, string> accepted_types);
 

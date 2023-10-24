@@ -189,3 +189,26 @@ http::Request::setContentLength(std::string& request)
         }
     }
 }
+
+std::string
+http::Request::getPathToRequestedFile()
+{
+    std::string path;
+
+    if (this->_method == "GET")
+    {
+        path = "./public";
+        if (this->_uri == "/") {// or other locations
+            this->_uri = "/index.html";
+            path += "/index.html";
+        }
+        else
+            path += this->_uri;
+    }
+    else if (_method == "POST")
+    {
+        path = "./public/index.html";
+        this->_uri = "/index.html";
+    }
+    return path;
+}

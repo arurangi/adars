@@ -104,6 +104,7 @@ Server::save_payload(Request& req)
             std::cerr << "♨ Error saving the image." << std::endl;
         }
     }
+    req._uri = "/";
 }
 
 http::Request
@@ -158,24 +159,6 @@ Server::process_request(const int& client_socket)
     return req;
 }
 
-// void getPathToRequestedFile()
-// {
-//     if (req._method == "POST") {
-//         std::string path = "." + req._uri + req._filename;
-//         std::ofstream outputFile(path, std::ios::binary);
-//         if (outputFile) {
-//             outputFile.write(req._payload.c_str(), req._payload.size());
-//             outputFile.close();
-//             std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
-//         } else {
-//             std::cerr << "♨ Error saving the image." << std::endl;
-//         }
-//         // get_fileTransmittedPage()
-//         // sendPage_fileUploaded()
-//         return res;
-//     }
-// }
-
 /** Build HTTP Response
  * **
  * - start-line (http-version, status-code, status-text)
@@ -189,24 +172,8 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     std::string     buffer;
     std::ifstream   requestedFile;
 
-    // TODO: 
-    // GET request, do this
-    // POST request, do this
-    // DELETE request, do this
-
-    if (req._method == "POST") {
-        return res;
-    }
-
-    /**
-     * Figure out which file to open
-     * - is it a location, home page?
-     * - or a specific file, image or other
-     */
-    if (req._uri == "/") // or other locations
-        req._uri = "/index.html";
-    // std::string dir = get_asset_folder(req._uri);
-    requestedFile.open("./public" + req._uri, std::ios::in);
+    std::string path = req.getPathToRequestedFile();
+    requestedFile.open(path, std::ios::in);
 
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
