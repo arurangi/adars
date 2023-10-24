@@ -10,7 +10,7 @@ int main()
 
     try {
         server.setup(IPV4, TCP, DEFAULT, PORT, BACKLOG);
-        // TODO: 
+        // TODO:
         // - cluster of servers listening on different ports
         // - NON-BLOCKING when handling multiple clients
         while (isRunning)

@@ -140,6 +140,24 @@ Server::process_request(const int& client_socket)
     return req;
 }
 
+// void getPathToRequestedFile()
+// {
+//     if (req._method == "POST") {
+//         std::string path = "." + req._uri + req._filename;
+//         std::ofstream outputFile(path, std::ios::binary);
+//         if (outputFile) {
+//             outputFile.write(req._payload.c_str(), req._payload.size());
+//             outputFile.close();
+//             std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
+//         } else {
+//             std::cerr << "♨ Error saving the image." << std::endl;
+//         }
+//         // get_fileTransmittedPage()
+//         // sendPage_fileUploaded()
+//         return res;
+//     }
+// }
+
 /** Build HTTP Response
  * **
  * - start-line (http-version, status-code, status-text)
@@ -185,20 +203,18 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
 
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
-        res._body = "";
-        res._contentLength = 0;
-    } else {
-        //////////////////////////////////////////////////////
-        // BODY
-        // : store content in `response._body`
-        res._body = ""; // get_ressource()
-        while (std::getline(requestedFile, buffer))
-            res._body += buffer + "\n";
-        res._body += '\0';
-        res._contentLength = res._body.size();
-
-        requestedFile.close();
+        requestedFile.open("./public/404.html");
     }
+    //////////////////////////////////////////////////////
+    // BODY
+    // : store content in `response._body`
+    res._body = ""; // get_ressource()
+    while (std::getline(requestedFile, buffer))
+        res._body += buffer + "\n";
+    res._body += '\0';
+    res._contentLength = res._body.size();
+
+    requestedFile.close();
 
     ////////////////////////////////////////////////////
     // STATUS_LINE
