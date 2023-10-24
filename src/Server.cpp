@@ -80,11 +80,29 @@ Server::handle_request(Client& c, Server& s)
 {
     try {
         http::Request req = this->process_request(c._socket);
+        if (req._method == "POST")
+            s.save_payload(req);
         http::Response res = this->build_response(req, s._mimeTypes);
         this->send_response(c, res);
     }
     catch (std::exception& e) {
         std::cout << e.what();
+    }
+}
+
+void
+Server::save_payload(Request& req)
+{
+    if (req._method == "POST") {
+        std::string path = "." + req._uri + req._filename;
+        std::ofstream outputFile(path, std::ios::binary);
+        if (outputFile) {
+            outputFile.write(req._payload.c_str(), req._payload.size());
+            outputFile.close();
+            std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
+        } else {
+            std::cerr << "♨ Error saving the image." << std::endl;
+        }
     }
 }
 
@@ -177,17 +195,6 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     // DELETE request, do this
 
     if (req._method == "POST") {
-        std::string path = "." + req._uri + req._filename;
-        std::ofstream outputFile(path, std::ios::binary);
-        if (outputFile) {
-            outputFile.write(req._payload.c_str(), req._payload.size());
-            outputFile.close();
-            std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
-        } else {
-            std::cerr << "♨ Error saving the image." << std::endl;
-        }
-        // get_fileTransmittedPage()
-        // sendPage_fileUploaded()
         return res;
     }
 
