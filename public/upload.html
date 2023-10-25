@@ -1,36 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Adars - Contact us</title>
-      <link rel="stylesheet" href="stylesheets/styles.css">
-      <script>
-          function validateForm() {
-              var fileInput = document.querySelector('input[type="file"]');
-              if (fileInput.files.length === 0) {
-                  alert("Please select a file before submitting.");
-                  return false;
-              }
-              return true;
-          }
-      </script>
-  </head>
-  <body>
-    <section class="wrapper">
-        <h1>Upload</h1>
-        <form method="post" action="/public/storage/" enctype="multipart/form-data" onsubmit="return validateForm()">
-            <input type="file" name="file">
-            <input type="submit" value="Upload">
-        </form>
-        <nav>
-            <ul class="navbar">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="upload.html">Send files</a></li>
-            </ul>
-        </nav>
-    </section>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adars - Contact us</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <script>
+        function validateForm() {
+            var fileInput = document.querySelector('input[type="file"]');
+            var errorMessage = document.getElementById('error-message');
+
+            if (fileInput.files.length === 0) {
+                errorMessage.textContent = "Please select a file before submitting.";
+                errorMessage.style.color = "red";
+                return false;
+            } else {
+                errorMessage.textContent = ""; // Clear the error message if a file is selected.
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+<section class="wrapper">
+    <h1>Upload</h1>
+    <form method="post" action="/public/storage/" enctype="multipart/form-data" onsubmit="return validateForm()">
+        <input type="file" name="file">
+        <div id="error-message" style="color: red;"></div>
+        <input type="submit" value="Upload">
+    </form>
+    <nav>
+        <ul class="navbar">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="upload.html">Send files</a></li>
+        </ul>
+    </nav>
+</section>
+</body>
 </html>
