@@ -202,9 +202,14 @@ http::Request::setReferer(std::string header)
 std::string
 http::Request::getPathToRequestedFile()
 {
-    std::string path = "./public";
+    std::string path;
     size_t found = 0;
     std::string storagePath = "/public/storage";
+    
+    if ((found = _uri.find("./public")) != std::string::npos)
+        path = "";
+    else
+        path = "./public";
 
     if (_method == "GET")
     {
@@ -221,9 +226,11 @@ http::Request::getPathToRequestedFile()
     else if (_method == "POST")
     {
         // the page the request was made from
-        path += _referer;
-        _uri = (_referer == "/") ? "./index.html" : _referer;
-        Log::status("Referer : " + _referer);
+        path += "/uploaded.html";
+        _uri = path;
+        // path += _referer;
+        // _uri = (_referer == "/") ? "./index.html" : _referer;
+        // Log::status("Referer : " + _referer);
     }
     return path;
 }
