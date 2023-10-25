@@ -194,6 +194,8 @@ std::string
 http::Request::getPathToRequestedFile()
 {
     std::string path;
+    size_t found = 0;
+    std::string storagePath = "/public/storage";
 
     if (this->_method == "GET")
     {
@@ -202,8 +204,11 @@ http::Request::getPathToRequestedFile()
             this->_uri = "/index.html";
             path += "/index.html";
         }
-        else
+        else {
+            if ((found = this->_uri.find(storagePath)) != std::string::npos)
+                this->_uri = this->_uri.substr(found+storagePath.size());
             path += this->_uri;
+        }
     }
     else if (_method == "POST")
     {
