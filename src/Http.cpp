@@ -3,9 +3,8 @@
 http::Response::Response() { reset(); }
 http::Response::~Response() { reset(); }
 
-http::Request::Request() { _contentLength = 0; }
-http::Request::~Request() { _contentLength = 0; }
-
+http::Request::Request() : _contentLength(0), _referer("") {}
+http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -32,20 +31,22 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
 
     size_t dotPosition = filepath.find(".");
     if (dotPosition == string::npos) {
-        std::cout << "No extension dotPosition\n";
+        Log::error("No extension dotPosition");
         return defaultMime;
     }
     string extension = filepath.substr(dotPosition, filepath.size());
+    Log::status("extension: " + extension);
 
     map<string, string>::iterator it = accepted_types.begin();
     while (it != accepted_types.end())
     {
         if (it->first == extension) {
-            // std::cout << "Type = " << CGREEN << it->second << CRESET << std::endl;
+            std::cout << "Type = " << CGREEN << it->second << CRESET << std::endl;
             return it->second;
         }
         it++;
     }
+    Log::error("Can't find (" + extension + ") in mime types");
     return defaultMime;
 }
 
@@ -91,13 +92,9 @@ operator<< (std::ostream& os, http::Request& rhs)
 std::ostream&
 operator<< (std::ostream& os, http::Response& rhs)
 {
-    std::string content(rhs._raw);
+    std::string content(rhs._header);
     std::string currentLine;
     std::stringstream ss(content);
-
-    std::thread::id threadId = std::this_thread::get_id();
-    os << CGREEN CBOLD << "\n---\n| Response " << CRESET
-       << CYELLOW << threadId << CRESET << std::endl;
     
     while (std::getline(ss, currentLine))
         os << CGREEN << "< " << CRESET << currentLine << std::endl;
@@ -190,16 +187,34 @@ http::Request::setContentLength(std::string& request)
     }
 }
 
+void
+http::Request::setReferer(std::string header)
+{
+    std::stringstream ss(header);
+    std::string line;
+    size_t found;
+
+    while (std::getline(ss, line)) {
+        std::string keyword = "Referer: ";
+        if (line.find(keyword) != std::string::npos) {
+            if ((found = line.find_last_of("/")) != std::string::npos)
+                this->_referer = line.substr(found);
+            else
+                this->_referer = "/index.html";
+            break ;
+        }
+    }
+}
+
 std::string
 http::Request::getPathToRequestedFile()
 {
-    std::string path;
+    std::string path = "./public";
     size_t found = 0;
     std::string storagePath = "/public/storage";
 
     if (this->_method == "GET")
     {
-        path = "./public";
         if (this->_uri == "/") {// or other locations
             this->_uri = "/index.html";
             path += "/index.html";
@@ -212,8 +227,10 @@ http::Request::getPathToRequestedFile()
     }
     else if (_method == "POST")
     {
-        path = "./public/index.html";
-        this->_uri = "/index.html";
+        // the page the request was made from
+        path += this->_referer;
+        this->_uri = (_referer == "/") ? "./index.html" : _referer;
+        Log::status("Referer : " + _referer);
     }
     return path;
 }

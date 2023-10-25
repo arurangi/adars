@@ -72,6 +72,7 @@
 
                 int _contentLength;
                 char _raw[BUFFER_SIZE];
+                std::string _referer;
 
                 std::string _filename;
                 std::string _payload;
@@ -81,6 +82,7 @@
 
                 void setStatusLine(std::string& request);
                 void setContentLength(std::string& request);
+                void setReferer(std::string header);
                 void setFilename(string& body);
                 void setPayload(string& body);
                 std::string getPathToRequestedFile();

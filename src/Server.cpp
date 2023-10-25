@@ -130,6 +130,8 @@ Server::process_request(const int& client_socket)
 
     if (req._method != "POST")
         return req;
+    
+    req.setReferer(request);
 
     while (1) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
@@ -141,7 +143,7 @@ Server::process_request(const int& client_socket)
             break ;
     }
 
-    Log::simple(request, CYELLOW);
+    // Log::simple(request, CYELLOW);
 
     if ((found = request.find(CRLFCRLF)) != std::string::npos) {
         std::string body = request.substr(found + CRLF_SIZE);
@@ -154,7 +156,7 @@ Server::process_request(const int& client_socket)
     Log::param("HTTP version", req._httpVersion);
     Log::param("Content-Length", utils::to_str(req._contentLength));
     Log::param("Filename", req._filename);
-    Log::param("Data", req._payload);
+    // Log::param("Data", req._payload);
     
     return req;
 }
@@ -173,8 +175,8 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     std::ifstream   requestedFile;
 
     std::string path = req.getPathToRequestedFile();
+    Log::status("Opening => " + path);
     requestedFile.open(path, std::ios::in);
-
     if (!requestedFile.is_open()) {
         res.set_status("400", "Bad Request");
         requestedFile.open("./public/404.html");
@@ -199,6 +201,8 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     ////////////////////////////////////////////////////
     // HEADER:
     // : Content-Type, Content-Length, Connection
+    res._header += res._statusLine;
+    Log::status("URI: " + req._uri);
     res._contentType = http::get_mime_type(req._uri, mimeType);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + utils::to_str(res._contentLength) + "\r\n";
@@ -208,7 +212,7 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     res._header   += "\r\n";
 
     // Construct raw HTTP response
-    res._raw = res._statusLine + res._header + res._body;
+    res._raw = res._header + res._body;
 
     std::cout << res;
     return res;

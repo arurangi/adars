@@ -11,6 +11,7 @@
     #include <sys/socket.h>
     #include <unistd.h>
     #include <netinet/in.h>
+    #include <sys/ioctl.h>
 
     #include "Http.hpp"
     #include "Utils.hpp"
