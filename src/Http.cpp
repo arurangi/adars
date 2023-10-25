@@ -29,25 +29,18 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
 {
     std::string defaultMime = "application/octet-stream";
 
-    size_t dotPosition = filepath.find(".");
+    size_t dotPosition = filepath.find_last_of(".");
     if (dotPosition == string::npos) {
-        Log::error("No extension dotPosition");
+        Log::error("Can't identify MIME type: No extension.");
         return defaultMime;
     }
-    string extension = filepath.substr(dotPosition, filepath.size());
-    Log::status("extension: " + extension);
+    string extension = filepath.substr(dotPosition);
+    Log::status("extension:" + extension);
 
-    map<string, string>::iterator it = accepted_types.begin();
-    while (it != accepted_types.end())
-    {
-        if (it->first == extension) {
-            std::cout << "Type = " << CGREEN << it->second << CRESET << std::endl;
-            return it->second;
-        }
-        it++;
-    }
+    if (accepted_types.find(extension) != accepted_types.end())
+        return accepted_types[extension];
     Log::error("Can't find (" + extension + ") in mime types");
-    return defaultMime;
+    return "text/html";
 }
 
 std::string http::Response::get_gmt_time()
@@ -213,23 +206,23 @@ http::Request::getPathToRequestedFile()
     size_t found = 0;
     std::string storagePath = "/public/storage";
 
-    if (this->_method == "GET")
+    if (_method == "GET")
     {
-        if (this->_uri == "/") {// or other locations
-            this->_uri = "/index.html";
+        if (_uri == "/") {// or other locations
+            _uri = "/index.html";
             path += "/index.html";
         }
         else {
-            if ((found = this->_uri.find(storagePath)) != std::string::npos)
-                this->_uri = this->_uri.substr(found+storagePath.size());
-            path += this->_uri;
+            if ((found = _uri.find(storagePath)) != std::string::npos)
+                _uri = _uri.substr(found+storagePath.size());
+            path += _uri;
         }
     }
     else if (_method == "POST")
     {
         // the page the request was made from
-        path += this->_referer;
-        this->_uri = (_referer == "/") ? "./index.html" : _referer;
+        path += _referer;
+        _uri = (_referer == "/") ? "./index.html" : _referer;
         Log::status("Referer : " + _referer);
     }
     return path;

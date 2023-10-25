@@ -3,25 +3,34 @@
 
  :root {
     --main-color: #9F8FFF;
+    --blue: #3636FF;
+    --blue-hover: #5225d6;
+    --blue-shadow: #3636ff7b;
+    --blue-bg: #EBEBFF;
 
  }
 
  html {
    font-family: 'Inter', sans-serif;
-   background-color: black;
-   color: white;
+   /* background-color: black;
+   color: white; */
  }
 
  body {
       height: 100vh;
-      
-      /* margin: auto; */
       margin: 20px;
       text-align: center;
       flex-direction: column;
       display: flex;
-      justify-content: center;
+      /* justify-content: center; */
       align-items: center;
+ }
+
+ h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(41, 38, 38);
+  margin: 20px 0 20px 0;
  }
 
  .wrapper {
@@ -38,9 +47,10 @@
 
  a {
     text-decoration: none;
+    transition: all 150ms;
  }
  a:visited {
-    color: whitesmoke;
+    color: black;
  }
  a:hover {
     color: var(--main-color);
@@ -50,20 +60,21 @@
      font-size: 54px;
      font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
      font-weight: 900;
-     color: #9F8FFF;
+     color: black;
  }
  
  .navbar {
    display: flex;
-   margin: 0;
+   margin: 20px 0px;
    padding: 0;
    justify-content: center;
+   background-color: bla;
  }
  
  .navbar li {
    margin-right: 10px;
    list-style-type: none;
-   font-size: 2rem;
+   font-size: 1.2rem;
  }
  
  .navbar li:hover {
@@ -92,6 +103,7 @@
    max-width: 500px;
    margin: auto;
    text-align: left;
+   align-items: center;
    margin-bottom: 24px;
  }
 
@@ -102,3 +114,61 @@
  label {
    margin-bottom: 5px;
  }
+
+.form_upload {
+  max-width: 50vw;
+  /* min-height: 400px; */
+  background-color: var(--blue-bg);
+  text-align: center;
+  padding: 30px;
+  border-radius: 20px;
+  border: 3px outset;
+  border-color:  #3636FF;
+}
+
+.img_form {
+
+}
+
+.form_upload label {
+  margin-right: 10px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.btn_collection {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+ .btn_browsing {
+  padding: 10px 20px;
+  background-color: var(--blue);
+  color: white;
+  transition: all 150ms;
+  border-radius: 30px;
+  height: fit-content;
+ }
+ .btn_browsing:hover {
+  cursor: pointer;
+  background-color: var(--blue-hover);
+ }
+
+ input[type="submit"] {
+  display: none;
+}
+.btn_submit {
+  padding: 10px;
+  padding: 10px 20px;
+  height: fit-content;
+  transition: all 150ms;
+  border-radius: 30px;
+  background-color: var(--blue-shadow);
+  color: white;
+}
+.btn_submit:hover {
+  cursor: pointer;
+}

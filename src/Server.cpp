@@ -178,8 +178,15 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     Log::status("Opening => " + path);
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
+        Log::error("Can't open :" + path);
+        perror("Reason: ");
         res.set_status("400", "Bad Request");
         requestedFile.open("./public/404.html");
+        req._uri = "/404.html";
+        if (!requestedFile.is_open()) {
+            Log::error("Can't open : ./public/404.html");
+            perror("Reason: ");
+        }
     }
     //////////////////////////////////////////////////////
     // BODY
@@ -189,6 +196,8 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
         res._body += buffer + "\n";
     res._body += '\0';
     res._contentLength = res._body.size();
+
+    // std::cout << CMAGENTA << res._body << CRESET << std::endl;
 
     requestedFile.close();
 
