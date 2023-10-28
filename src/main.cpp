@@ -19,21 +19,19 @@ int main()
         {
             // because select is destructive
             ready_sockets = current_sockets;
-            if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0) {
-                perror("select error");
-                exit(EXIT_FAILURE);
-            }
+            if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
+                exit(Log::x("select error"));
             
-            for (int i = 0; i < FD_SETSIZE; i++) {
-                if (FD_ISSET(i, &ready_sockets)) {
+            for (int curr_fd = 0; curr_fd < FD_SETSIZE; curr_fd++) {
+                if (FD_ISSET(curr_fd, &ready_sockets)) {
                     // this is a new connection
-                    if (i == server._socket) {
-                        int client_socket = server.get_client();
-                        FD_SET(client_socket, &current_sockets);
+                    if (curr_fd == server._socket) {
+                        int new_clientSocket = server.get_client();
+                        FD_SET(new_clientSocket, &current_sockets);
                     } else {
-                        Client clt(i);
-                        server.handle_request(clt, server);
-                        FD_CLR(i, &current_sockets);
+                        Client existing_client(curr_fd);
+                        server.handle_request(existing_client, server);
+                        FD_CLR(curr_fd, &current_sockets);
                     }
                 }
             }     
