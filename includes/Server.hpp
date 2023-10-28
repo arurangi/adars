@@ -48,6 +48,7 @@
             int _backlog;
             struct sockaddr_in _address;
             std::string _storageDir;
+            std::vector<std::string> _allowedPaths;
 
         public:
             int _socket;

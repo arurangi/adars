@@ -4,7 +4,20 @@
 
 #define DEBUG_MODE
 
-Server::Server() {}
+Server::Server()
+{
+    // TODO: allowed paths
+    _allowedPaths.push_back("./public/index.html");
+    _allowedPaths.push_back("./public/about.html");
+    _allowedPaths.push_back("./public/upload.html");
+    _allowedPaths.push_back("./public/uploaded.html");
+    _allowedPaths.push_back("./public/404.html");
+    _allowedPaths.push_back("./public/favicon.ico");
+
+    _allowedPaths.push_back("./public/stylesheets/styles.css");
+
+    // list images in ./public/images/
+}
 Server::~Server() {}
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +107,7 @@ void
 Server::save_payload(Request& req)
 {
     if (req._method == "POST") {
-        std::string path = "." + req._uri + req._filename;
+        std::string path = "./public/storage/" + req._filename; // TODO: see config
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
             outputFile.write(req._payload.c_str(), req._payload.size());
@@ -175,12 +188,13 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     std::ifstream   requestedFile;
 
     std::string path = req.getPathToRequestedFile();
-    Log::status("Opening => " + path);
+    // TODO: check if part of allowed paths
+    // Log::status("Opening => " + path);
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
         Log::error("Can't open :" + path);
         perror("Reason: ");
-        res.set_status("400", "Bad Request");
+        res.set_status(HTTP_NOT_FOUND);
         requestedFile.open("./public/404.html");
         req._uri = "/404.html";
         if (!requestedFile.is_open()) {

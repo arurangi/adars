@@ -20,6 +20,17 @@
             }
             return true;
         }
+        function updateSubmitButton() {
+            var fileInput = document.querySelector('input[type="file"]');
+            var submitButton = document.querySelector('input[type="submit"]');
+            var submitBtn = document.getElementById('btn_submit')
+
+            if (fileInput.files.length > 0) {
+                submitBtn.style.backgroundColor = "red";
+            } else {
+                submitBtn.style.backgroundColor = "green";
+            }
+        }
     </script>
 </head>
 <body>
@@ -33,20 +44,20 @@
         </ul>
     </nav>
     <h1>Upload your documents</h1>
-    <form class="form_upload" method="post" action="/public/storage/" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <form class="form_upload" method="post" action="/" enctype="multipart/form-data" onsubmit="return validateForm()">
         <img class="img_form" width="150px" height="150px" src="images/files-interface-svgrepo-com.png" alt="nothing">
         <h3>Browse and chose the files<br>your want to upload</h3>
-        <div class="btn_collection">            
+        <div class="btn_collection">
             <label class="btn_browsing">
                 <input type="file" name="file">
                 Browse Files
             </label>
-            <div id="error-message" style="color: red;"></div>
-            <label class="btn_submit">
+            <label class="btn_submit" id="btn_submit">
                 <input type="submit" value="Upload">
                 Submit
             </label>
         </div>
+        <div id="error-message" style="color: red;"></div>
     </form>
 </section>
 </body>

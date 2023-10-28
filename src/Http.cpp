@@ -1,7 +1,7 @@
 #include "../includes/Http.hpp"
 
 http::Response::Response() { reset(); }
-http::Response::~Response() { reset(); }
+http::Response::~Response() {}
 
 http::Request::Request() : _contentLength(0), _referer("") {}
 http::Request::~Request() { _referer = ""; }
@@ -20,6 +20,35 @@ http::Response::reset()
     _contentLength = 0;
     _body = "";
     _raw = "";
+
+
+    // This is the standard response for a successful HTTP request. It indicates that the request has been successfully processed, and the response contains the requested information.
+    _statusCodes["200"] = "OK";
+
+    // This status code is returned when a new resource has been successfully created as a result of the request. It is often accompanied by a "Location" header that specifies the URL of the newly created resource.
+    _statusCodes["201"] = "Created";
+
+    // The request was successfully processed, but there is no content to return in the response body
+    _statusCodes["204"] = "No Content";
+
+    // This is one of the most well-known HTTP error codes. It indicates that the requested resource could not be found on the server.
+    _statusCodes["404"] = "Not Found";
+
+    // The server understands the request, but it refuses to fulfill it. This might be due to insufficient permissions or access restrictions
+    _statusCodes["403"] = "Forbidden";
+
+    // The server cannot understand or process the client's request due to a client error, such as malformed syntax in the request
+    _statusCodes["400"] = "Bad Request";
+
+    // The HTTP method used in the request (e.g., GET, POST, PUT) is not allowed for the requested resource.
+    _statusCodes["405"] = "Method Not Allowed";
+
+    // When a client sends a conditional GET request and the resource has not been modified, the server responds with this code to indicate that the client's cached version is still valid
+    _statusCodes["304"] = "Not Modified";
+
+    // This is a generic error message indicating that something went wrong on the server's side, and the server couldn't be more specific about the issue.
+    _statusCodes["500"] = "Internal Server Error";
+
 }
 
 ///////////////// UTILS //////////////////////////////////////////////////
@@ -99,9 +128,10 @@ operator<< (std::ostream& os, http::Response& rhs)
 /* -------------------------------------------------------------------------- */
 
 void
-http::Response::set_status(std::string code, std::string msg) {
+http::Response::set_status(std::string code)
+{
     _code = code;
-    _message = msg;
+    _message = _statusCodes[code];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -153,12 +183,16 @@ http::Request::setPayload(string& body)
 }
 
 void
-http::Request::setStatusLine(std::string& request)
+http::Request::setStatusLine(std::string& header)
 {
-    std::stringstream ss(request);
+    std::stringstream ss(header);
     std::string method, path, version;
     
     ss >> method >> path >> version;
+
+    if (method != "GET" && method != "POST" && method != "DELETE")
+        _status = HTTP_BAD_REQUEST;
+        
 
     this->_method = method;
     this->_uri = path;
@@ -166,9 +200,9 @@ http::Request::setStatusLine(std::string& request)
 }
 
 void
-http::Request::setContentLength(std::string& request)
+http::Request::setContentLength(std::string& header)
 {
-    std::stringstream ss(request);
+    std::stringstream ss(header);
     std::string line;
     while (std::getline(ss, line)) {
         std::string keyword = "Content-Length: ";
@@ -206,31 +240,28 @@ http::Request::getPathToRequestedFile()
     size_t found = 0;
     std::string storagePath = "/public/storage";
     
-    if ((found = _uri.find("./public")) != std::string::npos)
-        path = "";
+    // if ((found = _uri.find(storagePath)) != std::string::npos)
+    //     _uri = _uri.substr(found+storagePath.size());
+
+    if ((found = _uri.find("/public")) != std::string::npos)
+        path = ".";
     else
         path = "./public";
 
     if (_method == "GET")
     {
-        if (_uri == "/") {// or other locations
+        if (_uri == "/") {
+            Log::status(">>> Here");
             _uri = "/index.html";
-            path += "/index.html";
-        }
-        else {
-            if ((found = _uri.find(storagePath)) != std::string::npos)
-                _uri = _uri.substr(found+storagePath.size());
             path += _uri;
         }
+        else
+            path += _uri;
     }
     else if (_method == "POST")
     {
-        // the page the request was made from
         path += "/uploaded.html";
         _uri = path;
-        // path += _referer;
-        // _uri = (_referer == "/") ? "./index.html" : _referer;
-        // Log::status("Referer : " + _referer);
     }
     return path;
 }

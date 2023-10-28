@@ -32,6 +32,17 @@
     #define CRLF_SIZE 4
     #define END_OF_HEADER CRLFCRLF
 
+    #define HTTP_OK "200"
+    #define HTTP_CREATED "201"
+    #define HTTP_NO_CONTENT "204"
+    #define HTTP_NOT_FOUND "404"
+    #define HTTP_FORBIDDEN "403"
+    #define HTTP_BAD_REQUEST "400"
+    #define HTTP_METHOD_NOT_ALLOWED "405"
+    #define HTTP_NOT_MODIFIED "304"
+    #define HTTP_INTERNAL_SERVER_ERROR "500"
+
+
     using std::string;
     using std::map;
 
@@ -42,6 +53,8 @@
                 std::string _httpVersion;
                 std::string _code;
                 std::string _message;
+
+                std::map<std::string, std::string> _statusCodes;
 
                 std::string _statusLine;
                 std::string _header;
@@ -55,7 +68,7 @@
                 Response();
                 ~Response();
 
-                void        set_status(std::string code, std::string msg);
+                void        set_status(std::string code);
                 std::string get_gmt_time();
                 void        reset();
         };
@@ -76,12 +89,14 @@
 
                 std::string _filename;
                 std::string _payload;
+
+                std::string _status;
         
                 Request();
                 ~Request();
 
-                void setStatusLine(std::string& request);
-                void setContentLength(std::string& request);
+                void setStatusLine(std::string& header);
+                void setContentLength(std::string& header);
                 void setReferer(std::string header);
                 void setFilename(string& body);
                 void setPayload(string& body);
