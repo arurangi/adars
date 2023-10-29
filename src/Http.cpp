@@ -53,10 +53,174 @@ http::Response::reset()
 
 ///////////////// UTILS //////////////////////////////////////////////////
 
-std::string
-http::get_mime_type(std::string filepath, map<string, string> accepted_types)
+int http::accept_connection(int serverSocket)
 {
-    std::string defaultMime = "application/octet-stream";
+    struct sockaddr_in  addr;
+    socklen_t           addrLen = sizeof(addr);
+    int client_socket = accept(serverSocket, (struct sockaddr *)&addr, &addrLen);
+    if (client_socket < 0) {
+        std::cout << "Bad Connection\n";
+        exit(1);
+    }
+    return client_socket;
+}
+
+void
+http::handle_request(int client_socket)
+{
+    try {
+        http::Request req = http::process_request(client_socket);
+        if (req._method == "POST")
+            http::save_payload(req);
+        http::Response res = http::build_response(req);
+        http::send_response(client_socket, res);
+    }
+    catch (std::exception& e) {
+        std::cout << e.what();
+    }
+}
+
+Request
+http::process_request(const int& client_socket)
+{
+    Request req;
+    char buffer[1024];
+    string request;
+    size_t found;
+    size_t bytesRead;
+
+    bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
+    if (bytesRead <= 0)
+        Log::error("Request processing issues");
+    request += string(buffer, bytesRead);
+
+    Log::simple(request, CMAGENTA);
+
+    req.setStatusLine(request);
+    req.setContentLength(request);
+
+    /////// POST REQUESTS //////////
+
+    if (req._method != "POST")
+        return req;
+    
+    req.setReferer(request);
+
+    while (1) {
+        bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
+        if (bytesRead <= 0)
+            Log::error("Request processing issues");
+        request += std::string(buffer, bytesRead);
+        Log::status(utils::to_str(bytesRead) + " bytes read");
+        if (bytesRead < sizeof(buffer))
+            break ;
+    }
+
+    // Log::simple(request, CYELLOW);
+
+    if ((found = request.find(CRLFCRLF)) != std::string::npos) {
+        string body = request.substr(found + CRLF_SIZE);
+        req.setFilename(body);
+        req.setPayload(body);
+    }
+
+    // Log::param("Method", req._method);
+    // Log::param("Path", req._uri);
+    // Log::param("HTTP version", req._httpVersion);
+    // Log::param("Content-Length", utils::to_str(req._contentLength));
+    // Log::param("Filename", req._filename);
+    // Log::param("Data", req._payload);
+    
+    return req;
+}
+
+http::Response
+http::build_response(Request& req)
+{
+    Response res;
+    string buffer;
+    std::ifstream requestedFile;
+    map<string, string>_mimeTypes = http::get_mime_types("./conf/mime.types");
+
+    string path = req.getPathToRequestedFile();
+
+    if (!utils::startswith(path, "./public/"))
+        Log::error("Invalid ressource path");
+    // TODO: check if part of allowed paths
+    // Log::status("Opening => " + path);
+    requestedFile.open(path, std::ios::in);
+    if (!requestedFile.is_open()) {
+        Log::error("Can't open :" + path);
+        perror("Reason: ");
+        res.set_status(HTTP_NOT_FOUND);
+        requestedFile.open("./public/404.html");
+        req._uri = "/404.html";
+        if (!requestedFile.is_open()) {
+            Log::error("Can't open : ./public/404.html");
+            perror("Reason: ");
+        }
+    }
+    //////////////////////////////////////////////////////
+    // BODY
+    // : store content in `response._body`
+    res._body = ""; // get_ressource()
+    while (std::getline(requestedFile, buffer))
+        res._body += buffer + "\n";
+    res._body += '\0';
+    res._contentLength = res._body.size();
+
+    // std::cout << CMAGENTA << res._body << CRESET << std::endl;
+
+    requestedFile.close();
+
+    ////////////////////////////////////////////////////
+    // STATUS_LINE
+    // : version, status_code, status_text
+    res._httpVersion = req._httpVersion;
+    res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\r\n";
+
+    ////////////////////////////////////////////////////
+    // HEADER:
+    // : Content-Type, Content-Length, Connection
+    res._header += res._statusLine;
+    res.set_content_type(req._uri, _mimeTypes);
+    res._header   += "Content-Type: " + res._contentType + "\r\n";
+    res._header   += "Content-Length: " + utils::to_str(res._contentLength) + "\r\n";
+    res._header   += "Date: " + res.get_gmt_time() + "\r\n";
+    res._header   += "Connection: keep-alive\r\n";
+    res._header   += "Server: Adars\r\n";
+    res._header   += "\r\n";
+
+    // Construct raw HTTP response
+    res._raw = res._header + res._body;
+
+    std::cout << res;
+    return res;
+}
+
+void
+http::save_payload(Request& req)
+{
+    if (req._method == "POST") {
+        std::string path = "./public/storage/" + req._filename; // TODO: see config
+        std::ofstream outputFile(path, std::ios::binary);
+        if (outputFile) {
+            outputFile.write(req._payload.c_str(), req._payload.size());
+            outputFile.close();
+            std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
+        } else {
+            std::cerr << "♨ Error saving the image." << std::endl;
+        }
+    }
+    req._uri = "/";
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+std::string
+Response::set_content_type(string filepath, map<string, string> accepted_types)
+{
+    string defaultMime = "application/octet-stream";
 
     size_t dotPosition = filepath.find_last_of(".");
     if (dotPosition == string::npos) {
@@ -70,6 +234,32 @@ http::get_mime_type(std::string filepath, map<string, string> accepted_types)
         return accepted_types[extension];
     Log::error("Can't find (" + extension + ") in mime types");
     return "text/html";
+}
+
+std::map<std::string, std::string>
+http::get_mime_types(std::string mimesFilePath) {
+    std::map<std::string, std::string> tmp;
+    std::string line, key, value;
+    std::ifstream mimeFile;
+    int seperator;
+
+    // open mime file
+    mimeFile.open(mimesFilePath, std::ios::in);
+    if (!mimeFile.is_open()) {
+        Log::error("Error: opening MIME file");
+        // throw exception???
+    }
+    
+    // read line by line
+    while (std::getline(mimeFile, line)) {
+        seperator = line.find(",");
+        key = line.substr(0, seperator);
+        value = line.substr(seperator+1, line.size());
+        tmp[key] = value;
+    }
+    mimeFile.close();
+
+    return tmp;
 }
 
 std::string http::Response::get_gmt_time()

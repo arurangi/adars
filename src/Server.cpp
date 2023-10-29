@@ -19,11 +19,40 @@ Server::Server()
     _allowedPaths.push_back("./public/uploaded.html");
     _allowedPaths.push_back("./public/404.html");
     _allowedPaths.push_back("./public/favicon.ico");
-
     _allowedPaths.push_back("./public/stylesheets/styles.css");
+
+    std::string bucket =
+    "<!DOCTYPE html>\n"
+    "<html lang=\"en\">\n"
+    "<head>\n"
+        "<meta charset=\"UTF-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
+        "<title>Error 404</title>\n"
+    "</head>\n"
+    "<body>\n"
+        "<section class=\"wrapper\">\n"
+        "<nav >\n"
+            "<ul class=\"navbar\">\n"
+            "<li><a href=\"index.html\">Home</a></li>\n"
+            "<li><a href=\"about.html\">About</a></li>\n"
+            "<li><a href=\"upload.html\">Send files</a></li>\n"
+            "<li><a href=\"uploaded.html\">Storage</a></li>\n"
+            "</ul>\n"
+        "</nav>\n"
+            "<h1>Error 404</h1>\n"
+        "</section>\n"
+    "</body>\n"
+    "</html>\n";
 
     // list images in ./public/images/
 }
+
+Server::Server(int domain, int service, int protocol, int port, int backlog)
+{
+    this->setup(domain, service, protocol, port, backlog);
+}
+
 Server::~Server() {}
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -200,6 +229,9 @@ Server::build_response(http::Request& req, std::map<string, string>& mimeType)
     std::ifstream   requestedFile;
 
     std::string path = req.getPathToRequestedFile();
+
+    if (!utils::startswith(path, "./public/"))
+        Log::error("Invalid ressource path");
     // TODO: check if part of allowed paths
     // Log::status("Opening => " + path);
     requestedFile.open(path, std::ios::in);

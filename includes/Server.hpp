@@ -59,13 +59,14 @@
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
             Server();
+            Server(int domain, int service, int protocol, int port, int backlog);
             ~Server();
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // member functions
 
             void setup(int domain, int service, int protocol, int port, int backlog);
-            int get_client();
+            // int get_client();
             void handle_request(Client& c, Server& s);
             http::Request process_request(const int& client_socket);
             http::Response build_response(http::Request& req, std::map<string, string>& mimeType);
