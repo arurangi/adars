@@ -4,6 +4,12 @@
 
 #define DEBUG_MODE
 
+#include <iostream>
+#include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 Server::Server()
 {
     // TODO: allowed paths
@@ -53,7 +59,13 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = _domain;
     _address.sin_port = htons(_port);
-    _address.sin_addr.s_addr = htonl(_host); // INADDR_ANY
+
+    if (inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr) <= 0) {
+        std::cerr << "Invalid IP address." << std::endl;
+        return ;
+    }
+
+    // _address.sin_addr.s_addr = htonl(454); // INADDR_ANY
     if (bind(_socket, (struct sockaddr*)&_address, sizeof(_address)))
         throw Server::SocketBindingProblem();
     

@@ -13,6 +13,7 @@
             socklen_t           _addrLength;
 
             Client() : _addrLength(sizeof(_address)) {}
+            Client(int socket) : _socket(socket), _addrLength(sizeof(_address)) {}
             ~Client() {}
     };
 

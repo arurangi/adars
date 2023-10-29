@@ -45,6 +45,13 @@
                       << std::endl;
 
             }
+
+            static int out(std::string msg) {
+                std::cout << std::endl << CRED CBOLD
+                          << "✗ Error: " << CRESET;
+                perror(msg.c_str());
+                return 1;
+            }
     };
 
 #endif
