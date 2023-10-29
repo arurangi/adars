@@ -88,13 +88,21 @@
 
  .gallery {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     margin-bottom: 40px;
  }
 
- .gallery div {
-    background-color: blue;
-
+ .gallery a {
+    background-color: var(--blue-shadow);
+    color: white;
+    border-radius: 10px;
+  }
+ .gallery a:hover {
+    background-color: var(--blue-hover);
+  }
+  
+  .gallery a:first-of-type {
+    margin-right: 10px;
  }
 
  form {

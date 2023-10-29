@@ -14,6 +14,8 @@
 
     namespace utils {
         std::string to_str(int num);
+        bool startswith(const std::string& str, const std::string& keyword);
+        bool endswith(const std::string& str, const std::string& keyword);
     };
 
 #endif
