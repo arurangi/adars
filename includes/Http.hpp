@@ -11,8 +11,12 @@
     #include <pthread.h>
     #include <thread> // TODO: delete this. Not in c++98
     #include <map>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <unistd.h>
 
     #include "Logger.hpp"
+    #include "Utils.hpp"
 
     class Client;
 
@@ -45,32 +49,34 @@
 
     using std::string;
     using std::map;
+    using std::ostream;
+    // using namespace http;
 
     namespace http {
 
         class Response {
             public:
-                std::string _httpVersion;
-                std::string _code;
-                std::string _message;
+                string _httpVersion;
+                string _code;
+                string _message;
 
-                std::map<std::string, std::string> _statusCodes;
+                map<string, string> _statusCodes;
 
-                std::string _statusLine;
-                std::string _header;
-                std::string _body;
+                string  _statusLine;
+                string  _header;
+                string  _body;
 
-                std::string _contentType;
-                size_t      _contentLength;
-
-                std::string _raw;
+                string  _contentType;
+                size_t  _contentLength;
+                string  _raw;
 
                 Response();
                 ~Response();
 
-                void        set_status(std::string code);
-                std::string get_gmt_time();
-                void        reset();
+                void    set_status(string code);
+                string  get_gmt_time();
+                void    reset();
+                void    set_content_type(string filepath, map<string, string> accepted_types);
         };
 
         class Request {
@@ -79,35 +85,42 @@
                 string _uri;
                 string _httpVersion;
 
-                std::string _startline;
+                string _startline;
                 char _header[BUFFER_SIZE];
                 char _body[BUFFER_SIZE];
 
                 int _contentLength;
                 char _raw[BUFFER_SIZE];
-                std::string _referer;
+                string _referer;
 
-                std::string _filename;
-                std::string _payload;
+                string _filename;
+                string _payload;
 
-                std::string _status;
+                string _status;
         
                 Request();
                 ~Request();
 
-                void setStatusLine(std::string& header);
-                void setContentLength(std::string& header);
-                void setReferer(std::string header);
-                void setFilename(string& body);
-                void setPayload(string& body);
-                std::string getPathToRequestedFile();
+                void    setStatusLine(string& header);
+                void    setContentLength(string& header);
+                void    setReferer(string header);
+                void    setFilename(string& body);
+                void    setPayload(string& body);
+                string  getPathToRequestedFile();
         };
-        std::string get_mime_type(std::string filepath, map<string, string> accepted_types);
 
+        int         accept_connection(int serverSocket);
+        void        handle_request(int client_socket);
+        Request     parse_request(const int& client_socket);
+        Response    build_response(Request& req);
+        void        send_response(int client_socket, Response& res);
+        void        save_payload(Request& req);
+
+        map<string, string> get_mime_types(std::string mimesFilePath);
         /////////////////////////////////////////////////////////////////////////////////////////
     }
 
-    std::ostream& operator<< (std::ostream& os, http::Request& rhs);
-    std::ostream& operator<< (std::ostream& os, http::Response& rhs);
+    ostream& operator<< (ostream& os, http::Request& rhs);
+    ostream& operator<< (ostream& os, http::Response& rhs);
 
 #endif
