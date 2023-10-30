@@ -48,9 +48,9 @@ Cluster::end() { return _end; }
 
 int Cluster::size() { return _size; }
 
-int Cluster::find(int socket)
+int Cluster::find(int curr_fd)
 {
-    if (_servers.find(socket) != _servers.end())
-        return (*(_servers.find(socket))).first;
+    if (_servers.find(curr_fd) != _servers.end())
+        return (*(_servers.find(curr_fd))).first;
     return -1;
 }

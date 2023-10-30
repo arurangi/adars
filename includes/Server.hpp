@@ -54,7 +54,6 @@
             int _socket;
             uint32_t _host;
             int _port;
-            map<string, string> _mimeTypes;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
@@ -66,15 +65,6 @@
             // member functions
 
             void setup(int domain, int service, int protocol, int port, int backlog);
-            // int get_client();
-            void handle_request(Client& c, Server& s);
-            http::Request process_request(const int& client_socket);
-            http::Response build_response(http::Request& req, std::map<string, string>& mimeType);
-            void send_response(Client& c, http::Response& res);
-
-            void save_payload(Request& req);
-
-            std::map<std::string, std::string>  store_mime_types(std::string mimesFilePath);
             static void check(int status, string error_msg);
 
             ///////////////////////////////////////////////////////////////////////////////////////////

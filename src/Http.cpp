@@ -69,10 +69,10 @@ void
 http::handle_request(int client_socket)
 {
     try {
-        http::Request req = http::process_request(client_socket);
+        Request req = http::parse_request(client_socket);
         if (req._method == "POST")
             http::save_payload(req);
-        http::Response res = http::build_response(req);
+        Response res = http::build_response(req);
         http::send_response(client_socket, res);
     }
     catch (std::exception& e) {
@@ -80,8 +80,8 @@ http::handle_request(int client_socket)
     }
 }
 
-Request
-http::process_request(const int& client_socket)
+http::Request
+http::parse_request(const int& client_socket)
 {
     Request req;
     char buffer[1024];
@@ -140,14 +140,14 @@ http::build_response(Request& req)
     Response res;
     string buffer;
     std::ifstream requestedFile;
-    map<string, string>_mimeTypes = http::get_mime_types("./conf/mime.types");
+    map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
 
     string path = req.getPathToRequestedFile();
 
     if (!utils::startswith(path, "./public/"))
         Log::error("Invalid ressource path");
     // TODO: check if part of allowed paths
-    // Log::status("Opening => " + path);
+    Log::status("Opening => " + path);
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
         Log::error("Can't open :" + path);
@@ -183,7 +183,8 @@ http::build_response(Request& req)
     // HEADER:
     // : Content-Type, Content-Length, Connection
     res._header += res._statusLine;
-    res.set_content_type(req._uri, _mimeTypes);
+    Log::status("URI: " + req._uri);
+    res.set_content_type(req._uri, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + utils::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
@@ -196,6 +197,20 @@ http::build_response(Request& req)
 
     std::cout << res;
     return res;
+}
+
+void http::send_response(int client_socket, http::Response& res)
+{
+    int bytes_sent = 0;
+    bytes_sent = send(client_socket, (res._raw).c_str(), res._raw.size(), 0);
+    if (bytes_sent < 0)
+        Log::error("in handleHttpRequest(): send(): No bytes to send");
+
+    std::cout << CGREEN << "••• Bytes transmitted: "
+            << CBOLD << bytes_sent
+            << "/" << res._contentLength << CRESET << std::endl;
+            
+    close(client_socket);
 }
 
 void
@@ -217,23 +232,22 @@ http::save_payload(Request& req)
 
 ////////////////////////////////////////////////////////////////////////////
 
-std::string
-Response::set_content_type(string filepath, map<string, string> accepted_types)
+void
+http::Response::set_content_type(string filepath, map<string, string> accepted_types)
 {
     string defaultMime = "application/octet-stream";
 
     size_t dotPosition = filepath.find_last_of(".");
     if (dotPosition == string::npos) {
         Log::error("Can't identify MIME type: No extension.");
-        return defaultMime;
+        _contentType = defaultMime;
     }
     string extension = filepath.substr(dotPosition);
     Log::status("extension:" + extension);
 
     if (accepted_types.find(extension) != accepted_types.end())
-        return accepted_types[extension];
-    Log::error("Can't find (" + extension + ") in mime types");
-    return "text/html";
+        _contentType = accepted_types[extension];
+    // return "text/html";
 }
 
 std::map<std::string, std::string>

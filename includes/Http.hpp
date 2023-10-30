@@ -13,6 +13,7 @@
     #include <map>
     #include <sys/socket.h>
     #include <netinet/in.h>
+    #include <unistd.h>
 
     #include "Logger.hpp"
     #include "Utils.hpp"
@@ -49,7 +50,7 @@
     using std::string;
     using std::map;
     using std::ostream;
-    using namespace http;
+    // using namespace http;
 
     namespace http {
 
@@ -75,7 +76,7 @@
                 void    set_status(string code);
                 string  get_gmt_time();
                 void    reset();
-                string set_content_type(string filepath, map<string, string> accepted_types);
+                void    set_content_type(string filepath, map<string, string> accepted_types);
         };
 
         class Request {
@@ -100,25 +101,26 @@
                 Request();
                 ~Request();
 
-                void setStatusLine(string& header);
-                void setContentLength(string& header);
-                void setReferer(string header);
-                void setFilename(string& body);
-                void setPayload(string& body);
-                string getPathToRequestedFile();
+                void    setStatusLine(string& header);
+                void    setContentLength(string& header);
+                void    setReferer(string header);
+                void    setFilename(string& body);
+                void    setPayload(string& body);
+                string  getPathToRequestedFile();
         };
 
-        int accept_connection(int serverSocket);
+        int         accept_connection(int serverSocket);
+        void        handle_request(int client_socket);
+        Request     parse_request(const int& client_socket);
+        Response    build_response(Request& req);
+        void        send_response(int client_socket, Response& res);
+        void        save_payload(Request& req);
 
-        void handle_request(int client_socket);
-        Request process_request(const int& client_socket);
-        Response build_response(Request& req, map<string, string>& mimeType);
-        void send_response(Client& c, Response& res);
-        void save_payload(Request& req)
+        map<string, string> get_mime_types(std::string mimesFilePath);
         /////////////////////////////////////////////////////////////////////////////////////////
     }
 
-    ostream& operator<< (ostream& os, Request& rhs);
-    ostream& operator<< (ostream& os, Response& rhs);
+    ostream& operator<< (ostream& os, http::Request& rhs);
+    ostream& operator<< (ostream& os, http::Response& rhs);
 
 #endif

@@ -1,8 +1,8 @@
 // The brain of the HTTP server
 
 #include "../includes/Server.hpp"
-#include "Client.hpp"
-#include "Http.hpp"
+#include "../includes/Client.hpp"
+#include "../includes/Http.hpp"
 #include "../includes/Cluster.hpp"
 
 
@@ -17,10 +17,10 @@ int main()
         std::cout << e.what();
     }
 
-    fd_set current_sockets, ready_sockets; // 2 lists of sockets
-    FD_ZERO(&current_sockets); // clear the list
+    fd_set current_sockets, ready_sockets;
+    FD_ZERO(&current_sockets);
     for (IteratorS it = cluster.begin(); it != cluster.end(); it++)
-        FD_SET((*it).second._socket, &current_sockets); // add serve socket to list
+        FD_SET((*it).second._socket, &current_sockets);
     while (isRunning)
     {
         // because select is destructive
@@ -30,21 +30,19 @@ int main()
         
         for (int curr_fd = 0; curr_fd < FD_SETSIZE; curr_fd++) {
             if (FD_ISSET(curr_fd, &ready_sockets)) {
-                // this is a new connection
                 int found = cluster.find(curr_fd);
-                if (found) {
+                if (found != -1) {
                     int new_clientSocket = http::accept_connection(found);
                     FD_SET(new_clientSocket, &current_sockets);
                 } else {
-                    Client existing_client(curr_fd);
-                    http::handle_request(existing_client, server);
+                    http::handle_request(curr_fd);
                     FD_CLR(curr_fd, &current_sockets);
                 }
             }
         }
     }
-
-    close(server._socket);
+    for (IteratorS it = cluster.begin(); it != cluster.end(); it++)
+        close((*it).second._socket);
     return EXIT_SUCCESS;
 }
 

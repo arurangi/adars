@@ -15,6 +15,8 @@
             IteratorS _begin;
             IteratorS _end;
         public:
+        Cluster();
+        ~Cluster();
             void init();
             int size();
             int find(int socket);
