@@ -26,7 +26,7 @@ int main()
         ready_sockets = current_sockets;
         if (select(FD_SETSIZE, &ready_sockets, NULL, NULL, NULL) < 0)
             exit(Log::out("select error"));
-        
+
         for (int curr_fd = 0; curr_fd < FD_SETSIZE; curr_fd++) {
             if (FD_ISSET(curr_fd, &ready_sockets)) {
                 int found = cluster.find(curr_fd);

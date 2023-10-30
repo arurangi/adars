@@ -111,7 +111,7 @@ http::parse_request(const int& client_socket)
         if (bytesRead <= 0)
             Log::error("Request processing issues");
         request += std::string(buffer, bytesRead);
-        Log::status(utils::to_str(bytesRead) + " bytes read");
+        Log::status(ft::to_str(bytesRead) + " bytes read");
         if (bytesRead < sizeof(buffer))
             break ;
     }
@@ -127,7 +127,7 @@ http::parse_request(const int& client_socket)
     // Log::param("Method", req._method);
     // Log::param("Path", req._uri);
     // Log::param("HTTP version", req._httpVersion);
-    // Log::param("Content-Length", utils::to_str(req._contentLength));
+    // Log::param("Content-Length", ft::to_str(req._contentLength));
     // Log::param("Filename", req._filename);
     // Log::param("Data", req._payload);
     
@@ -164,8 +164,12 @@ http::build_response(Request& req)
         // BODY
         // : store content in `response._body`
         res._body = ""; // get_ressource()
-        while (std::getline(requestedFile, buffer))
+        while (std::getline(requestedFile, buffer)) {
+            if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != std::string::npos) {
+                res._body += generate_storageList();
+            }
             res._body += buffer + "\n";
+        }
         res._body += '\0';
         requestedFile.close();
     }
@@ -184,7 +188,7 @@ http::build_response(Request& req)
     Log::status("URI: " + req._uri);
     res.set_content_type(req._uri, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
-    res._header   += "Content-Length: " + utils::to_str(res._contentLength) + "\r\n";
+    res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
     res._header   += "Connection: keep-alive\r\n";
     res._header   += "Server: Adars\r\n";
@@ -297,7 +301,7 @@ std::string http::Response::get_gmt_time()
 std::string
 http::generate_directoryPage(string uri)
 {
-    std::deque<std::string> list = utils::list_files_in(utils::get_dir(uri));
+    std::deque<std::string> list = ft::list_files_in(ft::get_dir(uri));
     std::string htmlPage = "";
     htmlPage += "<!DOCTYPE html>\n"
             "<html lang=\"en\">\n"
@@ -358,6 +362,18 @@ http::generate_errorPage()
                 "</body>\n"
                 "</html>\n";
     return page;
+}
+
+std::string
+http::generate_storageList()
+{
+    std::deque<std::string> list = ft::list_files_in("./public/storage");
+    std::string storageItem = "";
+    while (!list.empty()) {
+        storageItem += "<p>" + list.front() + "</p>\n";
+        list.pop_front();
+    }
+    return storageItem;
 }
 
 /* -------------------------------------------------------------------------- */

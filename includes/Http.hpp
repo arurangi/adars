@@ -123,6 +123,7 @@
         map<string, string> get_mime_types(std::string mimesFilePath);
         string generate_directoryPage(string uri);
         std::string generate_errorPage(/* give it code, returns string w/body */);
+        std::string generate_storageList();
         /////////////////////////////////////////////////////////////////////////////////////////
     }
 

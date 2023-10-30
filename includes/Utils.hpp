@@ -17,7 +17,7 @@
     #define CRED      "\033[0;31m"
     #define CRESET    "\033[0m"
 
-    namespace utils {
+    namespace ft {
         string to_str(int num);
         bool startswith(const string& str, const string& keyword);
         bool endswith(const string& str, const string& keyword);

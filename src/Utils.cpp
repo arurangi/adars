@@ -1,14 +1,14 @@
 #include "Utils.hpp"
 
 std::string
-utils::to_str(int num) {
+ft::to_str(int num) {
     std::stringstream ss;
     ss << num;
     std::string numstr = ss.str();
     return numstr;
 }
 
-bool utils::startswith(const std::string& str, const std::string& keyword)
+bool ft::startswith(const std::string& str, const std::string& keyword)
 {
     if (str.size() == 0 || keyword.size() == 0)
         return false;
@@ -20,7 +20,7 @@ bool utils::startswith(const std::string& str, const std::string& keyword)
     return true;
 }
 
-bool utils::endswith(const std::string& str, const std::string& keyword)
+bool ft::endswith(const std::string& str, const std::string& keyword)
 {
     if (str.size() == 0 || keyword.size() == 0)
         return false;
@@ -34,7 +34,7 @@ bool utils::endswith(const std::string& str, const std::string& keyword)
 }
 
 std::string
-utils::get_dir(std::string file_path) {
+ft::get_dir(std::string file_path) {
     int pos = file_path.find_last_of("/");
     if (pos == 0)
         return "/";
@@ -42,7 +42,7 @@ utils::get_dir(std::string file_path) {
 }
 
 std::deque<std::string>
-utils::list_files_in(std::string directory) {
+ft::list_files_in(std::string directory) {
     const char* directoryPath = directory.c_str();
 
     DIR *dir;
