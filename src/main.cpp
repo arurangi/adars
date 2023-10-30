@@ -4,13 +4,27 @@
 #include "../includes/Client.hpp"
 #include "../includes/Http.hpp"
 #include "../includes/Cluster.hpp"
+#include "../includes/Webserv.hpp"
 
-int main()
+int main(int ac, char **av)
 {
     Cluster cluster;
+    Data webservData;
+
+    if (ac != 2)
+        webservData.config.parsing_file("conf/config", webservData);
+    else if (ac == 2)
+        webservData.config.parsing_file(av[1], webservData);
+    if (webservData.error.length())
+    {
+        std::cout << RED << webservData.error << END_CLR << std::endl;
+        return 1;
+    }
+    std::cout << webservData.server_list.size() << std::endl;
+    std::cout << "CONFIGURATION FILE PARSING DONE" << std::endl;
 
     try {
-        cluster.init();
+        cluster.init(webservData.server_list);
     }
     catch (std::exception& e) {
         std::cout << e.what();

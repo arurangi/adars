@@ -4,6 +4,7 @@
     #include <iostream>
     #include <vector>
     #include "Server.hpp"
+    #include "Webserv.hpp"
 
     typedef std::map<int, Server>::iterator IteratorS;
 
@@ -17,7 +18,7 @@
         public:
         Cluster();
         ~Cluster();
-            void init();
+            void init(Serv_list serverList);
             int size();
             int find(int socket);
             IteratorS begin();

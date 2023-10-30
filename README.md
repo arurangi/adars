@@ -23,3 +23,8 @@ Here are a few bugs I had a hints on how to solve them.
 
 **Debugging**
 - [Araxis Merge](https://www.araxis.com/merge/index.en): it's a binary file comparaison tool. This was useful when uploading files to the server via POST request. It allowed me to compare the data received vs the data in the original file. (used their 30day free trial)
+
+
+# todo
+- combiner parsing et exec
+- 

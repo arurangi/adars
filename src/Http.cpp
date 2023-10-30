@@ -124,11 +124,11 @@ http::parse_request(const int& client_socket)
         req.setPayload(body);
     }
 
-    // Log::param("Method", req._method);
-    // Log::param("Path", req._uri);
-    // Log::param("HTTP version", req._httpVersion);
-    // Log::param("Content-Length", ft::to_str(req._contentLength));
-    // Log::param("Filename", req._filename);
+    Log::param("Method", req._method);
+    Log::param("Path", req._uri);
+    Log::param("HTTP version", req._httpVersion);
+    Log::param("Content-Length", ft::to_str(req._contentLength));
+    Log::param("Filename", req._filename);
     // Log::param("Data", req._payload);
     
     return req;

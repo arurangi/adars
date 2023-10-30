@@ -11,9 +11,9 @@ Cluster::~Cluster()
 }
 
 void
-Cluster::init()
+Cluster::init(Serv_list serverList)
 {
-    _size = 2;
+    _size = serverList.size();
     // _servers.push_back(Server(
     //     IPV4,
     //     TCP,
@@ -21,6 +21,11 @@ Cluster::init()
     //     8080,
     //     BACKLOG
     // ));
+
+    for(Serv_list::iterator it = serverList.begin(); it != serverList.end(); ++it)
+    {
+        
+    }
 
     Server a(IPV4,TCP,DEFAULT,8080,BACKLOG);
     _servers[a._socket] = a;
