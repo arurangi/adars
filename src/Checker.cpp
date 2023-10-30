@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Checker.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arurangi <arurangi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adamkorompai <adamkorompai@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/10/30 15:45:25 by arurangi         ###   ########.fr       */
+/*   Updated: 2023/10/30 18:42:05 by adamkorompa      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,7 +196,7 @@ void    Config::check_return_location(Data &wbsv_data, map_vector_it location_da
 
 int Config::valid_return_status(Data &wbsv_data, std::string status)
 {
-    int number = std::atoi(status.c_str());
+    int number = atoi(status.c_str());
     if (number >= 300 && number <= 399)
         return (1);
     wbsv_data.error = "Webserv: invalid return code \"" + status + "\" in ";

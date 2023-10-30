@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adamkorompai <adamkorompai@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 15:12:14 by akorompa          #+#    #+#             */
-/*   Updated: 2023/10/30 15:27:36 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/10/30 18:41:35 by adamkorompa      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "Config.hpp"
 #include "ConfigUtils.hpp"
