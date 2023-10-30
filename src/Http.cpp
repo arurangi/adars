@@ -369,8 +369,11 @@ http::generate_storageList()
 {
     std::deque<std::string> list = ft::list_files_in("./public/storage");
     std::string storageItem = "";
+
     while (!list.empty()) {
-        storageItem += "<p>" + list.front() + "</p>\n";
+        storageItem += "<div class=\"file\"><p>";
+        storageItem += list.front();
+        storageItem += "</p><img src=\"images/delete_icon.png\" height=\"16px\" width=\"16px\"></img></div>\n";
         list.pop_front();
     }
     return storageItem;
