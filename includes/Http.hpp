@@ -18,6 +18,10 @@
     #include "Logger.hpp"
     #include "Utils.hpp"
 
+    #define ON 1
+    #define OFF 0
+    #define AUTOINDEX ON
+
     class Client;
 
     #define CBLUE    "\033[0;94m"
@@ -117,6 +121,8 @@
         void        save_payload(Request& req);
 
         map<string, string> get_mime_types(std::string mimesFilePath);
+        string generate_directoryPage(string uri);
+        std::string generate_errorPage(/* give it code, returns string w/body */);
         /////////////////////////////////////////////////////////////////////////////////////////
     }
 

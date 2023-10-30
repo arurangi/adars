@@ -5,7 +5,6 @@
 #include "../includes/Http.hpp"
 #include "../includes/Cluster.hpp"
 
-
 int main()
 {
     Cluster cluster;
@@ -45,26 +44,3 @@ int main()
         close((*it).second._socket);
     return EXIT_SUCCESS;
 }
-
-// int main()
-// {
-//     Server server; Client client;
-
-//     try {
-//         server.setup(IPV4, TCP, DEFAULT, PORT, BACKLOG);
-//         // TODO:
-//         // - cluster of servers listening on different ports
-//         // - NON-BLOCKING when handling multiple clients
-//         while (isRunning)
-//         {
-//             client._socket = server.get_client();
-//             server.handle_request(client, server);
-//             close(client._socket);
-//         }
-//     }
-//     catch (std::exception& e) {
-//         std::cout << e.what();
-//     }
-//     close(server._socket);
-//     return EXIT_SUCCESS;
-// }

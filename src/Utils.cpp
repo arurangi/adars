@@ -32,3 +32,33 @@ bool utils::endswith(const std::string& str, const std::string& keyword)
     return true;
 
 }
+
+std::string
+utils::get_dir(std::string file_path) {
+    int pos = file_path.find_last_of("/");
+    if (pos == 0)
+        return "/";
+    return file_path.substr(0, pos);
+}
+
+std::deque<std::string>
+utils::list_files_in(std::string directory) {
+    const char* directoryPath = directory.c_str();
+
+    DIR *dir;
+    struct dirent *ent;
+    std::deque<std::string> filesList;
+
+    if ((dir = opendir(directoryPath)) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if (ent->d_type == DT_REG)
+                filesList.push_back(ent->d_name);
+        }
+        closedir(dir);
+    }
+    else {
+        Log::error("Could not open directory: " + directory);
+        return filesList;
+    }
+    return filesList;
+}

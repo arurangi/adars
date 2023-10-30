@@ -144,34 +144,32 @@ http::build_response(Request& req)
 
     string path = req.getPathToRequestedFile();
 
-    if (!utils::startswith(path, "./public/"))
-        Log::error("Invalid ressource path");
     // TODO: check if part of allowed paths
     Log::status("Opening => " + path);
+
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
-        Log::error("Can't open :" + path);
-        perror("Reason: ");
+        Log::out("Can't open :" + path);
         res.set_status(HTTP_NOT_FOUND);
-        requestedFile.open("./public/404.html");
-        req._uri = "/404.html";
-        if (!requestedFile.is_open()) {
-            Log::error("Can't open : ./public/404.html");
-            perror("Reason: ");
+        if (AUTOINDEX == ON) {
+            req._uri = ".html";
+            res._body = http::generate_directoryPage(path);
         }
+        else {
+            req._uri = "/404.html";
+            res._body = generate_errorPage();
+        }
+    } else {
+        //////////////////////////////////////////////////////
+        // BODY
+        // : store content in `response._body`
+        res._body = ""; // get_ressource()
+        while (std::getline(requestedFile, buffer))
+            res._body += buffer + "\n";
+        res._body += '\0';
+        requestedFile.close();
     }
-    //////////////////////////////////////////////////////
-    // BODY
-    // : store content in `response._body`
-    res._body = ""; // get_ressource()
-    while (std::getline(requestedFile, buffer))
-        res._body += buffer + "\n";
-    res._body += '\0';
     res._contentLength = res._body.size();
-
-    // std::cout << CMAGENTA << res._body << CRESET << std::endl;
-
-    requestedFile.close();
 
     ////////////////////////////////////////////////////
     // STATUS_LINE
@@ -294,6 +292,72 @@ std::string http::Response::get_gmt_time()
 
     formated_time = buffer;
     return formated_time;
+}
+
+std::string
+http::generate_directoryPage(string uri)
+{
+    std::deque<std::string> list = utils::list_files_in(utils::get_dir(uri));
+    std::string htmlPage = "";
+    htmlPage += "<!DOCTYPE html>\n"
+            "<html lang=\"en\">\n"
+            "<head>\n"
+            "<meta charset=\"UTF-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+            "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
+            "<title>Directory</title>\n"
+            "</head>\n"
+            "<body>\n"
+            "<section class=\"wrapper\">\n"
+                "<nav >\n"
+                    "<ul class=\"navbar\">\n"
+                    "<li><a href=\"index.html\">Home</a></li>\n"
+                    "<li><a href=\"about.html\">About</a></li>\n"
+                    "<li><a href=\"upload.html\">Send files</a></li>\n"
+                    "<li><a href=\"uploaded.html\">Storage</a></li>\n"
+                    "</ul>\n"
+                "</nav>\n";
+    while (!list.empty()) {
+        htmlPage += "<p>" + list.front() + "</p>\n";
+        list.pop_front();
+    }
+    htmlPage += "</section>"
+                "</body>\n"
+                "</html>\n";
+    
+    return htmlPage;
+}
+
+std::string
+http::generate_errorPage()
+{
+    // TODO: add map<int, std::string>
+    // key (int): status code
+    // value (string): full html page of the error code in a string
+    std::string page =
+                "<!DOCTYPE html>\n"
+                "<html lang=\"en\">\n"
+                "<head>\n"
+                    "<meta charset=\"UTF-8\">\n"
+                    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                    "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
+                    "<title>Error 404</title>\n"
+                "</head>\n"
+                "<body>\n"
+                    "<section class=\"wrapper\">\n"
+                    "<nav >\n"
+                        "<ul class=\"navbar\">\n"
+                        "<li><a href=\"index.html\">Home</a></li>\n"
+                        "<li><a href=\"about.html\">About</a></li>\n"
+                        "<li><a href=\"upload.html\">Send files</a></li>\n"
+                        "<li><a href=\"uploaded.html\">Storage</a></li>\n"
+                        "</ul>\n"
+                    "</nav>\n"
+                    "<h1>Error 404</h1>\n"
+                    "</section>\n"
+                "</body>\n"
+                "</html>\n";
+    return page;
 }
 
 /* -------------------------------------------------------------------------- */

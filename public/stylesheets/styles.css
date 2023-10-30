@@ -184,3 +184,8 @@ input[type="file"] {
 .currentLink {
   color: var(--blue-hover);
  }
+
+ .directory_table {
+  background-color: #3636FF;
+  color: white;
+ }
