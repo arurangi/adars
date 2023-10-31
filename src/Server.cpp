@@ -48,9 +48,9 @@ Server::Server()
     // list images in ./public/images/
 }
 
-Server::Server(int domain, int service, int protocol, int port, int backlog)
+Server::Server(int domain, int service, int protocol, int port, std::string host, int backlog)
 {
-    this->setup(domain, service, protocol, port, backlog);
+    this->setup(domain, service, protocol, port, host, backlog);
 }
 
 Server::~Server() {}
@@ -58,7 +58,7 @@ Server::~Server() {}
 //////////////////////////////////////////////////////////////////////////////////
 
 void
-Server::setup(int domain, int service, int protocol, int port, int backlog)
+Server::setup(int domain, int service, int protocol, int port, std::string host, int backlog)
 {
     int status, on = 1;
 
@@ -67,7 +67,7 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
     _protocol   = protocol;
     _port       = port;
     _backlog    = backlog;
-    _host       = INADDR_ANY;
+    _host       = host;
     _storageDir = "./public/storage";
 
     /*************************************************************/
@@ -104,7 +104,7 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = _domain;
     _address.sin_port = htons(_port);
-    status = inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr); // TODO: replace IP with server IP
+    status = inet_pton(AF_INET, _host.c_str(), &_address.sin_addr); // TODO: replace IP with server IP
     if (status <= 0) {
         close(_socket);
         exit(Log::out("inet_pton() failed: invalid IP address"));
@@ -113,7 +113,8 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
     status = bind(_socket, (struct sockaddr*)&_address, sizeof(_address));
     if (status < 0) {
         close(_socket);
-        exit(Log::out("bind() failed"));
+        Log::error("bind() failed: Can't assign requested address");
+        exit(-1);
     }
     
     /*************************************************************/
@@ -125,7 +126,7 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
         exit(Log::out("listen() failed"));
     }
     
-    Log::status("Listening on 127.0.0.1:" + ft::to_str(_port)); // TODO: add correct address
+    Log::status("Listening on " + _host + ":" + ft::to_str(_port)); // TODO: add correct address
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

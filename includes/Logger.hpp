@@ -26,7 +26,7 @@
             }
 
             static void error(std::string msg) {
-            std::cout << std::endl << CRED CBOLD
+            std::cerr << std::endl << CRED CBOLD
                       << "✗ error: " << CRESET 
                     << msg << " " << std::endl;
 
@@ -47,14 +47,14 @@
             }
 
             static int out(std::string msg) {
-                std::cout << std::endl << CRED CBOLD
-                          << "✗ error: " << CRESET;
-                perror(msg.c_str());
+                std::cerr << CRED CBOLD
+                          << "✗ error: " << msg << CRESET;
+                perror("");
                 return -1;
             }
 
             static int warn(std::string msg) {
-                std::cout << std::endl << CYELLOW CBOLD
+                std::cerr << std::endl << CYELLOW CBOLD
                           << "⚠️ warning: " << CRESET
                           << msg << std::endl;
                 return -1;

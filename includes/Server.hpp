@@ -52,19 +52,20 @@
 
         public:
             int _socket;
-            uint32_t _host;
+            // uint32_t _host;
+            std::string _host;
             int _port;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
             Server();
-            Server(int domain, int service, int protocol, int port, int backlog);
+            Server(int domain, int service, int protocol, int port, std::string host, int backlog);
             ~Server();
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // member functions
 
-            void setup(int domain, int service, int protocol, int port, int backlog);
+            void setup(int domain, int service, int protocol, int port, std::string host, int backlog);
             static void check(int status, string error_msg);
 
             ///////////////////////////////////////////////////////////////////////////////////////////

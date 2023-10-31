@@ -23,7 +23,6 @@ int main(int ac, char **av)
     Log::success("CONFIGURATION FILE PARSING DONE");
 
     cluster.init(webservData.server_list);
-    // exit(0);
 
     cluster.watch();
 

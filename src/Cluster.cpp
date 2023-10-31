@@ -1,13 +1,25 @@
 #include "../includes/Cluster.hpp"
 
 Cluster::Cluster() : _size(0) {}
-Cluster::~Cluster() {}
+Cluster::~Cluster()
+{
+    for (IteratorS it = this->begin(); it != this->end(); it++) {
+        close((*it).second._socket);
+    }
+}
 
 int get_port(std::vector<std::string> v)
 {
     std::string s = v[0];
     s = s.substr(s.find_last_of(":")+1, s.size());
     return std::atoi(s.c_str());
+}
+
+std::string get_host(std::vector<std::string> v)
+{
+    std::string s = v[0];
+    s = s.substr(0, s.find_first_of(":"));
+    return s;
 }
 
 void
@@ -19,12 +31,15 @@ Cluster::init(Serv_list serverList)
     for(Serv_list::iterator it = serverList.begin(); it != serverList.end() /* && !wbsv_data.error.length()*/ ; ++it)
     {
         int port = 0;
+        std::string host = "";
         for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end() /*&& !wbsv_data.error.length()*/; ++server_data_it)
         {
             for (std::vector<std::string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end() /*&& !wbsv_data.error.length()*/; value_it++)
             {
-                if (server_data_it->first == "listen")
+                if (server_data_it->first == "listen") {
                     port = get_port(server_data_it->second);
+                    host = get_host(server_data_it->second);
+                }
                 // else if (server_data_it->first == "client_max_body_size")
                 //     //
                 // else if (server_data_it->first == "root")
@@ -33,7 +48,7 @@ Cluster::init(Serv_list serverList)
                 //     //
            }
         }
-        Server a(IPV4,TCP,DEFAULT,port,BACKLOG);
+        Server a(IPV4,TCP,DEFAULT,port, host, BACKLOG);
         _servers[a._socket] = a;
     }
 
