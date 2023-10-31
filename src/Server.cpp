@@ -60,6 +60,8 @@ Server::~Server() {}
 void
 Server::setup(int domain, int service, int protocol, int port, int backlog)
 {
+    int status, on = 1;
+
     _domain     = domain;
     _service    = service;
     _protocol   = protocol;
@@ -68,40 +70,62 @@ Server::setup(int domain, int service, int protocol, int port, int backlog)
     _host       = INADDR_ANY;
     _storageDir = "./public/storage";
 
-    // Create socket
+    /*************************************************************/
+    /* Create an AF_INET4 stream socket to receive incoming      */
+    /* connections on                                            */
+    /*************************************************************/
     _socket = socket(domain, service, protocol);
     if (_socket < 0)
-        throw Server::SocketCreationProblem();
+        exit(Log::out("socket() failed"));
     
-    // Enable SO_REUSEADDR option
-    #ifdef DEBUG_MODE
-        std::cout << CGREEN << "⏻ " << CRESET CBOLD << "Debug mode activated\n" << CRESET;
-        std::cout << "  this allows to relaunch server immediately after shutdown\n  thus reusing the same socket before all ressources have been freed\n";
-        int reuse = 1;
-        if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0)
-            throw Server::SocketCreationProblem();
-    #endif
+    /*************************************************************/
+    /* Allow socket descriptor to be reuseable                   */
+    /*************************************************************/
+    status = setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    if (status < 0) {
+        close(_socket);
+        exit(Log::out("setsockopt() failed"));
+    }
+
+    /*************************************************************/
+    /* Set socket to be nonblocking. All of the sockets for      */
+    /* the incoming connections will also be nonblocking since   */
+    /* they will inherit that state from the listening socket.   */
+    /*************************************************************/
+    status = ioctl(_socket, FIONBIO, (char *)&on);
+    if (status < 0) {
+        close(_socket);
+        exit(Log::out("ioctl() failed"));
+    }
     
-    // Bind socket
+    /*************************************************************/
+    /* Bind the socket                                           */
+    /*************************************************************/
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = _domain;
     _address.sin_port = htons(_port);
-
-    if (inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr) <= 0) {
-        std::cerr << "Invalid IP address." << std::endl;
-        return ;
+    status = inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr); // TODO: replace IP with server IP
+    if (status <= 0) {
+        close(_socket);
+        exit(Log::out("inet_pton() failed: invalid IP address"));
     }
-
     // _address.sin_addr.s_addr = htonl(454); // INADDR_ANY
-    if (bind(_socket, (struct sockaddr*)&_address, sizeof(_address)))
-        throw Server::SocketBindingProblem();
+    status = bind(_socket, (struct sockaddr*)&_address, sizeof(_address));
+    if (status < 0) {
+        close(_socket);
+        exit(Log::out("bind() failed"));
+    }
     
-    // start listening
-    if (listen(_socket, _backlog) < 0)
-        throw Server::ListeningProblem();
+    /*************************************************************/
+    /* Set the listen back log                                   */
+    /*************************************************************/
+    status = listen(_socket, _backlog);
+    if (status < 0) {
+        close(_socket);
+        exit(Log::out("listen() failed"));
+    }
     
-    // std::system("clear");
-    Log::status("Listening on 127.0.0.1:" + ft::to_str(_port));
+    Log::status("Listening on 127.0.0.1:" + ft::to_str(_port)); // TODO: add correct address
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

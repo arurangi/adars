@@ -20,6 +20,8 @@
 
     #define ON 1
     #define OFF 0
+    #define TRUE 1
+    #define FALSE 0
     #define AUTOINDEX ON
 
     class Client;
@@ -124,6 +126,21 @@
         string generate_directoryPage(string uri);
         std::string generate_errorPage(/* give it code, returns string w/body */);
         std::string generate_storageList();
+
+        
+        class AcceptFailed : public std::exception {
+            public:
+                const char* what() const throw();
+        };
+        class ReceiveFailed : public std::exception {
+            public:
+                const char* what() const throw();
+        };
+        class ConnectionClosed : public std::exception {
+            public:
+                const char* what() const throw();
+        };
+
         /////////////////////////////////////////////////////////////////////////////////////////
     }
 

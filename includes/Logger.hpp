@@ -27,7 +27,7 @@
 
             static void error(std::string msg) {
             std::cout << std::endl << CRED CBOLD
-                      << "✗ Error: " << CRESET 
+                      << "✗ error: " << CRESET 
                     << msg << " " << std::endl;
 
             }
@@ -48,9 +48,30 @@
 
             static int out(std::string msg) {
                 std::cout << std::endl << CRED CBOLD
-                          << "✗ Error: " << CRESET;
+                          << "✗ error: " << CRESET;
                 perror(msg.c_str());
-                return 1;
+                return -1;
+            }
+
+            static int warn(std::string msg) {
+                std::cout << std::endl << CYELLOW CBOLD
+                          << "⚠️ warning: " << CRESET
+                          << msg << std::endl;
+                return -1;
+            }
+
+            static int success(std::string msg) {
+                std::cout << std::endl << CGREEN CBOLD
+                          << "✔ " << CRESET
+                          << msg << std::endl;
+                return -1;
+            }
+
+            static int mark(std::string msg) {
+                std::cout << std::endl << CMAGENTA CBOLD
+                          << "# " << CRESET
+                          << msg << std::endl;
+                return -1;
             }
     };
 

@@ -3,24 +3,26 @@
 
     #include <iostream>
     #include <vector>
+    #include <sys/socket.h>
     #include "Server.hpp"
     #include "Webserv.hpp"
 
     typedef std::map<int, Server>::iterator IteratorS;
+    using std::map;
 
     class Cluster {
         private:
-            int _size;
-            // std::vector<Server> _servers;
-            std::map<int, Server> _servers;
-            IteratorS _begin;
-            IteratorS _end;
+            map<int, Server>  _servers;
+            int               _size;
+            IteratorS         _begin;
+            IteratorS         _end;
         public:
-        Cluster();
-        ~Cluster();
-            void init(Serv_list serverList);
-            int size();
-            int find(int socket);
+            Cluster();
+            ~Cluster();
+            void  init(Serv_list serverList);
+            void  watch();
+            int   size();
+            bool  find(int socket);
             IteratorS begin();
             IteratorS end();
     };

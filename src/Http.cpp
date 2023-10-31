@@ -57,41 +57,35 @@ int http::accept_connection(int serverSocket)
 {
     struct sockaddr_in  addr;
     socklen_t           addrLen = sizeof(addr);
+
     int client_socket = accept(serverSocket, (struct sockaddr *)&addr, &addrLen);
-    if (client_socket < 0) {
-        std::cout << "Bad Connection\n";
-        exit(1);
-    }
+    if (client_socket < 0)
+        throw http::AcceptFailed();
     return client_socket;
 }
 
 void
 http::handle_request(int client_socket)
 {
-    try {
-        Request req = http::parse_request(client_socket);
-        if (req._method == "POST")
-            http::save_payload(req);
-        Response res = http::build_response(req);
-        http::send_response(client_socket, res);
-    }
-    catch (std::exception& e) {
-        std::cout << e.what();
-    }
+    Request req = http::parse_request(client_socket);
+    if (req._method == "POST" && req._contentLength > 0)
+        http::save_payload(req);
+    Response res = http::build_response(req);
+    http::send_response(client_socket, res);
 }
 
 http::Request
 http::parse_request(const int& client_socket)
 {
     Request req;
-    char buffer[1024];
-    string request;
-    size_t found;
-    size_t bytesRead;
+    char    buffer[1024];
+    string  request;
+    size_t  found;
+    size_t  bytesRead;
 
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-    if (bytesRead <= 0)
-        Log::error("Request processing issues");
+    if (bytesRead < 0)
+        throw http::ReceiveFailed();
     request += string(buffer, bytesRead);
 
     Log::simple(request, CMAGENTA);
@@ -99,17 +93,17 @@ http::parse_request(const int& client_socket)
     req.setStatusLine(request);
     req.setContentLength(request);
 
-    /////// POST REQUESTS //////////
-
     if (req._method != "POST")
         return req;
+
+    /////// POST REQUESTS //////////
     
     req.setReferer(request);
 
     while (1) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytesRead <= 0)
-            Log::error("Request processing issues");
+        if (bytesRead < 0)
+            throw http::ReceiveFailed();
         request += std::string(buffer, bytesRead);
         Log::status(ft::to_str(bytesRead) + " bytes read");
         if (bytesRead < sizeof(buffer))
@@ -137,9 +131,9 @@ http::parse_request(const int& client_socket)
 http::Response
 http::build_response(Request& req)
 {
-    Response res;
-    string buffer;
-    std::ifstream requestedFile;
+    Response            res;
+    string              buffer;
+    std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
 
     string path = req.getPathToRequestedFile();
@@ -551,4 +545,22 @@ http::Request::getPathToRequestedFile()
         _uri = path;
     }
     return path;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+/*                             EXCEPTIONS                                  */
+/////////////////////////////////////////////////////////////////////////////
+const char* http::AcceptFailed::what() const throw()
+{
+    return "accept() call failed";
+}
+
+const char* http::ConnectionClosed::what() const throw()
+{
+    return "";
+}
+
+const char* http::ReceiveFailed::what() const throw()
+{
+    return "Reading issue because of recv()";
 }
