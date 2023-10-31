@@ -3,20 +3,43 @@
 Cluster::Cluster() : _size(0) {}
 Cluster::~Cluster() {}
 
+int get_port(std::vector<std::string> v)
+{
+    std::string s = v[0];
+    s = s.substr(s.find_last_of(":")+1, s.size());
+    return std::atoi(s.c_str());
+}
+
 void
 Cluster::init(Serv_list serverList)
 {
     _size = serverList.size();
-    for(Serv_list::iterator it = serverList.begin(); it != serverList.end(); ++it)
+    std::string tmp;
+
+    for(Serv_list::iterator it = serverList.begin(); it != serverList.end() /* && !wbsv_data.error.length()*/ ; ++it)
     {
-        
+        int port = 0;
+        for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end() /*&& !wbsv_data.error.length()*/; ++server_data_it)
+        {
+            for (std::vector<std::string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end() /*&& !wbsv_data.error.length()*/; value_it++)
+            {
+                if (server_data_it->first == "listen")
+                    port = get_port(server_data_it->second);
+                // else if (server_data_it->first == "client_max_body_size")
+                //     //
+                // else if (server_data_it->first == "root")
+                //     //
+                // else if (server_data_it->first == "index")
+                //     //
+           }
+        }
+        Server a(IPV4,TCP,DEFAULT,port,BACKLOG);
+        _servers[a._socket] = a;
     }
 
-    Server a(IPV4,TCP,DEFAULT,8080,BACKLOG);
-    _servers[a._socket] = a;
 
-    Server b(IPV4,TCP,DEFAULT,8081,BACKLOG);
-    _servers[b._socket] = b;
+    // Server b(IPV4,TCP,DEFAULT,8081,BACKLOG);
+    // _servers[b._socket] = b;
 
     _begin = _servers.begin();
     _end = _servers.end();
