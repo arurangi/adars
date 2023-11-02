@@ -34,7 +34,6 @@ Cluster::init(Serv_list servers)
         {
             for (vector<string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end(); value_it++)
             {
-                Log::success(server_data_it->first);
                 if (server_data_it->first == "listen")
                     s.set_port(server_data_it->second[0]);
                 else if (server_data_it->first == "client_max_body_size")
@@ -67,7 +66,7 @@ Cluster::watch()
     fd_set master_set, working_set;
     FD_ZERO(&master_set);
     for (IteratorS it = this->begin(); it != this->end(); it++)
-        FD_SET((*it).second._socket, &master_set);
+        FD_SET((*it).first, &master_set);
     
     do
     {

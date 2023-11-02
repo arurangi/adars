@@ -82,8 +82,8 @@ Server::setup(int domain, int service, int protocol, int backlog)
     // TODO: add `server_name` to /etc/hosts
 
     Log::status("Listening on " + _host + ":" + ft::to_str(_port)); // TODO: add correct address
-    Log::mark(_root);
-    Log::ltree(_locations);
+    // Log::mark(_root);
+    // Log::ltree(_locations);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
