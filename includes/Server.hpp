@@ -12,6 +12,7 @@
     #include <unistd.h>
     #include <netinet/in.h>
     #include <sys/ioctl.h>
+    #include <arpa/inet.h>
 
     #include "Http.hpp"
     #include "Utils.hpp"
@@ -19,8 +20,13 @@
     #include "Client.hpp"
 
     using std::string;
+    using std::vector;
+    using std::map;
     using http::Request;
     using http::Response;
+
+    typedef map< string, map<string, vector<string> > > LocationMap;
+    typedef vector< LocationMap > LocationsList;
 
     #define IPV4                AF_INET
     #define IPV6                AF_INET6
@@ -42,31 +48,52 @@
     class Server {
 
         private:
-            int _domain;
-            int _service;
-            int _protocol;
-            int _backlog;
-            struct sockaddr_in _address;
-            std::string _storageDir;
-            std::vector<std::string> _allowedPaths;
+            // ↓ needed for setup
+            int                         _domain;
+            int                         _service;
+            int                         _protocol;
+            int                         _backlog;
+            struct sockaddr_in          _address;
+            // ↓ needed while running
+            string                      _host;
+            int                         _port;
+            string                      _root;
+            string                      _storage_dir;
+            LocationsList               _locations;
+            map<string, vector<string> > _error_pages;
+            int                         _request_body_size_limit;
+            string                      _index;
+            string                      _server_name;
+            // location=uploaded
+            // key=allow_methods  values=[GET, POST, DELETE] }
 
         public:
-            int _socket;
-            // uint32_t _host;
-            std::string _host;
-            int _port;
+            int     _socket;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
             Server();
-            Server(int domain, int service, int protocol, int port, std::string host, int backlog);
+            Server(int domain, int service, int protocol, int backlog);
             ~Server();
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // member functions
 
-            void setup(int domain, int service, int protocol, int port, std::string host, int backlog);
+            void        setup(int domain, int service, int protocol, int backlog);
             static void check(int status, string error_msg);
+
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            // setters
+
+            void set_root(string rootFolder);
+            void set_location(LocationsList locations);
+            void set_error_page(map<string, vector<string> > err_pages);
+            void set_request_body_size_limit(string size_limit);
+            void set_default_index(string index_page);
+            void set_port(string port);
+            void set_host(string host);
+            void set_server_name(string server_name);
+
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // Exceptions

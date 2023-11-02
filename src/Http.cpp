@@ -213,7 +213,7 @@ void
 http::save_payload(Request& req)
 {
     if (req._method == "POST") {
-        std::string path = "./public/storage/" + req._filename; // TODO: see config
+        std::string path = "./public/storage/" + req._filename; // TODO: prefix with _storage_dir
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
             outputFile.write(req._payload.c_str(), req._payload.size());

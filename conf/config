@@ -1,35 +1,10 @@
 server 
 {
-    listen 127.0.0.1:8014;
-    server_name 127.0.0.1;
+    listen 8020;
+    host 127.0.0.2;
+    server_name www.adars.com;
 
-    root ./eval;
-    index index.html;
-
-    client_max_body_size 2g;
-
-    location / {
-        allow_methods [GET];
-        autoindex on;
-    }
-
-    location /assets {
-        allow_methods GET;
-        autoindex off;
-    }
-
-    location /upload {
-        allow_methods [GET POST DELETE];
-        autoindex on;
-    }
-}
-
-server 
-{
-    listen 127.0.0.1:8023;
-    server_name 127.0.0.1;
-
-    root ./eval;
+    root ./public;
     index index.html;
 
     client_max_body_size 2g;

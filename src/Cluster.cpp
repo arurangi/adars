@@ -1,18 +1,14 @@
 #include "../includes/Cluster.hpp"
 
+typedef vector< map<string, map<string, vector<string> > > > LocationsList;
+typedef map< string, map<string, vector<string> > > LocationsMap;
+
 Cluster::Cluster() : _size(0) {}
 Cluster::~Cluster()
 {
     for (IteratorS it = this->begin(); it != this->end(); it++) {
         close((*it).second._socket);
     }
-}
-
-int get_port(std::vector<std::string> v)
-{
-    std::string s = v[0];
-    s = s.substr(s.find_last_of(":")+1, s.size());
-    return std::atoi(s.c_str());
 }
 
 std::string get_host(std::vector<std::string> v)
@@ -23,38 +19,40 @@ std::string get_host(std::vector<std::string> v)
 }
 
 void
-Cluster::init(Serv_list serverList)
+Cluster::init(Serv_list servers)
 {
-    _size = serverList.size();
-    std::string tmp;
+    _size = servers.size();
+    string tmp;
 
-    for(Serv_list::iterator it = serverList.begin(); it != serverList.end() /* && !wbsv_data.error.length()*/ ; ++it)
+    for(Serv_list::iterator it = servers.begin(); it != servers.end(); ++it)
     {
-        int port = 0;
-        std::string host = "";
-        for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end() /*&& !wbsv_data.error.length()*/; ++server_data_it)
+
+        Server s;
+        s.set_location((*it).locations);
+        
+        for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end(); ++server_data_it)
         {
-            for (std::vector<std::string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end() /*&& !wbsv_data.error.length()*/; value_it++)
+            for (vector<string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end(); value_it++)
             {
-                if (server_data_it->first == "listen") {
-                    port = get_port(server_data_it->second);
-                    host = get_host(server_data_it->second);
-                }
-                // else if (server_data_it->first == "client_max_body_size")
-                //     //
-                // else if (server_data_it->first == "root")
-                //     //
-                // else if (server_data_it->first == "index")
-                //     //
+                Log::success(server_data_it->first);
+                if (server_data_it->first == "listen")
+                    s.set_port(server_data_it->second[0]);
+                else if (server_data_it->first == "client_max_body_size")
+                    s.set_request_body_size_limit(server_data_it->second[0]);
+                else if (server_data_it->first == "root")
+                    s.set_root(server_data_it->second[0]);
+                else if (server_data_it->first == "host") // <== doesn't find "host"
+                    s.set_host(server_data_it->second[0]);
+                else if (server_data_it->first == "index")
+                    s.set_default_index(server_data_it->second[0]);
+                else if (server_data_it->first == "server_name")
+                    s.set_default_index(server_data_it->second[0]);
            }
         }
-        Server a(IPV4,TCP,DEFAULT,port, host, BACKLOG);
-        _servers[a._socket] = a;
+        
+        s.setup(IPV4,TCP,DEFAULT, BACKLOG);
+        _servers[s._socket] = s;
     }
-
-
-    // Server b(IPV4,TCP,DEFAULT,8081,BACKLOG);
-    // _servers[b._socket] = b;
 
     _begin = _servers.begin();
     _end = _servers.end();
