@@ -29,7 +29,7 @@ server
 {
     listen 8001;
     host 127.0.0.1;
-    server_name www.adars.com;
+    server_name www.adars.thesecond.com;
 
     root ./public;
     index index.html;
@@ -56,7 +56,7 @@ server
 {
     listen 8002;
     host 127.0.0.1;
-    server_name www.adars.com;
+    server_name www.adars.thethird.com;
 
     root ./public;
     index index.html;

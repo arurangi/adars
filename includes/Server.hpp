@@ -73,6 +73,7 @@
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
             Server();
+            Server& operator= (Server& rhs);
             Server(int domain, int service, int protocol, int backlog);
             ~Server();
 
@@ -94,7 +95,8 @@
             void set_host(string host);
             void set_server_name(string server_name);
 
-            int get_port();
+            int  get_port();
+            string get_server_name() { return _server_name; }
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////

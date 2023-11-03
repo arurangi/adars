@@ -65,14 +65,13 @@ int http::accept_connection(int serverSocket)
 }
 
 void
-http::handle_request(int client_socket, map<int, Server> servers)
+http::handle_request(int client_socket, Cluster& cluster)
 {
-    (void)servers;
     Request req = http::parse_request(client_socket);
-    // get server by port
+    Server server = cluster.getServerByPort(req._server_port);
     if (req._method == "POST" && req._contentLength > 0)
-        http::save_payload(req);
-    Response res = http::build_response(req);
+        http::save_payload(req); // where to save
+    Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
 }
 
@@ -141,12 +140,14 @@ http::parse_request(const int& client_socket)
 }
 
 http::Response
-http::build_response(Request& req)
+http::build_response(Request& req, Server& server)
 {
     Response            res;
     string              buffer;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
+
+    Log::status("Building response from server: " + server.get_server_name());
 
     string path = req.getPathToRequestedFile();
 
@@ -484,8 +485,11 @@ http::Request::set_headerInfos(std::string& header_raw)
     // status line
     ss >> method >> path >> version;
 
-    if (method != "GET" && method != "POST" && method != "DELETE")
+    if (method != "GET" && method != "POST" && method != "DELETE") {
+        if (path.empty() && version.empty())
+            throw EmptyRequest();
         _status = HTTP_BAD_REQUEST;
+    }
 
     this->_method = method;
     this->_uri = path;
@@ -611,4 +615,14 @@ const char* http::ConnectionClosed::what() const throw()
 const char* http::ReceiveFailed::what() const throw()
 {
     return "Reading issue because of recv()";
+}
+
+const char* http::BadRequest::what() const throw()
+{
+    return "Bad request recieved by server";
+}
+
+const char* http::EmptyRequest::what() const throw()
+{
+    return "Empty request";
 }

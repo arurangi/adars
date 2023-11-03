@@ -29,7 +29,7 @@ Cluster::init(Serv_list servers)
 
         Server s;
         s.set_location((*it).locations);
-        
+
         for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end(); ++server_data_it)
         {
             for (vector<string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end(); value_it++)
@@ -45,7 +45,7 @@ Cluster::init(Serv_list servers)
                 else if (server_data_it->first == "index")
                     s.set_default_index(server_data_it->second[0]);
                 else if (server_data_it->first == "server_name")
-                    s.set_default_index(server_data_it->second[0]);
+                    s.set_server_name(server_data_it->second[0]);
            }
         }
         
@@ -98,10 +98,11 @@ Cluster::watch()
                 else {
                     Log::mark("Descriptor " + ft::to_str(curr_fd) + " is readable");
                     try { /* recv() & write() */
-                        http::handle_request(curr_fd, this->_servers);
+                        http::handle_request(curr_fd, *this);
                     } catch(std::exception& e) {
-                        Log::warn(e.what());
                         close(curr_fd);
+                        if (std::strncmp(e.what(), "Empty request", 13) != 0)
+                            Log::warn(e.what());
                     }
                     FD_CLR(curr_fd, &master_set);
                 }
@@ -131,4 +132,15 @@ bool Cluster::find(int curr_fd)
         return true;
         // return (*(_servers.find(curr_fd))).first;
     return false;
+}
+
+Server Cluster::getServerByPort(int port)
+{
+    // IteratorS it = this->begin();
+    Server s;
+    for (IteratorS it = this->begin(); it != this->end(); it++) {
+        if ((*it).second.get_port() == port)
+            s = (*it).second;
+    }
+    return s;
 }

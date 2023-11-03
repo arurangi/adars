@@ -12,6 +12,22 @@ Server::Server(int domain, int service, int protocol, int backlog)
     this->setup(domain, service, protocol, backlog);
 }
 
+Server&
+Server::operator= (Server& rhs)
+{
+    this->_socket = rhs._socket;
+    this->_host = rhs._host;
+    this->_port = rhs._port;
+    this->_root = rhs._root;
+    this->_storage_dir = rhs._storage_dir;
+    this->_locations = rhs._locations;
+    this->_error_pages = rhs._error_pages;
+    this->_request_body_size_limit = rhs._request_body_size_limit;
+    this->_index = rhs._index;
+    this->_server_name = rhs._server_name;
+    return *this;
+}
+
 Server::~Server() {}
 
 //////////////////////////////////////////////////////////////////////////////////
