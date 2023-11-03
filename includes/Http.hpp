@@ -17,6 +17,7 @@
 
     #include "Logger.hpp"
     #include "Utils.hpp"
+    #include "Server.hpp"
 
     #define ON 1
     #define OFF 0
@@ -25,6 +26,7 @@
     #define AUTOINDEX ON
 
     class Client;
+    class Server;
 
     #define CBLUE    "\033[0;94m"
     #define CYELLOW   "\033[0;33m"
@@ -87,28 +89,32 @@
 
         class Request {
             public:
-                string _method;
-                string _uri;
-                string _httpVersion;
+                string  _method;
+                string  _uri;
+                string  _httpVersion;
 
-                string _startline;
-                char _header[BUFFER_SIZE];
-                char _body[BUFFER_SIZE];
+                string  _startline;
+                char    _header[BUFFER_SIZE];
+                char    _body[BUFFER_SIZE];
 
-                int _contentLength;
-                char _raw[BUFFER_SIZE];
-                string _referer;
+                int     _contentLength;
+                char    _raw[BUFFER_SIZE];
+                string  _referer;
+                int     _server_port;
 
-                string _filename;
-                string _payload;
+                string  _filename;
+                string  _payload;
 
-                string _status;
+                string  _status;
         
                 Request();
                 ~Request();
 
                 void    setStatusLine(string& header);
                 void    setContentLength(string& header);
+
+                void    set_headerInfos(std::string& header_raw);
+
                 void    setReferer(string header);
                 void    setFilename(string& body);
                 void    setPayload(string& body);
@@ -116,7 +122,7 @@
         };
 
         int         accept_connection(int serverSocket);
-        void        handle_request(int client_socket);
+        void        handle_request(int client_socket, map<int, Server> servers);
         Request     parse_request(const int& client_socket);
         Response    build_response(Request& req);
         void        send_response(int client_socket, Response& res);

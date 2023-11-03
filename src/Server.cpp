@@ -98,6 +98,13 @@ void Server::check(int status, string error_msg)
     }
 }
 
+/* --------------------------------- Getters -------------------------------- */
+
+int Server::get_port()
+{
+    return _port;
+}
+
 /* --------------------------------- Setters -------------------------------- */
 
 void Server::set_location(LocationsList locations)

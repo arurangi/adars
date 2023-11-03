@@ -98,7 +98,7 @@ Cluster::watch()
                 else {
                     Log::mark("Descriptor " + ft::to_str(curr_fd) + " is readable");
                     try { /* recv() & write() */
-                        http::handle_request(curr_fd);
+                        http::handle_request(curr_fd, this->_servers);
                     } catch(std::exception& e) {
                         Log::warn(e.what());
                         close(curr_fd);

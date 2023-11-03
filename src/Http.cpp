@@ -65,9 +65,11 @@ int http::accept_connection(int serverSocket)
 }
 
 void
-http::handle_request(int client_socket)
+http::handle_request(int client_socket, map<int, Server> servers)
 {
+    (void)servers;
     Request req = http::parse_request(client_socket);
+    // get server by port
     if (req._method == "POST" && req._contentLength > 0)
         http::save_payload(req);
     Response res = http::build_response(req);
@@ -90,8 +92,18 @@ http::parse_request(const int& client_socket)
 
     Log::simple(request, CMAGENTA);
 
-    req.setStatusLine(request);
-    req.setContentLength(request);
+    // req.setStatusLine(request);
+    // req.setContentLength(request);
+    req.set_headerInfos(request);
+
+    Log::param("Method", req._method);
+    Log::param("Path", req._uri);
+    Log::param("HTTP version", req._httpVersion);
+    Log::param("Content-Length", ft::to_str(req._contentLength));
+    Log::param("Server port", ft::to_str(req._server_port));
+    Log::param("Filename", req._filename);
+
+    // exit(0);
 
     if (req._method != "POST")
         return req;
@@ -464,6 +476,43 @@ http::Request::setPayload(string& body)
 }
 
 void
+http::Request::set_headerInfos(std::string& header_raw)
+{
+    std::stringstream ss(header_raw);
+    std::string method, path, version, line;
+    
+    // status line
+    ss >> method >> path >> version;
+
+    if (method != "GET" && method != "POST" && method != "DELETE")
+        _status = HTTP_BAD_REQUEST;
+
+    this->_method = method;
+    this->_uri = path;
+    this->_httpVersion = version;
+
+    std::stringstream ss2(header_raw);
+
+    // header
+    while (std::getline(ss2, line)) {
+        std::string keyword = "Content-Length: ";
+        if (line.find(keyword) != std::string::npos) {
+            std::string length = line.substr(keyword.size(), line.size());
+            Log::error(length);
+            this->_contentLength = std::atoi(length.c_str());
+        }
+        keyword = "Host: ";
+        if (line.find(keyword) != std::string::npos) {
+            std::string host = line.substr(keyword.size(), line.size());
+            std::string port = host.substr(host.find_last_of(":")+1);
+            this->_server_port = std::atoi(port.c_str());
+        }
+
+    }
+
+}
+
+void
 http::Request::setStatusLine(std::string& header)
 {
     std::stringstream ss(header);
@@ -473,7 +522,6 @@ http::Request::setStatusLine(std::string& header)
 
     if (method != "GET" && method != "POST" && method != "DELETE")
         _status = HTTP_BAD_REQUEST;
-        
 
     this->_method = method;
     this->_uri = path;

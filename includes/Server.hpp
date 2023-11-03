@@ -22,8 +22,8 @@
     using std::string;
     using std::vector;
     using std::map;
-    using http::Request;
-    using http::Response;
+    // using http::Request;
+    // using http::Response;
 
     typedef map< string, map<string, vector<string> > > LocationMap;
     typedef vector< LocationMap > LocationsList;
@@ -93,6 +93,8 @@
             void set_port(string port);
             void set_host(string host);
             void set_server_name(string server_name);
+
+            int get_port();
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////
