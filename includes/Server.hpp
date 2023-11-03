@@ -64,8 +64,6 @@
             int                         _request_body_size_limit;
             string                      _index;
             string                      _server_name;
-            // location=uploaded
-            // key=allow_methods  values=[GET, POST, DELETE] }
 
         public:
             int     _socket;
