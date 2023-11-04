@@ -394,6 +394,15 @@ http::generate_storageList()
     std::set<std::string> xtension_list = get_xtension_list(list);
     storageItem += "<div class=\"filter_buttons\">\n";
     storageItem += "<p>filter by: </p>\n";
+
+
+    storageItem += html::filter("all");
+
+    storageItem += "<form action=\"filter\" method=\"get\"> \
+                    <input type=\"submit\" name=\"all\" value=\"all\" /> \
+                    </form>";
+
+
     storageItem += "<button class=\"toggle\">all</button>\n";
     set<string>::iterator itr = xtension_list.begin();
     for (; itr != xtension_list.end(); itr++)

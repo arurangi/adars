@@ -20,6 +20,7 @@
     #include "Utils.hpp"
     #include "Server.hpp"
     #include "Cluster.hpp"
+    #include "Html.hpp"
 
     using std::set;
     using std::string;

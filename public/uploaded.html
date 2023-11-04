@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="stylesheets/styles.css">
     <title>Adars - Storage space</title>
+    <!-- Javascript to send  -->
+
+    <script>
+        document.getElementById('deleteButton').addEventListener('click', function() {
+            fetch('/uploaded.html', {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    // Vous pouvez ajouter des en-têtes supplémentaires ici si nécessaire
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // La requête a réussi (statut 200 OK)
+                    console.log('Requête DELETE réussie');
+                } else {
+                // La requête a échoué avec un statut différent de 200
+                console.error('Échec de la requête DELETE');
+            }
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite : ' + error);
+        });
+    });
+    </script>
+
 </head>
 <body>
     <nav >
