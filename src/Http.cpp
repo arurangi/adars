@@ -91,8 +91,6 @@ http::parse_request(const int& client_socket)
 
     Log::simple(request, CMAGENTA);
 
-    // req.setStatusLine(request);
-    // req.setContentLength(request);
     req.set_headerInfos(request);
 
     Log::param("Method", req._method);
