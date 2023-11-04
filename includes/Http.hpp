@@ -11,6 +11,7 @@
     #include <pthread.h>
     #include <thread> // TODO: delete this. Not in c++98
     #include <map>
+    #include <set>
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <unistd.h>
@@ -19,6 +20,10 @@
     #include "Utils.hpp"
     #include "Server.hpp"
     #include "Cluster.hpp"
+
+    using std::set;
+    using std::string;
+    using std::map;
 
     #define ON 1
     #define OFF 0

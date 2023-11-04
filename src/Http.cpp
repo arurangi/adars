@@ -369,12 +369,38 @@ http::generate_errorPage()
     return page;
 }
 
+std::set<std::string> get_xtension_list(std::deque<std::string> files_list)
+{
+    std::set<std::string> xtensions;
+    while (!files_list.empty()) {
+        std::string curr_file = files_list.front();
+        size_t dotPosition = curr_file.find_last_of(".");
+        if (dotPosition != std::string::npos) {
+            xtensions.insert(curr_file.substr(dotPosition));
+            Log::mark(curr_file.substr(dotPosition));
+        }
+        files_list.pop_front();
+    }
+    return xtensions;
+}
+
 std::string
 http::generate_storageList()
 {
     std::deque<std::string> list = ft::list_files_in("./public/storage");
     std::string storageItem = "";
 
+    // filtering buttons
+    std::set<std::string> xtension_list = get_xtension_list(list);
+    storageItem += "<div class=\"filter_buttons\">\n";
+    storageItem += "<p>filter by: </p>\n";
+    storageItem += "<button class=\"toggle\">all</button>\n";
+    set<string>::iterator itr = xtension_list.begin();
+    for (; itr != xtension_list.end(); itr++)
+        storageItem += "<button class=\"toggle\">" + (*itr) + "</button>\n";
+    storageItem += "</div>\n";
+
+    // files list
     while (!list.empty()) {
         storageItem += "<div class=\"file\"><p>";
         storageItem += list.front();
