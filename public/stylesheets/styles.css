@@ -261,3 +261,7 @@ input[type="file"] {
   border: none;
   cursor: pointer;
 }
+
+.toggle:hover {
+  background-color: rgb(192, 192, 192);
+}

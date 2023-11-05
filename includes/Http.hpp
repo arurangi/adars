@@ -62,10 +62,10 @@
     #define HTTP_NOT_MODIFIED "304"
     #define HTTP_INTERNAL_SERVER_ERROR "500"
 
-
     using std::string;
     using std::map;
     using std::ostream;
+    using std::stringstream;
     // using namespace http;
 
     namespace http {
@@ -109,6 +109,7 @@
                 char    _raw[BUFFER_SIZE];
                 string  _referer;
                 int     _server_port;
+                map<string, string> _queryParameters;
 
                 string  _filename;
                 string  _payload;
@@ -122,10 +123,12 @@
                 void    setContentLength(string& header);
 
                 void    set_headerInfos(std::string& header_raw);
+                void    parse_query();
 
                 void    setReferer(string header);
                 void    setFilename(string& body);
                 void    setPayload(string& body);
+
                 string  getPathToRequestedFile();
         };
 

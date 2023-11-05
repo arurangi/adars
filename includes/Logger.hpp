@@ -94,6 +94,13 @@
                     ll_it++;
                 }
             }
+
+            template <typename T, typename K>
+            static void pairs(T key, K pair) {
+                std::cout << CBOLD
+                          << key << ": " << pair
+                          << CRESET << std::endl;
+            }
     };
 
 #endif
