@@ -65,13 +65,27 @@ int http::accept_connection(int serverSocket)
 }
 
 void
-http::handle_request(int client_socket)
+http::handle_request(int client_socket, Cluster& cluster)
 {
     Request req = http::parse_request(client_socket);
-    if (req._method == "POST" && req._contentLength > 0)
-        http::save_payload(req);
-    Response res = http::build_response(req);
+    Server server = cluster.getServerByPort(req._server_port);
+    req.execute(server.get_storage_dir());
+    Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
+}
+
+void
+http::Request::execute(string storageDir) {
+    if (_method == "POST" && _contentLength > 0)
+        save_payload(storageDir);
+    if (_method == "DELETE") {
+        string filename = _queryParameters["name"];
+        string filepath = storageDir + filename;
+        if (ft::startswith(filepath, "./public/")) {
+            Log::status(">>>>>>>>> deleting file at: " + filepath + "<<<<<<<<<<<\n");
+            remove(filepath.c_str());
+        }
+    }
 }
 
 http::Request
@@ -87,11 +101,34 @@ http::parse_request(const int& client_socket)
     if (bytesRead < 0)
         throw http::ReceiveFailed();
     request += string(buffer, bytesRead);
+    req.set_headerInfos(request);
 
-    Log::simple(request, CMAGENTA);
+    req._header = request;
 
-    req.setStatusLine(request);
-    req.setContentLength(request);
+    /**
+     * At this point, the request can either be GET, POST or DELETE
+     * - check if it's one of those
+     * - check if that request is allowed on the server
+     * - handle each request accordingly:
+     *      - GET
+     *      - POST
+     *      - DELETE
+    */
+
+    std::cout << req;
+
+    if ((found = req._uri.find_first_of("?")) != string::npos)
+        req.parse_query();
+
+    // Log::simple(request, CMAGENTA);
+    // Log::param("Method", req._method);
+    // Log::param("Path", req._uri);
+    // Log::param("HTTP version", req._httpVersion);
+    // Log::param("Content-Length", ft::to_str(req._contentLength));
+    // Log::param("Server port", ft::to_str(req._server_port));
+    // Log::param("Filename", req._filename);
+
+    // exit(0);
 
     if (req._method != "POST")
         return req;
@@ -104,42 +141,57 @@ http::parse_request(const int& client_socket)
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
             throw http::ReceiveFailed();
-        request += std::string(buffer, bytesRead);
-        Log::status(ft::to_str(bytesRead) + " bytes read");
+        request += string(buffer, bytesRead);
+        // Log::status(ft::to_str(bytesRead) + " bytes read");
         if (bytesRead < sizeof(buffer))
             break ;
     }
 
     // Log::simple(request, CYELLOW);
 
-    if ((found = request.find(CRLFCRLF)) != std::string::npos) {
+    if ((found = request.find(CRLFCRLF)) != string::npos) {
         string body = request.substr(found + CRLF_SIZE);
         req.setFilename(body);
         req.setPayload(body);
     }
 
-    Log::param("Method", req._method);
-    Log::param("Path", req._uri);
-    Log::param("HTTP version", req._httpVersion);
-    Log::param("Content-Length", ft::to_str(req._contentLength));
-    Log::param("Filename", req._filename);
+    // Log::param("Method", req._method);
+    // Log::param("Path", req._uri);
+    // Log::param("HTTP version", req._httpVersion);
+    // Log::param("Content-Length", ft::to_str(req._contentLength));
+    // Log::param("Filename", req._filename);
     // Log::param("Data", req._payload);
     
     return req;
 }
 
 http::Response
-http::build_response(Request& req)
+http::build_response(Request& req, Server& server)
 {
     Response            res;
     string              buffer;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
+    (void)server;
+
+    /**
+     * At this point, I've gathered all informations about the request.
+     * Now possibilities:
+     * 1) Bad request => return default error page for that location
+     * 2) Good request => build appropriate response
+     *      - GET --> 2 cases
+     *          -- standard: 
+     *          -- query_parameters: 
+     *      - POST --> send uploaded.html
+     *      - DELETE --> send uploaded.html
+    */
+
+    // Log::status("Building response from server: " + server.get_server_name());
 
     string path = req.getPathToRequestedFile();
 
     // TODO: check if part of allowed paths
-    Log::status("Opening => " + path);
+    // Log::status("Opening => " + path);
 
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
@@ -159,7 +211,7 @@ http::build_response(Request& req)
         // : store content in `response._body`
         res._body = ""; // get_ressource()
         while (std::getline(requestedFile, buffer)) {
-            if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != std::string::npos) {
+            if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos) {
                 res._body += generate_storageList();
             }
             res._body += buffer + "\n";
@@ -179,13 +231,14 @@ http::build_response(Request& req)
     // HEADER:
     // : Content-Type, Content-Length, Connection
     res._header += res._statusLine;
-    Log::status("URI: " + req._uri);
+    // Log::status("URI: " + req._uri);
     res.set_content_type(req._uri, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
     res._header   += "Connection: keep-alive\r\n";
     res._header   += "Server: Adars\r\n";
+    res._header   += "Cache-Control: no-cache\r\n";
     res._header   += "\r\n";
 
     // Construct raw HTTP response
@@ -202,28 +255,28 @@ void http::send_response(int client_socket, http::Response& res)
     if (bytes_sent < 0)
         Log::error("in handleHttpRequest(): send(): No bytes to send");
 
-    std::cout << CGREEN << "••• Bytes transmitted: "
-            << CBOLD << bytes_sent
-            << "/" << res._contentLength << CRESET << std::endl;
+    // std::cout << CGREEN << "••• Bytes transmitted: "
+    //         << CBOLD << bytes_sent
+    //         << "/" << res._contentLength << CRESET << std::endl;
             
     close(client_socket);
 }
 
 void
-http::save_payload(Request& req)
+http::Request::save_payload(string storageDir)
 {
-    if (req._method == "POST") {
-        std::string path = "./public/storage/" + req._filename; // TODO: see config
+    if (_method == "POST") {
+        string path = storageDir + _filename; // TODO: prefix with _storage_dir
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
-            outputFile.write(req._payload.c_str(), req._payload.size());
+            outputFile.write(_payload.c_str(), _payload.size());
             outputFile.close();
-            std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
+            std::cout << "Image saved as: " << ("." + _filename) << std::endl;
         } else {
             std::cerr << "♨ Error saving the image." << std::endl;
         }
     }
-    req._uri = "/";
+    _uri = "/";
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -239,17 +292,16 @@ http::Response::set_content_type(string filepath, map<string, string> accepted_t
         _contentType = defaultMime;
     }
     string extension = filepath.substr(dotPosition);
-    Log::status("extension:" + extension);
 
     if (accepted_types.find(extension) != accepted_types.end())
         _contentType = accepted_types[extension];
     // return "text/html";
 }
 
-std::map<std::string, std::string>
-http::get_mime_types(std::string mimesFilePath) {
-    std::map<std::string, std::string> tmp;
-    std::string line, key, value;
+std::map<string, string>
+http::get_mime_types(string mimesFilePath) {
+    std::map<string, string> tmp;
+    string line, key, value;
     std::ifstream mimeFile;
     int seperator;
 
@@ -272,12 +324,12 @@ http::get_mime_types(std::string mimesFilePath) {
     return tmp;
 }
 
-std::string http::Response::get_gmt_time()
+string http::Response::get_gmt_time()
 {
     time_t      rawtime;
     struct tm*  timeinfo;
     char        buffer[80];
-    std::string formated_time;
+    string formated_time;
 
     time(&rawtime);
     timeinfo = gmtime(&rawtime);
@@ -292,11 +344,11 @@ std::string http::Response::get_gmt_time()
     return formated_time;
 }
 
-std::string
+string
 http::generate_directoryPage(string uri)
 {
-    std::deque<std::string> list = ft::list_files_in(ft::get_dir(uri));
-    std::string htmlPage = "";
+    std::deque<string> list = ft::list_files_in(ft::get_dir(uri));
+    string htmlPage = "";
     htmlPage += "<!DOCTYPE html>\n"
             "<html lang=\"en\">\n"
             "<head>\n"
@@ -326,13 +378,13 @@ http::generate_directoryPage(string uri)
     return htmlPage;
 }
 
-std::string
+string
 http::generate_errorPage()
 {
-    // TODO: add map<int, std::string>
+    // TODO: add map<int, string>
     // key (int): status code
     // value (string): full html page of the error code in a string
-    std::string page =
+    string page =
                 "<!DOCTYPE html>\n"
                 "<html lang=\"en\">\n"
                 "<head>\n"
@@ -358,16 +410,50 @@ http::generate_errorPage()
     return page;
 }
 
-std::string
+std::set<string> get_xtension_list(std::deque<string> files_list)
+{
+    std::set<string> xtensions;
+    while (!files_list.empty()) {
+        string curr_file = files_list.front();
+        size_t dotPosition = curr_file.find_last_of(".");
+        if (dotPosition != string::npos) {
+            xtensions.insert(curr_file.substr(dotPosition));
+            Log::mark(curr_file.substr(dotPosition));
+        }
+        files_list.pop_front();
+    }
+    return xtensions;
+}
+
+string
 http::generate_storageList()
 {
-    std::deque<std::string> list = ft::list_files_in("./public/storage");
-    std::string storageItem = "";
+    std::deque<string> list = ft::list_files_in("./public/storage");
+    string storageItem = "";
 
+    // filtering buttons
+    // std::set<string> xtension_list = get_xtension_list(list);
+    // storageItem += "<div class=\"filter_buttons\">\n";
+    // storageItem += "<p>filter by: </p>\n";
+    // storageItem += html::filter("all");
+
+    // storageItem += "<form action=\"filter\" method=\"get\"> \
+    //                 <input type=\"submit\" name=\"all\" value=\"all\" /> \
+    //                 </form>";
+
+
+    // storageItem += "<button class=\"toggle\">all</button>\n";
+    // set<string>::iterator itr = xtension_list.begin();
+    // for (; itr != xtension_list.end(); itr++)
+    //     storageItem += "<button class=\"toggle\">" + (*itr) + "</button>\n";
+    // storageItem += "</div>\n";
+
+    // files list
     while (!list.empty()) {
-        storageItem += "<div class=\"file\"><p>";
-        storageItem += list.front();
-        storageItem += "</p><img src=\"images/delete_icon.png\" height=\"16px\" width=\"16px\"></img></div>\n";
+        storageItem += "<div class=\"file\">\n";
+        storageItem += "<p>" + list.front() + "</p>";
+        storageItem += "<img onclick='deleter(\"" + list.front() + "\")' src=\"images/delete_icon.png\" height=\"16px\" width=\"16px\">\n";
+        storageItem += "</div>\n";
         list.pop_front();
     }
     return storageItem;
@@ -380,14 +466,12 @@ http::generate_storageList()
 std::ostream&
 operator<< (std::ostream& os, http::Request& rhs)
 {
-    std::string raw((char*)rhs._raw);
-    std::string curr;
-    std::stringstream ss(raw);
+    string curr;
+    stringstream ss(rhs._header);
 
-    os << CBLUE CBOLD << "\n---\n| Request " << CRESET
-       << CYELLOW << std::this_thread::get_id() << CRESET << std::endl;
+    os << CBLUE CBOLD << "\nREQUEST\n" << CRESET;
     while (std::getline(ss, curr)) {
-        os << CBLUE << "> " << CRESET << curr << std::endl;
+        os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
     }
     return os;
 }
@@ -395,12 +479,13 @@ operator<< (std::ostream& os, http::Request& rhs)
 std::ostream&
 operator<< (std::ostream& os, http::Response& rhs)
 {
-    std::string content(rhs._header);
-    std::string currentLine;
-    std::stringstream ss(content);
+    string content(rhs._header);
+    string currentLine;
+    stringstream ss(content);
     
+    os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET; 
     while (std::getline(ss, currentLine))
-        os << CGREEN << "< " << CRESET << currentLine << std::endl;
+        os << CGREEN << "<< " << CRESET << currentLine << std::endl;
     return os;
 }
 
@@ -409,7 +494,7 @@ operator<< (std::ostream& os, http::Response& rhs)
 /* -------------------------------------------------------------------------- */
 
 void
-http::Response::set_status(std::string code)
+http::Response::set_status(string code)
 {
     _code = code;
     _message = _statusCodes[code];
@@ -419,18 +504,18 @@ http::Response::set_status(std::string code)
 /*                          Request: Member Functions                         */
 /* -------------------------------------------------------------------------- */
 
-void http::Request::setFilename(std::string& body)
+void http::Request::setFilename(string& body)
 {
     size_t pos;
     string line, tmp, keyword = "filename=\"";
     
-    if ((pos = body.find("Content-Disposition")) == std::string::npos) {
+    if ((pos = body.find("Content-Disposition")) == string::npos) {
         Log::error("No `Content-Disposition` in POST request");
         return ;
     }
-    std::stringstream ss(body.substr(pos));
+    stringstream ss(body.substr(pos));
     while (std::getline(ss, line)) {
-        if ((pos = line.find(keyword)) != std::string::npos) {
+        if ((pos = line.find(keyword)) != string::npos) {
             tmp = line.substr(pos+keyword.size(), line.size());
             this->_filename = tmp.substr(0, tmp.size()-2);
             break ;
@@ -444,15 +529,15 @@ http::Request::setPayload(string& body)
     size_t pos;
     string line;
     
-    if ((pos = body.find("Content-Disposition")) == std::string::npos) {
+    if ((pos = body.find("Content-Disposition")) == string::npos) {
         Log::error("No `Content-Disposition` in POST request");
         return ;
     }
-    std::stringstream ss(body.substr(pos));
+    stringstream ss(body.substr(pos));
     while (std::getline(ss, line)) {
-        if ((pos = line.find("filename=\"")) != std::string::npos)
+        if ((pos = line.find("filename=\"")) != string::npos)
             continue ;
-        else if ((pos = line.find("Content-Type:")) != std::string::npos)
+        else if ((pos = line.find("Content-Type:")) != string::npos)
         {
             std::getline(ss, line);
             std::getline(ss, line);
@@ -464,16 +549,55 @@ http::Request::setPayload(string& body)
 }
 
 void
-http::Request::setStatusLine(std::string& header)
+http::Request::set_headerInfos(string& header_raw)
 {
-    std::stringstream ss(header);
-    std::string method, path, version;
+    stringstream ss(header_raw);
+    string method, path, version, line;
+    
+    // status line
+    ss >> method >> path >> version;
+
+    if (method != "GET" && method != "POST" && method != "DELETE") {
+        if (path.empty() && version.empty())
+            throw EmptyRequest();
+        _status = HTTP_BAD_REQUEST;
+    }
+
+    this->_method = method;
+    this->_uri = path;
+    this->_httpVersion = version;
+
+    stringstream ss2(header_raw);
+
+    // header
+    while (std::getline(ss2, line)) {
+        string keyword = "Content-Length: ";
+        if (line.find(keyword) != string::npos) {
+            string length = line.substr(keyword.size(), line.size());
+            Log::error(length);
+            this->_contentLength = std::atoi(length.c_str());
+        }
+        keyword = "Host: ";
+        if (line.find(keyword) != string::npos) {
+            string host = line.substr(keyword.size(), line.size());
+            string port = host.substr(host.find_last_of(":")+1);
+            this->_server_port = std::atoi(port.c_str());
+        }
+
+    }
+
+}
+
+void
+http::Request::setStatusLine(string& header)
+{
+    stringstream ss(header);
+    string method, path, version;
     
     ss >> method >> path >> version;
 
     if (method != "GET" && method != "POST" && method != "DELETE")
         _status = HTTP_BAD_REQUEST;
-        
 
     this->_method = method;
     this->_uri = path;
@@ -481,31 +605,59 @@ http::Request::setStatusLine(std::string& header)
 }
 
 void
-http::Request::setContentLength(std::string& header)
+http::Request::setContentLength(string& header)
 {
-    std::stringstream ss(header);
-    std::string line;
+    stringstream ss(header);
+    string line;
     while (std::getline(ss, line)) {
-        std::string keyword = "Content-Length: ";
-        if (line.find(keyword) != std::string::npos) {
-            std::string length = line.substr(keyword.size(), line.size());
+        string keyword = "Content-Length: ";
+        if (line.find(keyword) != string::npos) {
+            string length = line.substr(keyword.size(), line.size());
             this->_contentLength = std::atoi(length.c_str());
             break ;
         }
     }
 }
 
-void
-http::Request::setReferer(std::string header)
+void    http::Request::parse_query()
 {
-    std::stringstream ss(header);
-    std::string line;
+    size_t pos;
+    string query, parameter, key, value, toReplace = "%20";
+    stringstream ss;
+
+    pos = _uri.find_first_of("?");
+    query = _uri.substr(
+        pos+1,
+        (_uri.find("#") != string::npos) ? _uri.find_first_of("#") : _uri.size()
+    );
+    _uri = _uri.substr(0, pos); // remove query string from URI
+
+    // remove %20 in query string
+    while ((pos = query.find(toReplace)) != string::npos)
+        query.replace(pos, toReplace.length(), " ");
+
+    // store query parameters in Request object
+    ss << query;
+    while (std::getline(ss, parameter, '&')) {
+        if ((pos = parameter.find("=")) != string::npos) {
+            key = parameter.substr(0, pos);
+            value = parameter.substr(pos+1, parameter.size());
+            _queryParameters[key] = value;
+        }
+    }
+}
+
+void
+http::Request::setReferer(string header)
+{
+    stringstream ss(header);
+    string line;
     size_t found;
 
     while (std::getline(ss, line)) {
-        std::string keyword = "Referer: ";
-        if (line.find(keyword) != std::string::npos) {
-            if ((found = line.find_last_of("/")) != std::string::npos)
+        string keyword = "Referer: ";
+        if (line.find(keyword) != string::npos) {
+            if ((found = line.find_last_of("/")) != string::npos)
                 this->_referer = line.substr(found);
             else
                 this->_referer = "/index.html";
@@ -514,17 +666,19 @@ http::Request::setReferer(std::string header)
     }
 }
 
-std::string
+/* --------------------------------- Getters -------------------------------- */
+
+string
 http::Request::getPathToRequestedFile()
 {
-    std::string path;
+    string path;
     size_t found = 0;
-    std::string storagePath = "/public/storage";
+    string storagePath = "/public/storage";
     
-    // if ((found = _uri.find(storagePath)) != std::string::npos)
+    // if ((found = _uri.find(storagePath)) != string::npos)
     //     _uri = _uri.substr(found+storagePath.size());
 
-    if ((found = _uri.find("/public")) != std::string::npos)
+    if ((found = _uri.find("/public")) != string::npos)
         path = ".";
     else
         path = "./public";
@@ -532,14 +686,13 @@ http::Request::getPathToRequestedFile()
     if (_method == "GET")
     {
         if (_uri == "/") {
-            Log::status(">>> Here");
             _uri = "/index.html";
             path += _uri;
         }
         else
             path += _uri;
     }
-    else if (_method == "POST")
+    else if (_method == "POST" || _method == "DELETE")
     {
         path += "/uploaded.html";
         _uri = path;
@@ -563,4 +716,14 @@ const char* http::ConnectionClosed::what() const throw()
 const char* http::ReceiveFailed::what() const throw()
 {
     return "Reading issue because of recv()";
+}
+
+const char* http::BadRequest::what() const throw()
+{
+    return "Bad request recieved by server";
+}
+
+const char* http::EmptyRequest::what() const throw()
+{
+    return "Empty request";
 }

@@ -11,12 +11,20 @@
     #include <pthread.h>
     #include <thread> // TODO: delete this. Not in c++98
     #include <map>
+    #include <set>
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <unistd.h>
 
     #include "Logger.hpp"
     #include "Utils.hpp"
+    #include "Server.hpp"
+    #include "Cluster.hpp"
+    #include "Html.hpp"
+
+    using std::set;
+    using std::string;
+    using std::map;
 
     #define ON 1
     #define OFF 0
@@ -25,6 +33,8 @@
     #define AUTOINDEX ON
 
     class Client;
+    class Server;
+    class Cluster;
 
     #define CBLUE    "\033[0;94m"
     #define CYELLOW   "\033[0;33m"
@@ -52,10 +62,12 @@
     #define HTTP_NOT_MODIFIED "304"
     #define HTTP_INTERNAL_SERVER_ERROR "500"
 
+    #define QUERY_SPACE "%20"
 
     using std::string;
     using std::map;
     using std::ostream;
+    using std::stringstream;
     // using namespace http;
 
     namespace http {
@@ -87,40 +99,49 @@
 
         class Request {
             public:
-                string _method;
-                string _uri;
-                string _httpVersion;
+                string  _method;
+                string  _uri;
+                string  _httpVersion;
 
-                string _startline;
-                char _header[BUFFER_SIZE];
-                char _body[BUFFER_SIZE];
+                string  _startline;
+                string  _header;
+                char    _body[BUFFER_SIZE];
 
-                int _contentLength;
-                char _raw[BUFFER_SIZE];
-                string _referer;
+                int     _contentLength;
+                char    _raw[BUFFER_SIZE];
+                string  _referer;
+                int     _server_port;
+                map<string, string> _queryParameters;
 
-                string _filename;
-                string _payload;
+                string  _filename;
+                string  _payload;
 
-                string _status;
+                string  _status;
         
                 Request();
                 ~Request();
 
                 void    setStatusLine(string& header);
                 void    setContentLength(string& header);
+
+                void    set_headerInfos(std::string& header_raw);
+                void    parse_query();
+
                 void    setReferer(string header);
                 void    setFilename(string& body);
                 void    setPayload(string& body);
+
+                void    execute(string storageDir);
+                void    save_payload(string storageDir);
+
                 string  getPathToRequestedFile();
         };
 
         int         accept_connection(int serverSocket);
-        void        handle_request(int client_socket);
+        void        handle_request(int client_socket, Cluster& servers);
         Request     parse_request(const int& client_socket);
-        Response    build_response(Request& req);
+        Response    build_response(Request& req, Server& server);
         void        send_response(int client_socket, Response& res);
-        void        save_payload(Request& req);
 
         map<string, string> get_mime_types(std::string mimesFilePath);
         string generate_directoryPage(string uri);
@@ -140,6 +161,17 @@
             public:
                 const char* what() const throw();
         };
+
+        class BadRequest : public std::exception {
+            public:
+                const char* what() const throw();
+        };
+
+        class EmptyRequest : public std::exception {
+            public:
+                const char* what() const throw();
+        };
+
 
         /////////////////////////////////////////////////////////////////////////////////////////
     }

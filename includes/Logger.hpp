@@ -2,6 +2,15 @@
     #define LOGGER_HPP
 
     #include <iostream>
+    #include <vector>
+    #include <map>
+
+    using std::string;
+    using std::vector;
+    using std::map;
+
+    typedef map< string, map<string, vector<string> > >          LocationMap;
+    typedef vector< LocationMap > LocationsList;
 
     #define CBLUE    "\033[0;94m"
     #define CYELLOW   "\033[0;33m"
@@ -72,6 +81,25 @@
                           << "# " << CRESET
                           << msg << std::endl;
                 return -1;
+            }
+
+            static void ltree(LocationsList& ll) {
+                LocationsList::iterator ll_it = ll.begin();
+                while (ll_it != ll.end()) {
+                    LocationMap::iterator lm_it = (*ll_it).begin() ;
+                    while (lm_it != (*ll_it).end()) {
+                        Log::mark((*lm_it).first);
+                        lm_it++;
+                    }
+                    ll_it++;
+                }
+            }
+
+            template <typename T, typename K>
+            static void pairs(T key, K pair) {
+                std::cout << CBOLD
+                          << key << ": " << pair
+                          << CRESET << std::endl;
             }
     };
 

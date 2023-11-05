@@ -6,7 +6,7 @@
 /*   By: arurangi <arurangi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:17:29 by akorompa          #+#    #+#             */
-/*   Updated: 2023/10/30 15:49:36 by arurangi         ###   ########.fr       */
+/*   Updated: 2023/11/01 16:24:33 by arurangi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,12 +92,12 @@ void    Config::getData(Data &wbsv_data)
 bool    Config::check_brackets(Data &wbsv_data)
 {
     std::string line;
-    int index = 0;
+    // int index = 0;  to remove error: set but not used
     std::stack<char> brace_stack;
 
     while(std::getline(this->_infile, line))
     {
-        index++;
+        // index++;
         trim(line, WHITE_SPACE);
         if (line[0] == '#')
             continue;

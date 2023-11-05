@@ -4,7 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="stylesheets/styles.css">
-    <title>Adars - Home page</title>
+    <title>Adars - Storage space</title>
+
+    <script>
+        function deleter(name) {
+            fetch(`uploaded.html?name=${name}&age=26#hello`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            }).then( response => {
+                if (response.ok) {
+                    location.reload();
+                }
+                console.log("Response received");
+            })
+        }
+    </script>
+
 </head>
 <body>
     <nav >

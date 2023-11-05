@@ -7,6 +7,8 @@
     #include "Server.hpp"
     #include "Webserv.hpp"
 
+    class Server;
+
     typedef std::map<int, Server>::iterator IteratorS;
     using std::map;
 
@@ -19,12 +21,13 @@
         public:
             Cluster();
             ~Cluster();
-            void  init(Serv_list serverList);
-            void  watch();
-            int   size();
-            bool  find(int socket);
-            IteratorS begin();
-            IteratorS end();
+            void        init(Serv_list serverList);
+            void        watch();
+            int         size();
+            bool        find(int socket);
+            IteratorS   begin();
+            IteratorS   end();
+            Server      getServerByPort(int port);
     };
 
     std::ostream& operator<< (std::ostream& os, Cluster& rhs);

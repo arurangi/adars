@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <title>Document</title>
+</head>
+<body>
+    <section class="wrapper">
+        <nav>
+            <ul class="navbar">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="upload.html">Send files</a></li>
+                <li><a href="search.html">Search</a></li>
+                <li><a href="uploaded.html">Storage</a></li>
+            </ul>
+        </nav>
+        <h1>Look for words definition</h1>
+        <form class="form_upload" method="get" action="/" onsubmit="return validateForm()">
+            <!-- <div class="btn_collection">
+            </div> -->
+            <label class="btn_browsing">
+                <input type="text" name="text">
+            </label>
+            <label class="btn_submit_ready" id="btn_submit">
+                <input type="submit" value="Upload">
+                search
+            </label>
+            <div id="error-message" style="color: red;"></div>
+        </form>
+        <p style="color:rgb(130, 130, 132)">Note: Sending this form via <code>GET</code> request. <br>Data is part of the URL as <code>query parameters</code>code>.<br>OK since few informations to send.</p>
+        <!-- <script src="test.sh"></script> -->
+    </section>
+</body>
+</html>
