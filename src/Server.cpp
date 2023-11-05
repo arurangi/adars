@@ -3,11 +3,11 @@
 #include "../includes/Server.hpp"
 
 Server::Server()
-: _host("127.0.0.1"), _port(8000), _root("./public"), _storage_dir("./public/storage")
+: _host("127.0.0.1"), _port(8000), _root("./public"), _storage_dir("./public/storage/")
 {}
 
 Server::Server(int domain, int service, int protocol, int backlog)
-: _host("127.0.0.1"), _port(8000), _root("./public"), _storage_dir("./public/storage")
+: _host("127.0.0.1"), _port(8000), _root("./public"), _storage_dir("./public/storage/")
 {
     this->setup(domain, service, protocol, backlog);
 }

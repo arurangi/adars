@@ -69,10 +69,23 @@ http::handle_request(int client_socket, Cluster& cluster)
 {
     Request req = http::parse_request(client_socket);
     Server server = cluster.getServerByPort(req._server_port);
-    if (req._method == "POST" && req._contentLength > 0)
-        http::save_payload(req); // where to save
+    req.execute(server.get_storage_dir());
     Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
+}
+
+void
+http::Request::execute(string storageDir) {
+    if (_method == "POST" && _contentLength > 0)
+        save_payload(storageDir);
+    if (_method == "DELETE") {
+        string filename = _queryParameters["name"];
+        string filepath = storageDir + filename;
+        if (ft::startswith(filepath, "./public/")) {
+            Log::status(">>>>>>>>> deleting file at: " + filepath + "<<<<<<<<<<<\n");
+            remove(filepath.c_str());
+        }
+    }
 }
 
 http::Request
@@ -222,6 +235,7 @@ http::build_response(Request& req, Server& server)
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
     res._header   += "Connection: keep-alive\r\n";
     res._header   += "Server: Adars\r\n";
+    res._header   += "Cache-Control: no-cache\r\n";
     res._header   += "\r\n";
 
     // Construct raw HTTP response
@@ -246,20 +260,20 @@ void http::send_response(int client_socket, http::Response& res)
 }
 
 void
-http::save_payload(Request& req)
+http::Request::save_payload(string storageDir)
 {
-    if (req._method == "POST") {
-        string path = "./public/storage/" + req._filename; // TODO: prefix with _storage_dir
+    if (_method == "POST") {
+        string path = storageDir + _filename; // TODO: prefix with _storage_dir
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
-            outputFile.write(req._payload.c_str(), req._payload.size());
+            outputFile.write(_payload.c_str(), _payload.size());
             outputFile.close();
-            std::cout << "Image saved as: " << ("." + req._filename) << std::endl;
+            std::cout << "Image saved as: " << ("." + _filename) << std::endl;
         } else {
             std::cerr << "♨ Error saving the image." << std::endl;
         }
     }
-    req._uri = "/";
+    _uri = "/";
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -607,7 +621,7 @@ http::Request::setContentLength(string& header)
 void    http::Request::parse_query()
 {
     size_t pos;
-    string query, parameter, key, value;
+    string query, parameter, key, value, toReplace = "%20";
     stringstream ss;
 
     pos = _uri.find_first_of("?");
@@ -615,8 +629,13 @@ void    http::Request::parse_query()
         pos+1,
         (_uri.find("#") != string::npos) ? _uri.find_first_of("#") : _uri.size()
     );
-    _uri = _uri.substr(0, pos); // remove query
+    _uri = _uri.substr(0, pos); // remove query string from URI
 
+    // remove %20 in query string
+    while ((pos = query.find(toReplace)) != string::npos)
+        query.replace(pos, toReplace.length(), " ");
+
+    // store query parameters in Request object
     ss << query;
     while (std::getline(ss, parameter, '&')) {
         if ((pos = parameter.find("=")) != string::npos) {
@@ -673,7 +692,7 @@ http::Request::getPathToRequestedFile()
         else
             path += _uri;
     }
-    else if (_method == "POST")
+    else if (_method == "POST" || _method == "DELETE")
     {
         path += "/uploaded.html";
         _uri = path;

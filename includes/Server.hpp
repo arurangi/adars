@@ -93,8 +93,9 @@
             void set_host(string host);
             void set_server_name(string server_name);
 
-            int  get_port();
-            string get_server_name() { return _server_name; }
+            int     get_port();
+            string  get_server_name() { return _server_name; }
+            string  get_storage_dir() { return _storage_dir; }
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////

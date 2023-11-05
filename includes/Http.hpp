@@ -62,6 +62,8 @@
     #define HTTP_NOT_MODIFIED "304"
     #define HTTP_INTERNAL_SERVER_ERROR "500"
 
+    #define QUERY_SPACE "%20"
+
     using std::string;
     using std::map;
     using std::ostream;
@@ -129,6 +131,9 @@
                 void    setFilename(string& body);
                 void    setPayload(string& body);
 
+                void    execute(string storageDir);
+                void    save_payload(string storageDir);
+
                 string  getPathToRequestedFile();
         };
 
@@ -137,7 +142,6 @@
         Request     parse_request(const int& client_socket);
         Response    build_response(Request& req, Server& server);
         void        send_response(int client_socket, Response& res);
-        void        save_payload(Request& req);
 
         map<string, string> get_mime_types(std::string mimesFilePath);
         string generate_directoryPage(string uri);
