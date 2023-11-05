@@ -104,7 +104,7 @@
                 string  _httpVersion;
 
                 string  _startline;
-                char    _header[BUFFER_SIZE];
+                string  _header;
                 char    _body[BUFFER_SIZE];
 
                 int     _contentLength;

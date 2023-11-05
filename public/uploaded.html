@@ -14,7 +14,9 @@
                     'Accept': 'application/json',
                 }
             }).then( response => {
-                // location.reload();
+                if (response.ok) {
+                    location.reload();
+                }
                 console.log("Response received");
             })
         }
@@ -31,11 +33,5 @@
       </ul>
     </nav>
     <h1>Recently uploaded</h1>
-    <button onclick='deleter("clicker")'>Click here</button>
-    <!-- <script>
-        function exemple() {
-            console.log("SHowing struff");
-        }
-    </script> -->
 </body>
 </html>

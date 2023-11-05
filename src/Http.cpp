@@ -103,6 +103,8 @@ http::parse_request(const int& client_socket)
     request += string(buffer, bytesRead);
     req.set_headerInfos(request);
 
+    req._header = request;
+
     /**
      * At this point, the request can either be GET, POST or DELETE
      * - check if it's one of those
@@ -113,18 +115,18 @@ http::parse_request(const int& client_socket)
      *      - DELETE
     */
 
+    std::cout << req;
+
     if ((found = req._uri.find_first_of("?")) != string::npos)
         req.parse_query();
 
-    Log::simple(request, CMAGENTA);
-
-
-    Log::param("Method", req._method);
-    Log::param("Path", req._uri);
-    Log::param("HTTP version", req._httpVersion);
-    Log::param("Content-Length", ft::to_str(req._contentLength));
-    Log::param("Server port", ft::to_str(req._server_port));
-    Log::param("Filename", req._filename);
+    // Log::simple(request, CMAGENTA);
+    // Log::param("Method", req._method);
+    // Log::param("Path", req._uri);
+    // Log::param("HTTP version", req._httpVersion);
+    // Log::param("Content-Length", ft::to_str(req._contentLength));
+    // Log::param("Server port", ft::to_str(req._server_port));
+    // Log::param("Filename", req._filename);
 
     // exit(0);
 
@@ -140,7 +142,7 @@ http::parse_request(const int& client_socket)
         if (bytesRead < 0)
             throw http::ReceiveFailed();
         request += string(buffer, bytesRead);
-        Log::status(ft::to_str(bytesRead) + " bytes read");
+        // Log::status(ft::to_str(bytesRead) + " bytes read");
         if (bytesRead < sizeof(buffer))
             break ;
     }
@@ -153,11 +155,11 @@ http::parse_request(const int& client_socket)
         req.setPayload(body);
     }
 
-    Log::param("Method", req._method);
-    Log::param("Path", req._uri);
-    Log::param("HTTP version", req._httpVersion);
-    Log::param("Content-Length", ft::to_str(req._contentLength));
-    Log::param("Filename", req._filename);
+    // Log::param("Method", req._method);
+    // Log::param("Path", req._uri);
+    // Log::param("HTTP version", req._httpVersion);
+    // Log::param("Content-Length", ft::to_str(req._contentLength));
+    // Log::param("Filename", req._filename);
     // Log::param("Data", req._payload);
     
     return req;
@@ -170,6 +172,7 @@ http::build_response(Request& req, Server& server)
     string              buffer;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
+    (void)server;
 
     /**
      * At this point, I've gathered all informations about the request.
@@ -183,12 +186,12 @@ http::build_response(Request& req, Server& server)
      *      - DELETE --> send uploaded.html
     */
 
-    Log::status("Building response from server: " + server.get_server_name());
+    // Log::status("Building response from server: " + server.get_server_name());
 
     string path = req.getPathToRequestedFile();
 
     // TODO: check if part of allowed paths
-    Log::status("Opening => " + path);
+    // Log::status("Opening => " + path);
 
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
@@ -228,7 +231,7 @@ http::build_response(Request& req, Server& server)
     // HEADER:
     // : Content-Type, Content-Length, Connection
     res._header += res._statusLine;
-    Log::status("URI: " + req._uri);
+    // Log::status("URI: " + req._uri);
     res.set_content_type(req._uri, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
@@ -252,9 +255,9 @@ void http::send_response(int client_socket, http::Response& res)
     if (bytes_sent < 0)
         Log::error("in handleHttpRequest(): send(): No bytes to send");
 
-    std::cout << CGREEN << "••• Bytes transmitted: "
-            << CBOLD << bytes_sent
-            << "/" << res._contentLength << CRESET << std::endl;
+    // std::cout << CGREEN << "••• Bytes transmitted: "
+    //         << CBOLD << bytes_sent
+    //         << "/" << res._contentLength << CRESET << std::endl;
             
     close(client_socket);
 }
@@ -289,7 +292,6 @@ http::Response::set_content_type(string filepath, map<string, string> accepted_t
         _contentType = defaultMime;
     }
     string extension = filepath.substr(dotPosition);
-    Log::status("extension:" + extension);
 
     if (accepted_types.find(extension) != accepted_types.end())
         _contentType = accepted_types[extension];
@@ -464,14 +466,12 @@ http::generate_storageList()
 std::ostream&
 operator<< (std::ostream& os, http::Request& rhs)
 {
-    string raw((char*)rhs._raw);
     string curr;
-    stringstream ss(raw);
+    stringstream ss(rhs._header);
 
-    os << CBLUE CBOLD << "\n---\n| Request " << CRESET
-       << CYELLOW << std::this_thread::get_id() << CRESET << std::endl;
+    os << CBLUE CBOLD << "\nREQUEST\n" << CRESET;
     while (std::getline(ss, curr)) {
-        os << CBLUE << "> " << CRESET << curr << std::endl;
+        os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
     }
     return os;
 }
@@ -483,8 +483,9 @@ operator<< (std::ostream& os, http::Response& rhs)
     string currentLine;
     stringstream ss(content);
     
+    os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET; 
     while (std::getline(ss, currentLine))
-        os << CGREEN << "< " << CRESET << currentLine << std::endl;
+        os << CGREEN << "<< " << CRESET << currentLine << std::endl;
     return os;
 }
 
@@ -685,7 +686,6 @@ http::Request::getPathToRequestedFile()
     if (_method == "GET")
     {
         if (_uri == "/") {
-            Log::status(">>> Here");
             _uri = "/index.html";
             path += _uri;
         }
