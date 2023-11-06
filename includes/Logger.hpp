@@ -5,9 +5,12 @@
     #include <vector>
     #include <map>
 
+    #include "Utils.hpp"
+
     using std::string;
     using std::vector;
     using std::map;
+
 
     typedef map< string, map<string, vector<string> > >          LocationMap;
     typedef vector< LocationMap > LocationsList;
@@ -28,72 +31,25 @@
         private:
             //
         public:
-            static void status(std::string msg) {
-            std::cout << std::endl << CYELLOW CBOLD
-                      << "◌" 
-                      << " " << msg << " " << CRESET << std::endl;
-            }
+            static void status(std::string msg);
 
-            static void error(std::string msg) {
-            std::cerr << std::endl << CRED CBOLD
-                      << "✗ error: " << CRESET 
-                    << msg << " " << std::endl;
+            static void listening(std::string host, int port, std::string server_name);
 
-            }
+            static void error(std::string msg);
 
-            static void param(std::string title, std::string msg) {
-            std::cout << std::endl << CMAGENTA CBOLD
-                      << ">>> " << title << CRESET 
-                    << ": " << msg << std::endl;
+            static void param(std::string title, std::string msg);
 
-            }
+            static void simple(std::string msg, std::string color);
 
-            static void simple(std::string msg, std::string color) {
-            std::cout << std::endl << color << CBOLD
-                      << msg << CRESET 
-                      << std::endl;
+            static int out(std::string msg);
 
-            }
+            static int warn(std::string msg);
 
-            static int out(std::string msg) {
-                std::cerr << CRED CBOLD
-                          << "✗ error: " << msg << CRESET;
-                perror("");
-                return -1;
-            }
+            static int success(std::string msg);
 
-            static int warn(std::string msg) {
-                std::cerr << std::endl << CYELLOW CBOLD
-                          << "⚠️ warning: " << CRESET
-                          << msg << std::endl;
-                return -1;
-            }
+            static int mark(std::string msg);
 
-            static int success(std::string msg) {
-                std::cout << std::endl << CGREEN CBOLD
-                          << "✔ " << CRESET
-                          << msg << std::endl;
-                return -1;
-            }
-
-            static int mark(std::string msg) {
-                std::cout << std::endl << CMAGENTA CBOLD
-                          << "# " << CRESET
-                          << msg << std::endl;
-                return -1;
-            }
-
-            static void ltree(LocationsList& ll) {
-                LocationsList::iterator ll_it = ll.begin();
-                while (ll_it != ll.end()) {
-                    LocationMap::iterator lm_it = (*ll_it).begin() ;
-                    while (lm_it != (*ll_it).end()) {
-                        Log::mark((*lm_it).first);
-                        lm_it++;
-                    }
-                    ll_it++;
-                }
-            }
+            static void ltree(LocationsList ll);
 
             template <typename T, typename K>
             static void pairs(T key, K pair) {

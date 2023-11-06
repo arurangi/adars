@@ -20,7 +20,7 @@ Server::operator= (Server& rhs)
     this->_port = rhs._port;
     this->_root = rhs._root;
     this->_storage_dir = rhs._storage_dir;
-    this->_locations = rhs._locations;
+    this->_locations = rhs.get_locations();
     this->_error_pages = rhs._error_pages;
     this->_request_body_size_limit = rhs._request_body_size_limit;
     this->_index = rhs._index;
@@ -93,11 +93,17 @@ Server::setup(int domain, int service, int protocol, int backlog)
     }
     
     /*************************************************************/
-    /* Add server name to hosts                                  */
+    /* Link server_name to host (IP address) : local DNS lookup  */
     /*************************************************************/
-    // TODO: add `server_name` to /etc/hosts
+    std::ofstream hostsfile("/etc/hosts", std::ofstream::app);
+    if (hostsfile.is_open()) {
+        hostsfile <<  _host + " " + _server_name << std::endl;
+        hostsfile.close();
+    } else {
+        Log::out("Couldn't link server_name to host");
+    }
 
-    Log::status("Listening on " + _host + ":" + ft::to_str(_port)); // TODO: add correct address
+    Log::listening(_host, _port, _server_name);
     // Log::mark(_root);
     // Log::ltree(_locations);
 }

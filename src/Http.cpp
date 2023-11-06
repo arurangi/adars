@@ -186,6 +186,8 @@ http::build_response(Request& req, Server& server)
      *      - DELETE --> send uploaded.html
     */
 
+    Log::ltree(server.get_locations());
+
     // Log::status("Building response from server: " + server.get_server_name());
 
     string path = req.getPathToRequestedFile();
@@ -265,8 +267,10 @@ void http::send_response(int client_socket, http::Response& res)
 void
 http::Request::save_payload(string storageDir)
 {
+    Log::status("save_payload()..");
     if (_method == "POST") {
         string path = storageDir + _filename; // TODO: prefix with _storage_dir
+        Log::status("filepath: " + path);
         std::ofstream outputFile(path, std::ios::binary);
         if (outputFile) {
             outputFile.write(_payload.c_str(), _payload.size());
