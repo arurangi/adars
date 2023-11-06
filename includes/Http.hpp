@@ -62,6 +62,8 @@
     #define HTTP_NOT_MODIFIED "304"
     #define HTTP_INTERNAL_SERVER_ERROR "500"
 
+    #define DEFAULT_INDEX "index.html"
+
     #define QUERY_SPACE "%20"
 
     using std::string;
@@ -94,7 +96,6 @@
                 void    set_status(string code);
                 string  get_gmt_time();
                 void    reset();
-                void    set_content_type(string filepath, map<string, string> accepted_types);
         };
 
         class Request {
@@ -143,10 +144,11 @@
         Response    build_response(Request& req, Server& server);
         void        send_response(int client_socket, Response& res);
 
-        map<string, string> get_mime_types(std::string mimesFilePath);
-        string generate_directoryPage(string uri);
-        std::string generate_errorPage(/* give it code, returns string w/body */);
-        std::string generate_storageList();
+        map<string, string> load_mimeTypes(std::string mimesFilePath);
+        string              get_mimeType(string filepath, map<string, string> accepted_types);
+        string              generate_directoryPage(string uri);
+        std::string         generate_errorPage(/* give it code, returns string w/body */);
+        std::string         generate_storageList();
 
         
         class AcceptFailed : public std::exception {

@@ -97,6 +97,10 @@
             string          get_server_name() const { return _server_name; }
             string          get_storage_dir() const { return _storage_dir; }
             LocationsList   get_locations() { return _locations; }
+            string          get_root() { return _root; }
+
+            LocationsList::iterator lbegin();
+            LocationsList::iterator lend();
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////

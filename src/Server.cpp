@@ -127,6 +127,15 @@ int Server::get_port()
     return _port;
 }
 
+LocationsList::iterator Server::lbegin()
+{
+    return _locations.begin();
+}
+LocationsList::iterator Server::lend()
+{
+    return _locations.end();
+}
+
 /* --------------------------------- Setters -------------------------------- */
 
 void Server::set_location(LocationsList locations)

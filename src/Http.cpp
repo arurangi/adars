@@ -169,9 +169,9 @@ http::Response
 http::build_response(Request& req, Server& server)
 {
     Response            res;
-    string              buffer;
+    string              buffer, path;
     std::ifstream       requestedFile;
-    map<string, string> mimeTypes = http::get_mime_types("./conf/mime.types");
+    map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
     (void)server;
 
     /**
@@ -186,14 +186,65 @@ http::build_response(Request& req, Server& server)
      *      - DELETE --> send uploaded.html
     */
 
-    Log::ltree(server.get_locations());
+    Log::mark("uri: " + req._uri);
 
-    // Log::status("Building response from server: " + server.get_server_name());
+    if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
+        path = req.getPathToRequestedFile();
+    } else {
+        bool found = false;
+        string root = server.get_root();
+        string index = "";
+        LocationsList::iterator v = server.lbegin();
+        for (; v != server.lend() && !found; v++) {
+            LocationMap::iterator m = (*v).begin();
+            for (; m != (*v).end() && !found; m++) {
+                // m.first is a string of the location path
+                string location_path = (*m).first; /* ANCHOR */
+                Log::mark("location_path: " + location_path);
+                if (req._uri == location_path)
+                {
+                    found = true; Log::success(req._uri);
 
-    string path = req.getPathToRequestedFile();
+                    // TODO: 
+                    // 1) define root directory, if not specified take from server
+                    // 2) append index file to root
 
-    // TODO: check if part of allowed paths
-    // Log::status("Opening => " + path);
+                    // m.second is a map of the location directives
+                    map<string, vector<string> > directives = (*m).second;
+                    if (directives.find("root") != directives.end()) {
+                        root = directives["root"][0];
+                    } else {
+                        root = server.get_root();
+                    }
+
+                    if (directives.find("index") != directives.end()) {
+                        index = directives["index"][0];
+                    } else {
+                        index = DEFAULT_INDEX;
+                    }
+
+                    map<string, vector<string> >::iterator d = directives.begin();
+                    for (; d != directives.end(); d++) {
+
+                        // In curr location contex: curr directive type & its settings
+                        string          type        = (*d).first; /* ANCHOR */
+                        vector<string>  settings    = (*d).second; /* ANCHOR */
+                    }
+                }
+
+            }
+        }
+
+        ////////////////////////////////////////////////////////////////////////////
+
+        if (found) {
+            path = root + "/" + index;
+        } else {
+            Log::error("Location not found");
+            res.set_status("404"); // NOT FOUND
+            path = root + "/" + "404.html";
+        }
+    }
 
     requestedFile.open(path, std::ios::in);
     if (!requestedFile.is_open()) {
@@ -233,8 +284,8 @@ http::build_response(Request& req, Server& server)
     // HEADER:
     // : Content-Type, Content-Length, Connection
     res._header += res._statusLine;
-    // Log::status("URI: " + req._uri);
-    res.set_content_type(req._uri, mimeTypes);
+    // Log
+    res._contentType = get_mimeType(path, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
@@ -283,27 +334,26 @@ http::Request::save_payload(string storageDir)
     _uri = "/";
 }
 
-////////////////////////////////////////////////////////////////////////////
-
-void
-http::Response::set_content_type(string filepath, map<string, string> accepted_types)
+/////////////////////////////////////////////////////////////////////////
+string
+http::get_mimeType(string filepath, map<string, string> accepted_types)
 {
     string defaultMime = "application/octet-stream";
 
     size_t dotPosition = filepath.find_last_of(".");
     if (dotPosition == string::npos) {
         Log::error("Can't identify MIME type: No extension.");
-        _contentType = defaultMime;
+        return defaultMime;
     }
     string extension = filepath.substr(dotPosition);
 
     if (accepted_types.find(extension) != accepted_types.end())
-        _contentType = accepted_types[extension];
-    // return "text/html";
+        return accepted_types[extension];
+    return defaultMime; //"text/html";
 }
 
 std::map<string, string>
-http::get_mime_types(string mimesFilePath) {
+http::load_mimeTypes(string mimesFilePath) {
     std::map<string, string> tmp;
     string line, key, value;
     std::ifstream mimeFile;

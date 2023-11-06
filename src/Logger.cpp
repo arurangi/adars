@@ -66,7 +66,7 @@ Log::success(std::string msg) {
 
 int 
 Log::mark(std::string msg) {
-    std::cout << std::endl << CMAGENTA CBOLD
+    std::cout << CMAGENTA CBOLD
                 << "# " << CRESET
                 << msg << std::endl;
     return -1;
