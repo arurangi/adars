@@ -16,8 +16,15 @@
           <li><a href="form.html">Form</a></li>
       </ul>
     </nav>
-    <h1>Welcome!</h1>
-    <h2>I'm ADARS, a tiny web server at your service.</h2>
-    <img class="cover" src="images/211112_deepthought_wireframe.jpg" alt="">
+    <form action="/cgi/cgi_script.py" enctype="multipart/form-data" method="post">
+		<label for="">
+			Enter your name:
+			<input type="text">
+		</label>
+		<label class="btn_submit" id="btn_submit">
+			<input type="submit" value="send_form">
+			Submit
+		</label>
+	</form>
 </body>
 </html>

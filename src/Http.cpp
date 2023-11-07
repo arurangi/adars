@@ -67,7 +67,8 @@ int http::accept_connection(int serverSocket)
 void
 http::handle_request(int client_socket, Cluster& cluster)
 {
-    Request req = http::parse_request(client_socket);        
+    Request req = http::parse_request(client_socket);
+    Log::status("HERE");
     Server server = cluster.getServerByPort(req._server_port);
     req.execute(req, server.get_storage_dir());
     Response res = http::build_response(req, server);
@@ -179,9 +180,12 @@ http::parse_request(const int& client_socket)
 
     std::cout << req;
 
+    Log::status("Before parsing query");
+
     if ((found = req._uri.find_first_of("?")) != string::npos)
         req.parse_query();
 
+    Log::status("After parsing query");
     // Log::simple(request, CMAGENTA);
     // Log::param("Method", req._method);
     // Log::param("Path", req._uri);
@@ -199,6 +203,7 @@ http::parse_request(const int& client_socket)
     
     req.setReferer(request);
 
+    Log::status("Before reading for second time");
     while (1) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
@@ -208,14 +213,17 @@ http::parse_request(const int& client_socket)
         if (bytesRead < sizeof(buffer))
             break ;
     }
+    Log::status("After reading");
 
     // Log::simple(request, CYELLOW);
 
+    Log::status("Before body");
     if ((found = request.find(CRLFCRLF)) != string::npos) {
         string body = request.substr(found + CRLF_SIZE);
         req.setFilename(body);
         req.setPayload(body);
     }
+    Log::status("After body");
 
     // Log::param("Method", req._method);
     // Log::param("Path", req._uri);

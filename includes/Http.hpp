@@ -108,6 +108,8 @@
                 string  _header;
                 char    _body[BUFFER_SIZE];
 
+                map<string, string> _formData;
+
                 int     _contentLength;
                 char    _raw[BUFFER_SIZE];
                 string  _referer;
