@@ -67,15 +67,24 @@ int http::accept_connection(int serverSocket)
 void
 http::handle_request(int client_socket, Cluster& cluster)
 {
-    Request req = http::parse_request(client_socket);
+    Request req = http::parse_request(client_socket);        
     Server server = cluster.getServerByPort(req._server_port);
-    req.execute(server.get_storage_dir());
+    req.execute(req, server.get_storage_dir());
     Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
 }
 
+bool    http::check_cgi(Request &req)
+{
+    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
+    {
+        return true;
+    }
+    return false;
+}
+
 void
-http::Request::execute(string storageDir) {
+http::Request::execute(Request& req, string storageDir) {
     if (_method == "POST" && _contentLength > 0)
         save_payload(storageDir);
     if (_method == "DELETE") {
@@ -86,6 +95,59 @@ http::Request::execute(string storageDir) {
             remove(filepath.c_str());
         }
     }
+    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
+    {
+        req._cgiContent = handle_cgi(req);
+        std::cout << "here :";
+        std::cout << req._cgiContent << std::endl;
+    }
+}
+
+string
+http::handle_cgi(Request &req)
+{
+    int stdin_pipe[2];
+    int stdout_pipe[2];
+    string tmp = "." + req._uri;
+    string final;
+
+    const char *cmd = tmp.c_str();
+
+    if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0)
+    {
+        Log::error("in pipes");
+        return NULL;
+    }
+    pid_t child_pid = fork();
+    if (child_pid < 0)
+        Log::error("Fork failed");
+    else if (child_pid == 0)
+    {
+        dup2(stdin_pipe[0], 0);
+        close(stdin_pipe[0]);
+        close(stdin_pipe[1]);
+
+        dup2(stdout_pipe[1], 1);
+        close(stdout_pipe[0]);
+        close(stdout_pipe[1]);
+
+        execve(cmd, NULL, NULL);
+    } else {
+        close(stdin_pipe[0]);
+        close(stdin_pipe[1]);
+        close(stdout_pipe[1]);
+
+        char buffer[1024];
+        ssize_t bytes;
+
+        while ((bytes = read(stdout_pipe[0], buffer, sizeof(buffer))) > 0)
+        {
+            write(STDOUT_FILENO, buffer, bytes);
+        }
+        close(stdout_pipe[0]);
+        final = buffer;
+    }
+    return final;
 }
 
 http::Request
@@ -187,8 +249,15 @@ http::build_response(Request& req, Server& server)
     */
 
     Log::mark("uri: " + req._uri);
-
-    if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
+    if (!req._cgiContent.empty()) {
+        res._body = req._cgiContent;
+        res._body += '\0';
+        res._contentLength = res._body.size();
+        res._contentType = "text/html";
+        req._uri = "./public/index.html";
+        path = "./public/index.html";
+    }
+    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
         path = req.getPathToRequestedFile();
     } else {
         bool found = false;
@@ -245,34 +314,35 @@ http::build_response(Request& req, Server& server)
             path = root + "/" + "404.html";
         }
     }
-
-    requestedFile.open(path, std::ios::in);
-    if (!requestedFile.is_open()) {
-        Log::out("Can't open :" + path);
-        res.set_status(HTTP_NOT_FOUND);
-        if (AUTOINDEX == ON) {
-            req._uri = ".html";
-            res._body = http::generate_directoryPage(path);
-        }
-        else {
-            req._uri = "/404.html";
-            res._body = generate_errorPage();
-        }
-    } else {
-        //////////////////////////////////////////////////////
-        // BODY
-        // : store content in `response._body`
-        res._body = ""; // get_ressource()
-        while (std::getline(requestedFile, buffer)) {
-            if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos) {
-                res._body += generate_storageList();
+    if (req._cgiContent.empty()) {
+        requestedFile.open(path, std::ios::in);
+        if (!requestedFile.is_open()) {
+            Log::out("Can't open :" + path);
+            res.set_status(HTTP_NOT_FOUND);
+            if (AUTOINDEX == ON) {
+                req._uri = ".html";
+                res._body = http::generate_directoryPage(path);
             }
-            res._body += buffer + "\n";
+            else {
+                req._uri = "/404.html";
+                res._body = generate_errorPage();
+            }
+        } else {
+            //////////////////////////////////////////////////////
+            // BODY
+            // : store content in `response._body`
+            res._body = ""; // get_ressource()
+            while (std::getline(requestedFile, buffer)) {
+                if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos) {
+                    res._body += generate_storageList();
+                }
+                res._body += buffer + "\n";
+            }
+            res._body += '\0';
+            requestedFile.close();
         }
-        res._body += '\0';
-        requestedFile.close();
+        res._contentLength = res._body.size();
     }
-    res._contentLength = res._body.size();
 
     ////////////////////////////////////////////////////
     // STATUS_LINE

@@ -118,6 +118,8 @@
                 string  _payload;
 
                 string  _status;
+
+                string _cgiContent;
         
                 Request();
                 ~Request();
@@ -132,7 +134,7 @@
                 void    setFilename(string& body);
                 void    setPayload(string& body);
 
-                void    execute(string storageDir);
+                void    execute(Request& req, string storageDir);
                 void    save_payload(string storageDir);
 
                 string  getPathToRequestedFile();
@@ -143,6 +145,9 @@
         Request     parse_request(const int& client_socket);
         Response    build_response(Request& req, Server& server);
         void        send_response(int client_socket, Response& res);
+
+        bool        check_cgi(Request & req);
+        string      handle_cgi(Request &req);
 
         map<string, string> load_mimeTypes(std::string mimesFilePath);
         string              get_mimeType(string filepath, map<string, string> accepted_types);

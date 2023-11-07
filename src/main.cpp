@@ -18,18 +18,18 @@ int main(int ac, char **av)
     if (data.error.length())
         exit(Log::out(data.error));
 
-    printServerData(data.server_list);
+    //printServerData(data.server_list);
 
-    // Log::success("CONFIGURATION FILE PARSING DONE");
+    Log::success("CONFIGURATION FILE PARSING DONE");
 
-    // try {
-    //     cluster.init(data.server_list);
-    //     Log::success("CLUSTER INITIALIZED");
-    // }
-    // catch (std::exception& e) {
-    //     exit(Log::out(e.what()));
-    // }
-    // cluster.watch();
+    try {
+        cluster.init(data.server_list);
+        Log::success("CLUSTER INITIALIZED");
+    }
+    catch (std::exception& e) {
+        exit(Log::out(e.what()));
+    }
+    cluster.watch();
 
     return EXIT_SUCCESS;
 }
