@@ -68,39 +68,34 @@ void
 http::handle_request(int client_socket, Cluster& cluster)
 {
     Request req = http::parse_request(client_socket);
-    Log::status("HERE");
     Server server = cluster.getServerByPort(req._server_port);
     req.execute(req, server.get_storage_dir());
     Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
 }
 
-bool    http::check_cgi(Request &req)
-{
-    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
-    {
-        return true;
-    }
-    return false;
-}
-
 void
 http::Request::execute(Request& req, string storageDir) {
-    if (_method == "POST" && _contentLength > 0)
+
+    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
+    {
+        Log::status("Execution: processing CGI");
+        req._cgiContent = handle_cgi(req);
+        std::cout << req._cgiContent << std::endl;
+    }
+    if (_method == "POST" && _contentLength > 0) {
+        Log::status("Execution: saving payload to storage");
         save_payload(storageDir);
+        _uri = "/storage";
+    }
     if (_method == "DELETE") {
+        Log::status("Execution: deleting files from storage");
         string filename = _queryParameters["name"];
         string filepath = storageDir + filename;
         if (ft::startswith(filepath, "./public/")) {
             Log::status(">>>>>>>>> deleting file at: " + filepath + "<<<<<<<<<<<\n");
             remove(filepath.c_str());
         }
-    }
-    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
-    {
-        req._cgiContent = handle_cgi(req);
-        std::cout << "here :";
-        std::cout << req._cgiContent << std::endl;
     }
 }
 
@@ -155,18 +150,20 @@ http::Request
 http::parse_request(const int& client_socket)
 {
     Request req;
-    char    buffer[1024];
+    char    buffer[BUFFER_SIZE];
     string  request;
     size_t  found;
     size_t  bytesRead;
 
+    /////// READ HEADER //////////
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
     if (bytesRead < 0)
         throw http::ReceiveFailed();
     request += string(buffer, bytesRead);
-    req.set_headerInfos(request);
 
     req._header = request;
+    req.set_headerInfos(request);
+    req.parse_query();
 
     /**
      * At this point, the request can either be GET, POST or DELETE
@@ -180,57 +177,25 @@ http::parse_request(const int& client_socket)
 
     std::cout << req;
 
-    Log::status("Before parsing query");
-
-    if ((found = req._uri.find_first_of("?")) != string::npos)
-        req.parse_query();
-
-    Log::status("After parsing query");
-    // Log::simple(request, CMAGENTA);
-    // Log::param("Method", req._method);
-    // Log::param("Path", req._uri);
-    // Log::param("HTTP version", req._httpVersion);
-    // Log::param("Content-Length", ft::to_str(req._contentLength));
-    // Log::param("Server port", ft::to_str(req._server_port));
-    // Log::param("Filename", req._filename);
-
-    // exit(0);
-
     if (req._method != "POST")
         return req;
 
     /////// POST REQUESTS //////////
     
-    req.setReferer(request);
-
-    Log::status("Before reading for second time");
-    while (1) {
+    while (bytesRead >= BUFFER_SIZE) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
             throw http::ReceiveFailed();
         request += string(buffer, bytesRead);
-        // Log::status(ft::to_str(bytesRead) + " bytes read");
         if (bytesRead < sizeof(buffer))
             break ;
     }
-    Log::status("After reading");
 
-    // Log::simple(request, CYELLOW);
-
-    Log::status("Before body");
     if ((found = request.find(CRLFCRLF)) != string::npos) {
         string body = request.substr(found + CRLF_SIZE);
         req.setFilename(body);
         req.setPayload(body);
     }
-    Log::status("After body");
-
-    // Log::param("Method", req._method);
-    // Log::param("Path", req._uri);
-    // Log::param("HTTP version", req._httpVersion);
-    // Log::param("Content-Length", ft::to_str(req._contentLength));
-    // Log::param("Filename", req._filename);
-    // Log::param("Data", req._payload);
     
     return req;
 }
@@ -242,7 +207,6 @@ http::build_response(Request& req, Server& server)
     string              buffer, path;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
-    (void)server;
 
     /**
      * At this point, I've gathered all informations about the request.
@@ -685,6 +649,7 @@ http::Request::set_headerInfos(string& header_raw)
 {
     stringstream ss(header_raw);
     string method, path, version, line;
+    size_t found;
     
     // status line
     ss >> method >> path >> version;
@@ -715,7 +680,13 @@ http::Request::set_headerInfos(string& header_raw)
             string port = host.substr(host.find_last_of(":")+1);
             this->_server_port = std::atoi(port.c_str());
         }
-
+        keyword = "Referer: ";
+        if (line.find(keyword) != string::npos) {
+            if ((found = line.find_last_of("/")) != string::npos)
+                this->_referer = line.substr(found);
+            else
+                this->_referer = "/index.html";
+        }
     }
 
 }
@@ -757,6 +728,8 @@ void    http::Request::parse_query()
     string query, parameter, key, value, toReplace = "%20";
     stringstream ss;
 
+    if (_uri.find_first_of("?") == string::npos)
+        return ;
     pos = _uri.find_first_of("?");
     query = _uri.substr(
         pos+1,
@@ -775,25 +748,6 @@ void    http::Request::parse_query()
             key = parameter.substr(0, pos);
             value = parameter.substr(pos+1, parameter.size());
             _queryParameters[key] = value;
-        }
-    }
-}
-
-void
-http::Request::setReferer(string header)
-{
-    stringstream ss(header);
-    string line;
-    size_t found;
-
-    while (std::getline(ss, line)) {
-        string keyword = "Referer: ";
-        if (line.find(keyword) != string::npos) {
-            if ((found = line.find_last_of("/")) != string::npos)
-                this->_referer = line.substr(found);
-            else
-                this->_referer = "/index.html";
-            break ;
         }
     }
 }

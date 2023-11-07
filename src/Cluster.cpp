@@ -100,6 +100,7 @@ Cluster::watch()
                     try { /* recv() & write() */
                         http::handle_request(curr_fd, *this);
                     } catch(std::exception& e) {
+                        Log::error("Caught error");
                         close(curr_fd);
                         if (std::strncmp(e.what(), "Empty request", 13) != 0)
                             Log::warn(e.what());

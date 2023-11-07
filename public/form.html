@@ -16,15 +16,12 @@
           <li><a href="form.html">Form</a></li>
       </ul>
     </nav>
-    <form action="/cgi/cgi_script.py" enctype="multipart/form-data" method="post">
-		<label for="">
-			Enter your name:
-			<input type="text">
-		</label>
-		<label class="btn_submit" id="btn_submit">
-			<input type="submit" value="send_form">
-			Submit
-		</label>
-	</form>
+    <form action="/cgi/cgi_script.py" method="POST">
+      <label for="name">
+        Enter your name:
+        <input name="name" type="text">
+      </label>
+      <button>Send form</button>
+	  </form>
 </body>
 </html>
