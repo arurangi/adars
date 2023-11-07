@@ -35,6 +35,8 @@ class Config
         void    check_validity(Data &wbsv_data);
         void    server_data(Data &wbsv_data);
         void    valid_listen(Data &wbsv_data, std::string value);
+        void    valid_name(Data &wbsv_data, std::string value);
+        void    valid_host(Data &wbsv_data, std::string value);
         void    valid_body(Data &wbsv_data, map_vector_it server_data_it);
         void    check_one_arg(Data &wbsv_data, map_vector_it server_data_it);
         void    server_location(Data &wbsv_data);

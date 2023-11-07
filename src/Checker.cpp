@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Checker.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adamkorompai <adamkorompai@student.42.f    +#+  +:+       +#+        */
+/*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/10/30 18:42:05 by adamkorompa      ###   ########.fr       */
+/*   Updated: 2023/11/07 09:55:48 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,10 @@ void    Config::server_data(Data &wbsv_data)
             {
                 if (server_data_it->first == "listen")
                     valid_listen(wbsv_data, (*value_it));
+                else if (server_data_it->first == "server_name")
+                    valid_name(wbsv_data, (*value_it));
+                else if (server_data_it->first == "host")
+                    valid_host(wbsv_data, (*value_it));
                 else if (server_data_it->first == "client_max_body_size")
                     valid_body(wbsv_data, server_data_it);
                 else if (server_data_it->first == "root")
@@ -41,6 +45,27 @@ void    Config::server_data(Data &wbsv_data)
                 else if (server_data_it->first == "index")
                     check_one_arg(wbsv_data, server_data_it);           
            }
+        }
+    }
+}
+
+void    Config::valid_host(Data &wbsv_data, std::string value)
+{
+    if (value != "127.0.0.1")
+    {
+        wbsv_data.error = "Webserv: wrong host in \"";
+        wbsv_data.error += value + "\" of the \"host\" directive in " + this->filename;
+    }
+}
+
+void    Config::valid_name(Data &wbsv_data, std::string value)
+{
+    for (std::string::size_type i = 0; i < value.length(); i++)
+    {
+        if (!std::isalpha(value[i]))
+        {
+            wbsv_data.error = "Webserv: wrong server_name in \"";
+            wbsv_data.error += value + "\" of the \"server_name\" directive in " + this->filename;    
         }
     }
 }
@@ -58,26 +83,18 @@ void    Config::valid_listen(Data &wbsv_data, std::string value)
     status = value.find_first_not_of(IP_NUM);
     if (status != -1)
     {
-        wbsv_data.error = "Webserv: host not found in \"";
+        wbsv_data.error = "Webserv: port not found in \"";
         wbsv_data.error += value + "\" of the \"listen\" directive in " + this->filename;
     }
     else if ((status = value.find(":")) != -1)
     {
-        host = value.substr(0, value.find(":"));
-        port = value.substr(value.find(":") + 1, value.length() - 1);
-        if (getaddrinfo(host.c_str(), port.c_str(), &hints, &res) != 0)
-        {
-            wbsv_data.error = "Webserv: host not found in \"" + value + "\" of the \"listen\" directive in ";
-            wbsv_data.error += this->filename;
-        }
+        wbsv_data.error = "Webserv: port not found in \"" + value + "\" of the \"listen\" directive in ";
+        wbsv_data.error += this->filename;
     }
     else if ((status = value.find(".")) != -1)
     {
-        if (getaddrinfo(value.c_str(), NULL, &hints, &res) != 0)
-        {
-            wbsv_data.error = "Webserv: host not found in \"" + value + "\" of the \"listen\" directive in ";
-            wbsv_data.error += this->filename;
-        }
+        wbsv_data.error = "Webserv: port not found in \"" + value + "\" of the \"listen\" directive in ";
+        wbsv_data.error += this->filename;
     }
     else
     {

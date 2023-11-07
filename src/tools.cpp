@@ -70,9 +70,9 @@ void    printServerData(Serv_list server_list)
         std::cout << "Server " << id << " :" << std::endl;
         for (map_vector_it server_data_it = it->server_data.begin(); server_data_it != it->server_data.end(); ++server_data_it)
         {
-            std::cout << "Key : " << server_data_it->first << " ";
+            std::cout << RED << "Key : " << END_CLR << server_data_it->first << " ";
             for (std::vector<std::string>::iterator value_it = server_data_it->second.begin(); value_it != server_data_it->second.end(); value_it++)
-                std::cout << "Value : " << (*value_it) << " ";
+                std::cout << RED << "Value : " << END_CLR << (*value_it) << " ";
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -93,5 +93,6 @@ void    printServerData(Serv_list server_list)
                 std::cout << std::endl;
             }
         }
+        id++;
     }
 }
