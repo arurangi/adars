@@ -77,18 +77,19 @@ http::handle_request(int client_socket, Cluster& cluster)
 void
 http::Request::execute(Request& req, string storageDir) {
 
-    if (ft::startswith(req._uri, "/cgi/") && ft::endswith(req._uri, ".py"))
+    if (ft::startswith(req._uri, "/cgi-bin/") && ft::endswith(req._uri, ".py"))
     {
         Log::status("Execution: processing CGI");
+        req._cgiContent = "not empty";
         req._cgiContent = handle_cgi(req);
         std::cout << req._cgiContent << std::endl;
     }
-    if (_method == "POST" && _contentLength > 0) {
+    else if (_method == "POST" && _contentLength > 0) {
         Log::status("Execution: saving payload to storage");
         save_payload(storageDir);
         _uri = "/storage";
     }
-    if (_method == "DELETE") {
+    else if (_method == "DELETE") {
         Log::status("Execution: deleting files from storage");
         string filename = _queryParameters["name"];
         string filepath = storageDir + filename;
@@ -99,52 +100,35 @@ http::Request::execute(Request& req, string storageDir) {
     }
 }
 
-string
-http::handle_cgi(Request &req)
-{
-    int stdin_pipe[2];
-    int stdout_pipe[2];
-    string tmp = "." + req._uri;
-    string final;
+// string
+// http::handle_cgi(Request &req)
+// {
+//     std::string path;
+//     std::string exten;
+//     size_t      pos;
+//     int         _cgiFd[2];
 
-    const char *cmd = tmp.c_str();
+//     path = req._uri;
 
-    if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0)
-    {
-        Log::error("in pipes");
-        return NULL;
-    }
-    pid_t child_pid = fork();
-    if (child_pid < 0)
-        Log::error("Fork failed");
-    else if (child_pid == 0)
-    {
-        dup2(stdin_pipe[0], 0);
-        close(stdin_pipe[0]);
-        close(stdin_pipe[1]);
+//     if (path[0] && path[0] == '/')
+//         path.erase(0, 1);
+//     pos = path.find(".");
+//     if (pos == std::string::npos)
+//         return NULL;
+//     exten = path.substr(pos);
+//     if (exten != ".py")
+//         return NULL;
+//     if (access(path.c_str(), 1) == -1 || access(path.c_str(), 3) == -1)
+//         return NULL;
+//     if (pipe(_cgiFd) < 0)
+//     {
+//         return NULL;
+//     }
 
-        dup2(stdout_pipe[1], 1);
-        close(stdout_pipe[0]);
-        close(stdout_pipe[1]);
-
-        execve(cmd, NULL, NULL);
-    } else {
-        close(stdin_pipe[0]);
-        close(stdin_pipe[1]);
-        close(stdout_pipe[1]);
-
-        char buffer[1024];
-        ssize_t bytes;
-
-        while ((bytes = read(stdout_pipe[0], buffer, sizeof(buffer))) > 0)
-        {
-            write(STDOUT_FILENO, buffer, bytes);
-        }
-        close(stdout_pipe[0]);
-        final = buffer;
-    }
-    return final;
-}
+    
+    
+//     return "LOL";
+// }
 
 http::Request
 http::parse_request(const int& client_socket)
@@ -735,6 +719,7 @@ void    http::Request::parse_query()
         pos+1,
         (_uri.find("#") != string::npos) ? _uri.find_first_of("#") : _uri.size()
     );
+    _querystr = query;
     _uri = _uri.substr(0, pos); // remove query string from URI
 
     // remove %20 in query string

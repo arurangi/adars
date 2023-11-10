@@ -115,6 +115,7 @@
                 string  _referer;
                 int     _server_port;
                 map<string, string> _queryParameters;
+                string              _querystr;
 
                 string  _filename;
                 string  _payload;
