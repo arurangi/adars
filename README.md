@@ -1,6 +1,8 @@
 # About [in progress]
 This project is about building an HTTP server from scratch (without libraries) in C/C++.
 
+![Alt Text](.documentation/walkthrough.gif)
+
 ## Objectives
 ### Client (browser)
 1. go to ``localhost:<port>/index.html`` and see the home page with its corresponding CSS
