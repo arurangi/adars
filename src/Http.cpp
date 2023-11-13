@@ -119,8 +119,8 @@ void    http::Request::initEnv(Request &req)
     {
         std::stringstream out;
         out << req._body;
-		this->_env["CONTENT_LENGTH"] = "640";
-		this->_env["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
+		this->_env["CONTENT_LENGTH"] = this->_contentLengthStr;
+		this->_env["CONTENT_TYPE"] = this->_contentType;
     }
     this->_env["QUERY_STRING"] = req._querystr;
     this->_env["SCRIPT_NAME"] = "." + req._uri;
@@ -180,7 +180,7 @@ string    http::Request::execute(Request &req)
 
         if (req._method == "POST")
         {
-            write(pipe_in[1], "name=Lorem+ipsum+dolor+sit+amet%2C+consectetur+adipiscing+elit.+Sed+do+eiusmod+tempor+incididunt+ut+labore+et+dolore+magna+aliqua.+Ut+enim+ad+minim+veniam%2C+quis+nostrud+exercitation+ullamco+laboris+nisi+ut+aliquip+ex+ea+commodo+consequat.+Duis+aute+irure+dolor+in+reprehenderit+in+voluptate+velit+esse+cillum+dolore+eu+fugiat+nulla+pariatur.+Excepteur+sint+occaecat+cupidatat+non+proident%2C+sunt+in+culpa+qui+officia+deserunt+mollit+anim+id+est+laborum.+Curabitur+pretium+tincidunt+lacus.+Nulla+gravida+orci+a+odio.+Nullam+varius%2C+turpis+et+commodo+pharetra%2C+est+eros+bibendum+elit%2C+nec+luctus+magna+felis+sollicitudin+mauris.&age=", strlen("name=Lorem+ipsum+dolor+sit+amet%2C+consectetur+adipiscing+elit.+Sed+do+eiusmod+tempor+incididunt+ut+labore+et+dolore+magna+aliqua.+Ut+enim+ad+minim+veniam%2C+quis+nostrud+exercitation+ullamco+laboris+nisi+ut+aliquip+ex+ea+commodo+consequat.+Duis+aute+irure+dolor+in+reprehenderit+in+voluptate+velit+esse+cillum+dolore+eu+fugiat+nulla+pariatur.+Excepteur+sint+occaecat+cupidatat+non+proident%2C+sunt+in+culpa+qui+officia+deserunt+mollit+anim+id+est+laborum.+Curabitur+pretium+tincidunt+lacus.+Nulla+gravida+orci+a+odio.+Nullam+varius%2C+turpis+et+commodo+pharetra%2C+est+eros+bibendum+elit%2C+nec+luctus+magna+felis+sollicitudin+mauris.&age="));
+            write(pipe_in[1], this->_rawBody.c_str(), strlen(this->_rawBody.c_str()));
         }
         close(pipe_in[1]);
 
