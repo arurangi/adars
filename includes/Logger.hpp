@@ -51,6 +51,13 @@
 
             static void ltree(LocationsList ll);
 
+            template <typename T>
+            static void highlight(T data) {
+                std::cout << CYELLOW << "/////////////////////////////\n" CRESET;
+                std::cout << CYELLOW << "$ " << CRESET << data << std::endl;
+                std::cout << CYELLOW << "/////////////////////////////\n" CRESET;
+            }
+
             template <typename T, typename K>
             static void pairs(T key, K pair) {
                 std::cout << CBOLD
