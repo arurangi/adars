@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
+
 import cgi
 
-# Get form data from POST request
-form = cgi.FieldStorage()
-
-# Get values submitted through the form
-name = form.getvalue("name")
-email = form.getvalue("email")
-
-# HTML response
 print("<html>")
 print("<head>")
-print("<title>Form Submission Result</title>")
+print("    <title>Form Submission Result</title>")
 print("</head>")
 print("<body>")
-print("<h1>Form Submission Result</h1>")
-print(f"<p>Name: {name}</p>")
-print("<p>Email: %s</p>" % (email))
+
+# Retrieve form data from the query string
+form = cgi.FieldStorage()
+
+# Get the values submitted in the form
+name = form.getvalue('name')
+email = form.getvalue('email')
+
+# Display the submitted data
+print("<h2>Form Submission Result:</h2>")
+print(f"<p><strong>Name:</strong> {name}</p>")
+print(f"<p><strong>Email:</strong> {email}</p>")
+
 print("</body>")
 print("</html>")

@@ -8,6 +8,7 @@ http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
 
+
 void
 http::Response::reset()
 {
@@ -80,8 +81,10 @@ http::Request::execute(Request& req, string storageDir) {
     if (ft::startswith(req._uri, "/cgi-bin/") && ft::endswith(req._uri, ".py"))
     {
         Log::status("Execution: processing CGI");
-        req._cgiContent = "not empty";
-        req._cgiContent = handle_cgi(req);
+        req._cgiContent = "";
+        handle_cgi(req);
+        size_t pos = req._cgiContent.find_last_of('>');
+        req._cgiContent = req._cgiContent.substr(0, pos + 1);
         std::cout << req._cgiContent << std::endl;
     }
     else if (_method == "POST" && _contentLength > 0) {
@@ -100,35 +103,107 @@ http::Request::execute(Request& req, string storageDir) {
     }
 }
 
-// string
-// http::handle_cgi(Request &req)
-// {
-//     std::string path;
-//     std::string exten;
-//     size_t      pos;
-//     int         _cgiFd[2];
+void http::Request::handle_cgi(Request &req)
+{
+    clear();
+    this->_cgi_path = req._uri;
+    initEnv(req);
+    req._cgiContent = execute();
+}
 
-//     path = req._uri;
+void    http::Request::initEnv(Request &req)
+{
+    std::string cgi_exec = "." + req._uri;
 
-//     if (path[0] && path[0] == '/')
-//         path.erase(0, 1);
-//     pos = path.find(".");
-//     if (pos == std::string::npos)
-//         return NULL;
-//     exten = path.substr(pos);
-//     if (exten != ".py")
-//         return NULL;
-//     if (access(path.c_str(), 1) == -1 || access(path.c_str(), 3) == -1)
-//         return NULL;
-//     if (pipe(_cgiFd) < 0)
-//     {
-//         return NULL;
-//     }
+    if (req._method == "POST")
+    {
+        std::stringstream out;
+        out << req._body;
+		this->_env["CONTENT_LENGTH"] = out.str();
+		this->_env["CONTENT_TYPE"] = "text/html";
+    }
+    this->_env["QUERY_STRING"] = req._querystr;
+    this->_env["SCRIPT_NAME"] = "." + req._uri;
+    this->_env["SCRIPT_FILENAME"] = this->_cgi_path;
+    this->_env["PATH_INFO"] = this->_cgi_path;
+    this->_env["PATH_TRANSLATED"] = this->_cgi_path;
+    this->_env["REQUEST_URI"] = this->_cgi_path;
+    this->_env["SERVER_NAME"] = "127.0.0.1";
+    this->_env["SERVER_PORT"] = "8000";
+    this->_env["REQUEST_METHOD"] = req._method;
+    this->_env["SERVER_PROTOCOL"] = "HTTP/1.1";
+    this->_env["REDIRECT_STATUS"] = "200";
+    this->_env["SERVER_SOFTWARE"] = "ADARS";
 
+    this->_ch_env = (char **)calloc(sizeof(char *), this->_env.size() + 1);
+	std::map<std::string, std::string>::const_iterator it = this->_env.begin();
+	for (int i = 0; it != this->_env.end(); it++, i++)
+	{
+		std::string tmp = it->first + "=" + it->second;
+		this->_ch_env[i] = strdup(tmp.c_str());
+	}
+	this->_argv = (char **)malloc(sizeof(char *) * 3);
+	this->_argv[0] = strdup(cgi_exec.c_str());
+	this->_argv[1] = strdup(this->_cgi_path.c_str());
+	this->_argv[2] = NULL;
+}
+
+string    http::Request::execute()
+{
+    std::string final;
     
-    
-//     return "LOL";
-// }
+    if (this->_argv[0] == NULL || this->_argv[1] == NULL)
+	{
+		return "CACA";
+	}
+	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
+	{
+        Log::status("pipe() failed");
+		return "CACA";
+	}
+	this->_cgi_pid = fork();
+	if (this->_cgi_pid == 0)
+	{
+		dup2(pipe_in[0], 0);
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+
+        dup2(pipe_out[1], 1);
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		this->_exit_status = execve(this->_argv[0], this->_argv, this->_ch_env);
+		exit(this->_exit_status);
+	}
+	else if (this->_cgi_pid > 0){
+        close(pipe_in[0]);
+        close(pipe_out[1]);
+        close(pipe_in[1]);
+
+        char buffer[1024];
+        ssize_t bytes;
+
+        while ((bytes = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
+        {
+            write(STDOUT_FILENO, buffer, bytes);
+        }
+        final = buffer;
+    }
+	else
+	{
+        std::cout << "Fork failed" << std::endl;
+	}
+    return final;
+}
+
+void		http::Request::clear()
+{
+	this->_cgi_pid = -1;
+	this->_exit_status = 0;
+	this->_cgi_path = "";
+	this->_ch_env = NULL;
+	this->_argv = NULL;
+	this->_env.clear();
+}
 
 http::Request
 http::parse_request(const int& client_socket)

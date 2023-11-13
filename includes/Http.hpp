@@ -22,6 +22,8 @@
     #include "Cluster.hpp"
     #include "Html.hpp"
 
+    // class Cgi;
+
     using std::set;
     using std::string;
     using std::map;
@@ -122,8 +124,17 @@
 
                 string  _status;
 
-                string _cgiContent;
-        
+                string                      _cgiContent;
+                std::map<string, string>	_env;
+                std::string					_cgi_path;
+                char						**_ch_env;
+                char 						**_argv;
+                pid_t						_cgi_pid;
+                int							_exit_status;
+
+                int	pipe_in[2];
+		        int	pipe_out[2];
+
                 Request();
                 ~Request();
 
@@ -141,6 +152,11 @@
                 void    save_payload(string storageDir);
 
                 string  getPathToRequestedFile();
+                
+                void    handle_cgi(Request &req);
+                void    initEnv(Request &req);
+                string	execute();
+                void	clear();
         };
 
         int         accept_connection(int serverSocket);
@@ -150,7 +166,6 @@
         void        send_response(int client_socket, Response& res);
 
         bool        check_cgi(Request & req);
-        string      handle_cgi(Request &req);
 
         map<string, string> load_mimeTypes(std::string mimesFilePath);
         string              get_mimeType(string filepath, map<string, string> accepted_types);
