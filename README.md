@@ -1,7 +1,7 @@
 # About [in progress]
 This project is about building an HTTP server from scratch (without libraries) in C/C++.
 
-<img src=".documentation/walkthrough.gif" width="100%" />
+<img src="./.documentation/walkthrough_.gif" width="100%" />
 
 ## Objectives
 ### Client (browser)
