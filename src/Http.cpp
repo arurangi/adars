@@ -218,7 +218,7 @@ http::parse_request(const int& client_socket)
     char    buffer[BUFFER_SIZE];
     string  request;
     size_t  found;
-    size_t  bytesRead;
+    size_t  bytesRead = std::numeric_limits<int>::max();
 
     /////// READ HEADER //////////
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
@@ -227,42 +227,92 @@ http::parse_request(const int& client_socket)
     request += string(buffer, bytesRead);
 
     req._header = request;
-    req.set_headerInfos(request);
-    req.parse_query();
-
-    /**
-     * At this point, the request can either be GET, POST or DELETE
-     * - check if it's one of those
-     * - check if that request is allowed on the server
-     * - handle each request accordingly:
-     *      - GET
-     *      - POST
-     *      - DELETE
-    */
+    req.parse_header(request);
 
     std::cout << req;
 
     if (req._method != "POST")
         return req;
-
-    /////// POST REQUESTS //////////
     
-    while (bytesRead >= BUFFER_SIZE) {
+    while (bytesRead == BUFFER_SIZE) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
             throw http::ReceiveFailed();
         request += string(buffer, bytesRead);
-        if (bytesRead < sizeof(buffer))
-            break ;
     }
 
     if ((found = request.find(CRLFCRLF)) != string::npos) {
-        string body = request.substr(found + CRLF_SIZE);
-        req.setFilename(body);
-        req.setPayload(body);
+        req._body = request.substr(found + CRLF_SIZE);
+
+        Log::status(req._contentType);
+
+        if (req.isMultipartFormData()) {
+            Log::status("Structured body");
+            req.parseStructuredBody();
+        }
+        else {
+            Log::status("Unstructured body");
+            req.parseUnstructuredBody();
+        }
+
+        map<string, string>::iterator it = req._postData.begin();
+        Log::status("////////////////");
+        size_t i = 0;
+        for (; it != req._formData.end() && i < req._postData.size(); it++) {
+            std::cout << (*it).first << ": " << (*it).second << std::endl;
+            i++;
+        }
+        Log::status("////////////////");
+
+        req.setFilename(req._body);
+        req.setPayload(req._body);
     }
     
     return req;
+}
+
+void
+http::Request::parseStructuredBody()
+{
+    stringstream    ss(this->_body);
+    string          currLine;
+    string          keyword = "Content-Disposition: form-data; name=\"";
+    string key, value;
+
+    while (std::getline(ss, currLine))
+    {
+        if (currLine.find(_formBoundary) != string::npos && std::getline(ss, currLine) /*check ending*/) {
+            if (ft::startswith(currLine, keyword)) {
+                key = currLine.substr(keyword.size());
+                key = key.substr(0, key.find_last_of("\"")); // remove " from ending
+
+                std::getline(ss, currLine); // empty line
+                std::getline(ss, currLine);
+
+                _postData[key] = currLine;
+                // TODO: remove empty line in map
+                // _postData.insert(std::make_pair(key, currLine));
+
+                Log::highlight(key + ": " + currLine);
+            }
+        }
+    }
+}
+
+void
+http::Request::parseUnstructuredBody()
+{
+    stringstream ss(_body);
+    string currLine;
+
+    while (std::getline(ss, currLine))
+        _rawBody += currLine;
+}
+
+bool
+http::Request::isMultipartFormData()
+{
+    return (_contentType == "multipart/form-data");
 }
 
 http::Response
@@ -710,33 +760,42 @@ http::Request::setPayload(string& body)
 }
 
 void
-http::Request::set_headerInfos(string& header_raw)
+http::Request::parse_header(string& header_raw)
 {
-    stringstream ss(header_raw);
-    string method, path, version, line;
-    size_t found;
+    stringstream    ss(header_raw);
+    string          line;
+    size_t          found;
     
-    // status line
-    ss >> method >> path >> version;
-
-    if (method != "GET" && method != "POST" && method != "DELETE") {
-        if (path.empty() && version.empty())
+    ss >> _method >> _uri >> _httpVersion;
+    if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
+        if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
         _status = HTTP_BAD_REQUEST;
     }
 
-    this->_method = method;
-    this->_uri = path;
-    this->_httpVersion = version;
+    this->parse_query();
 
-    stringstream ss2(header_raw);
-
-    // header
-    while (std::getline(ss2, line)) {
-        string keyword = "Content-Length: ";
+    while (std::getline(ss, line) && line != CRLFCRLF) {
+        string keyword = "Content-Type: ";
+        if (line.find(keyword) != string::npos) {
+            line = line.substr(keyword.size(), line.size());
+            if ((found = line.find(";")) != string::npos) {
+                _contentType = line.substr(0, found);
+            }
+            else
+                _contentType = line;
+            keyword = "boundary=";
+            if ((found = line.find(keyword)) != string::npos) {
+                _formBoundary = line.substr(found+keyword.size());
+                trim(_formBoundary, WHITE_SPACE); // remove leading spaces
+                Log::highlight(_formBoundary);
+            }
+            // Log::highlight(type);
+        }
+        keyword = "Content-Length: ";
         if (line.find(keyword) != string::npos) {
             string length = line.substr(keyword.size(), line.size());
-            Log::error(length);
+            this->_contentLengthStr = length;
             this->_contentLength = std::atoi(length.c_str());
         }
         keyword = "Host: ";

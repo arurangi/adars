@@ -108,11 +108,15 @@
 
                 string  _startline;
                 string  _header;
-                char    _body[BUFFER_SIZE];
+                string _body;
+                map<string, string> _postData;
+                string _rawBody;
 
                 map<string, string> _formData;
 
+                string _contentType;
                 int     _contentLength;
+                string _contentLengthStr;
                 char    _raw[BUFFER_SIZE];
                 string  _referer;
                 int     _server_port;
@@ -123,6 +127,8 @@
                 string  _payload;
 
                 string  _status;
+
+                string _formBoundary;
 
                 string                      _cgiContent;
                 std::map<string, string>	_env;
@@ -141,7 +147,7 @@
                 void    setStatusLine(string& header);
                 void    setContentLength(string& header);
 
-                void    set_headerInfos(std::string& header_raw);
+                void    parse_header(std::string& header_raw);
                 void    parse_query();
 
                 void    setReferer(string header);
@@ -150,6 +156,10 @@
 
                 void    execute(Request& req, string storageDir);
                 void    save_payload(string storageDir);
+
+                void parseUnstructuredBody();
+                void parseStructuredBody();
+                bool isMultipartFormData();
 
                 string  getPathToRequestedFile();
                 
