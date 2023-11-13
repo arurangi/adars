@@ -5,13 +5,16 @@ This project is about building an HTTP server from scratch (without libraries) i
 
 ## Objectives
 ### Client (browser)
-1. go to ``localhost:<port>/index.html`` and see the home page with its corresponding CSS
+1. go to ``localhost:<port>/<location>`` and see the home page with its corresponding CSS
 
-### Server
-- listens for incoming TCP connections on chosen port
-- processes request (HTTP)
-- locate ressource
-- build and send response
+### Features
+- Can listen on multiple ports simultaneously
+- Can accept multiple simultaneously connections
+- NON-BLOCKING
+- Handles GET, POST & DELETE requests
+-- naviguate, send forms, upload and delete files
+- Handles CGIs in python
+- Uses an NGINX like configuration file
 
 ## Useful Links
 **Core functions**
