@@ -108,7 +108,7 @@ void http::Request::handle_cgi(Request &req)
     clear();
     this->_cgi_path = req._uri;
     initEnv(req);
-    req._cgiContent = execute();
+    req._cgiContent = execute(req);
 }
 
 void    http::Request::initEnv(Request &req)
@@ -119,8 +119,8 @@ void    http::Request::initEnv(Request &req)
     {
         std::stringstream out;
         out << req._body;
-		this->_env["CONTENT_LENGTH"] = out.str();
-		this->_env["CONTENT_TYPE"] = "text/html";
+		this->_env["CONTENT_LENGTH"] = "640";
+		this->_env["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
     }
     this->_env["QUERY_STRING"] = req._querystr;
     this->_env["SCRIPT_NAME"] = "." + req._uri;
@@ -148,7 +148,7 @@ void    http::Request::initEnv(Request &req)
 	this->_argv[2] = NULL;
 }
 
-string    http::Request::execute()
+string    http::Request::execute(Request &req)
 {
     std::string final;
     
@@ -177,7 +177,13 @@ string    http::Request::execute()
 	else if (this->_cgi_pid > 0){
         close(pipe_in[0]);
         close(pipe_out[1]);
+
+        if (req._method == "POST")
+        {
+            write(pipe_in[1], "name=Lorem+ipsum+dolor+sit+amet%2C+consectetur+adipiscing+elit.+Sed+do+eiusmod+tempor+incididunt+ut+labore+et+dolore+magna+aliqua.+Ut+enim+ad+minim+veniam%2C+quis+nostrud+exercitation+ullamco+laboris+nisi+ut+aliquip+ex+ea+commodo+consequat.+Duis+aute+irure+dolor+in+reprehenderit+in+voluptate+velit+esse+cillum+dolore+eu+fugiat+nulla+pariatur.+Excepteur+sint+occaecat+cupidatat+non+proident%2C+sunt+in+culpa+qui+officia+deserunt+mollit+anim+id+est+laborum.+Curabitur+pretium+tincidunt+lacus.+Nulla+gravida+orci+a+odio.+Nullam+varius%2C+turpis+et+commodo+pharetra%2C+est+eros+bibendum+elit%2C+nec+luctus+magna+felis+sollicitudin+mauris.&age=", strlen("name=Lorem+ipsum+dolor+sit+amet%2C+consectetur+adipiscing+elit.+Sed+do+eiusmod+tempor+incididunt+ut+labore+et+dolore+magna+aliqua.+Ut+enim+ad+minim+veniam%2C+quis+nostrud+exercitation+ullamco+laboris+nisi+ut+aliquip+ex+ea+commodo+consequat.+Duis+aute+irure+dolor+in+reprehenderit+in+voluptate+velit+esse+cillum+dolore+eu+fugiat+nulla+pariatur.+Excepteur+sint+occaecat+cupidatat+non+proident%2C+sunt+in+culpa+qui+officia+deserunt+mollit+anim+id+est+laborum.+Curabitur+pretium+tincidunt+lacus.+Nulla+gravida+orci+a+odio.+Nullam+varius%2C+turpis+et+commodo+pharetra%2C+est+eros+bibendum+elit%2C+nec+luctus+magna+felis+sollicitudin+mauris.&age="));
+        }
         close(pipe_in[1]);
+
 
         char buffer[1024];
         ssize_t bytes;

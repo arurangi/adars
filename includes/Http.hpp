@@ -155,7 +155,7 @@
                 
                 void    handle_cgi(Request &req);
                 void    initEnv(Request &req);
-                string	execute();
+                string	execute(Request &req);
                 void	clear();
         };
 
