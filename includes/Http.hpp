@@ -115,6 +115,8 @@
 
                 map<string, string> _formData;
 
+                string    _autoindex;
+
                 string _contentType;
                 int     _contentLength;
                 string _contentLengthStr;

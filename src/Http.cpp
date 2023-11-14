@@ -3,7 +3,7 @@
 http::Response::Response() { reset(); }
 http::Response::~Response() {}
 
-http::Request::Request() : _contentLength(0), _referer("") {}
+http::Request::Request() : _contentLength(0), _referer(""){}
 http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
@@ -378,6 +378,8 @@ http::build_response(Request& req, Server& server)
                             root = settings[0];
                         else if (type == "index")
                             index = settings[0];
+                        else if (type == "autoindex")
+                            req._autoindex = settings[0];
                         else if (type == "allow_methods") {
                             vector<string>::iterator itr = std::find(settings.begin(), settings.end(), req._method);
                             if (itr == settings.end()) {  // not found
@@ -409,7 +411,7 @@ http::build_response(Request& req, Server& server)
         if (!requestedFile.is_open()) {
             Log::out("Can't open :" + path);
             res.set_status(HTTP_NOT_FOUND);
-            if (AUTOINDEX == ON) {
+            if (req._autoindex == "on") {
                 req._uri = ".html";
                 res._body = http::generate_directoryPage(path);
             }
