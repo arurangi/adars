@@ -60,13 +60,13 @@
             string                      _root;
             string                      _storage_dir;
             LocationsList               _locations;
-            map<string, vector<string> > _error_pages;
             int                         _request_body_size_limit;
             string                      _index;
             string                      _server_name;
 
         public:
             int     _socket;
+            map<string, string > _error_pages;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // constructors
@@ -86,12 +86,12 @@
 
             void set_root(string rootFolder);
             void set_location(LocationsList locations);
-            void set_error_page(map<string, vector<string> > err_pages);
             void set_request_body_size_limit(string size_limit);
             void set_default_index(string index_page);
             void set_port(string port);
             void set_host(string host);
             void set_server_name(string server_name);
+            void set_default_error_page(vector<string> pages);
 
             int             get_port();
             string          get_server_name() const { return _server_name; }

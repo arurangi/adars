@@ -149,12 +149,6 @@ void Server::set_root(string rootFolder)
 }
 
 void
-Server::set_error_page(map<string, vector<string> > err_pages)
-{
-    _error_pages = err_pages;
-}
-
-void
 Server::set_request_body_size_limit(string size_limit)
 {
     _request_body_size_limit = std::atoi(size_limit.c_str());
@@ -178,6 +172,13 @@ void
 Server::set_host(string host)
 {
     _host = host;
+}
+
+void
+Server::set_default_error_page(vector<string> pages)
+{
+    Log::status(pages[0] + ": " + pages[1]);
+    _error_pages[pages[0]] = pages[1];
 }
 
 void

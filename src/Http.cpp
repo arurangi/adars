@@ -318,7 +318,7 @@ http::build_response(Request& req, Server& server)
     string              buffer, path;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
-    string error_page = "404.html";
+    string error_page = server._error_pages["404"];
 
     Log::mark("uri: " + req._uri);
 
@@ -386,7 +386,7 @@ http::build_response(Request& req, Server& server)
                             if (itr == settings.end()) {  // not found
                                 res.set_status("405");
                                 index = error_page;
-                                break ;
+                                //break ;
                             }
                         } else if (type == "error_page") {
                             error_page = settings[1];
@@ -396,8 +396,10 @@ http::build_response(Request& req, Server& server)
             } /* End of loop through LocationMap (1) */
         } /* End of loop through LocationList */
         ////////////////////////////////////////////////////////////////////////////
+        std::cout << error_page << std::endl;
         if (found) {
             path = root + "/" + index;
+            std::cout << path << std::endl;
         } else {
             Log::error("Location not found");
             res.set_status("404"); // NOT FOUND
@@ -420,7 +422,7 @@ http::build_response(Request& req, Server& server)
             }
             else {
                 req._uri = "/" + error_page;
-                res._body = generate_errorPage();
+                res._body = generate_errorPage(error_page);
             }
         } else {
             res._body = "";
@@ -594,35 +596,45 @@ http::generate_directoryPage(string uri)
 }
 
 string
-http::generate_errorPage()
+http::generate_errorPage(string path)
 {
     // TODO: add map<int, string>
     // key (int): status code
     // value (string): full html page of the error code in a string
-    string page =
-                "<!DOCTYPE html>\n"
-                "<html lang=\"en\">\n"
-                "<head>\n"
-                    "<meta charset=\"UTF-8\">\n"
-                    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                    "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
-                    "<title>Error 404</title>\n"
-                "</head>\n"
-                "<body>\n"
-                    "<section class=\"wrapper\">\n"
-                    "<nav >\n"
-                        "<ul class=\"navbar\">\n"
-                        "<li><a href=\"index.html\">Home</a></li>\n"
-                        "<li><a href=\"about.html\">About</a></li>\n"
-                        "<li><a href=\"upload.html\">Send files</a></li>\n"
-                        "<li><a href=\"uploaded.html\">Storage</a></li>\n"
-                        "</ul>\n"
-                    "</nav>\n"
-                    "<h1>Error 404</h1>\n"
-                    "</section>\n"
-                "</body>\n"
-                "</html>\n";
-    return page;
+    std::ifstream requestedFile("./public/" + path, std::ios::in);
+    string body = "", buffer = "";
+    while (std::getline(requestedFile, buffer)) {
+        body += buffer + "\n";
+    }
+    body += '\0';
+    requestedFile.close();
+
+    return body;
+
+    // string page =
+    //             "<!DOCTYPE html>\n"
+    //             "<html lang=\"en\">\n"
+    //             "<head>\n"
+    //                 "<meta charset=\"UTF-8\">\n"
+    //                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+    //                 "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
+    //                 "<title>Error 404</title>\n"
+    //             "</head>\n"
+    //             "<body>\n"
+    //                 "<section class=\"wrapper\">\n"
+    //                 "<nav >\n"
+    //                     "<ul class=\"navbar\">\n"
+    //                     "<li><a href=\"index.html\">Home</a></li>\n"
+    //                     "<li><a href=\"about.html\">About</a></li>\n"
+    //                     "<li><a href=\"upload.html\">Send files</a></li>\n"
+    //                     "<li><a href=\"uploaded.html\">Storage</a></li>\n"
+    //                     "</ul>\n"
+    //                 "</nav>\n"
+    //                 "<h1>Error 404</h1>\n"
+    //                 "</section>\n"
+    //             "</body>\n"
+    //             "</html>\n";
+    // return page;
 }
 
 std::set<string> get_xtension_list(std::deque<string> files_list)

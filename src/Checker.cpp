@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/07 09:55:48 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/14 17:02:48 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,6 +161,8 @@ void    Config::server_location(Data &wbsv_data)
                         check_one_arg(wbsv_data, location_data_it);
                     else if (location_data_it->first == "return")
                         check_return_location(wbsv_data, location_data_it);
+                    else if (location_data_it->first == "error_page")
+                        check_error_pages(wbsv_data, location_data_it);
                     else if (location_data_it->first == "autoindex")
                         check_autoindex_location(wbsv_data, location_data_it);
                     else if (location_data_it->first == "index")
@@ -177,6 +179,18 @@ void    Config::server_location(Data &wbsv_data)
             }
         }
     }
+}
+
+void    Config::check_error_pages(Data &wbsv_data, map_vector_it location_data_it)
+{
+    if (location_data_it->second.size() != 2)
+        wbsv_data.error = "Webserv: invalid numbers of arguments in error_pages in " + this->filename;
+    std::vector<std::string>::iterator value_it = location_data_it->second.begin();
+    if (*value_it != "400" && *value_it != "401" && *value_it != "403" && *value_it != "404")
+        wbsv_data.error = "Webserv: invalid arguments \"" + *value_it + "\" in error_pages in " + this->filename;
+    value_it++;
+    if (value_it->find(".html") == std::string::npos)
+        wbsv_data.error = "Webserv: " + *value_it + " is not a valid error file 'file.html' in " + this->filename; 
 }
 
 void    Config::check_allow_method(Data &wbsv_data, map_vector_it location_data_it)
@@ -324,10 +338,10 @@ void    Config::set_default(Data &wbsv_data)
     Serv_list &server_list = wbsv_data.server_list; 
     
     for (Serv_list::iterator it = server_list.begin(); it != server_list.end()  && !wbsv_data.error.length(); ++it) {
-        if (!check_exist_server_data(it->server_data, "error_page")) {
-            set_default_error_vector(vector_value);
-            it->server_data.insert(std::make_pair("error_page",vector_value));
-        }
+        // if (!check_exist_server_data(it->server_data, "error_page")) {
+        //     set_default_error_vector(vector_value);
+        //     it->server_data.insert(std::make_pair("error_page",vector_value));
+        // }
         if (!check_exist_server_data(it->server_data, "listen"))
             wbsv_data.error = "Webserv: need to define listen directive in the " + this->filename;
         if (!check_exist_server_data(it->server_data, "root"))

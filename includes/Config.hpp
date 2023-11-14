@@ -44,6 +44,7 @@ class Config
         void    check_return_location(Data &wbsv_data, map_vector_it location_data_it);
         int     valid_return_status(Data &g_Data, std::string status);
         void    check_autoindex_location(Data &wbsv_data, map_vector_it location_data_it);
+        void    check_error_pages(Data &wbsv_data, map_vector_it location_data_it);
         void    set_default(Data &wbsv_data);
         void    printData(ServerConf server);
 };

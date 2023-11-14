@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:17:29 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/07 10:34:30 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/14 16:08:00 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,7 +231,7 @@ void    Config::key_value_error_page(ServerConf &server, Data &wbsv_data, Utils 
         wbsv_data.error = "Webserv: invalid number of arguments in \"";
         wbsv_data.error += utils.key + "\" directive in " + this->filename + ':' + ft_to_string(this->line_index);
     }
-    else if (utils.value.find(".html") == std::string::npos)\
+    else if (utils.value.find(".html") == std::string::npos)
     {
         wbsv_data.error = "Webserv: " + utils.value + " is not a error file ('file.html') in \"";
         wbsv_data.error += this->filename + ':' + ft_to_string(this->line_index);
