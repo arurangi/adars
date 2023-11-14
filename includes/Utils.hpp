@@ -4,7 +4,12 @@
     #include <sstream>
     #include <string>
     #include <deque>
+
     #include <dirent.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
+
     #include "Logger.hpp"
 
     using std::string;
@@ -24,6 +29,7 @@
 
         string get_dir(string file_path);
         std::deque<string> list_files_in(string directory);
+        bool isdirectory(const char* path);
     };
 
 #endif

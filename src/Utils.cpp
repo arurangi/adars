@@ -62,3 +62,16 @@ ft::list_files_in(std::string directory) {
     }
     return filesList;
 }
+
+bool
+ft::isdirectory(const char* path)
+{
+    struct stat file_stat;
+    if (stat(path, &file_stat)) {
+        if (S_ISDIR(file_stat.st_mode))
+            return true;
+        return false;
+    }
+    else
+        return false;
+}
