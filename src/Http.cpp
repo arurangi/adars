@@ -318,6 +318,7 @@ http::build_response(Request& req, Server& server)
     string              buffer, path;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
+    string error_page = "404.html";
 
     Log::mark("uri: " + req._uri);
 
@@ -338,8 +339,8 @@ http::build_response(Request& req, Server& server)
         res._body += '\0';
         res._contentLength = res._body.size();
         res._contentType = "text/html";
-        req._uri = "./public/404.html";
-        path = "./public/404.html";
+        req._uri = "./public/" + error_page;
+        path = "./public/" + error_page;
     }
     ////////////////////////////////////////////////////////////////////////////
     // FILENAMES
@@ -384,9 +385,11 @@ http::build_response(Request& req, Server& server)
                             vector<string>::iterator itr = std::find(settings.begin(), settings.end(), req._method);
                             if (itr == settings.end()) {  // not found
                                 res.set_status("405");
-                                index = "405.html";
+                                index = error_page;
                                 break ;
                             }
+                        } else if (type == "error_page") {
+                            error_page = settings[1];
                         }
                     } /* End of loop through location settings */
                 } /* End of 'if (req._uri == location_path)' */
@@ -398,7 +401,7 @@ http::build_response(Request& req, Server& server)
         } else {
             Log::error("Location not found");
             res.set_status("404"); // NOT FOUND
-            path = root + "/" + "404.html";
+            path = root + "/" + error_page;
         }
     } // end location
 
@@ -416,7 +419,7 @@ http::build_response(Request& req, Server& server)
                 res._body = http::generate_directoryPage(path);
             }
             else {
-                req._uri = "/404.html";
+                req._uri = "/" + error_page;
                 res._body = generate_errorPage();
             }
         } else {

@@ -44,6 +44,7 @@ server
         autoindex on;
         root ./public;
         index form.html;
+        error_page 404 form_404.html;
     }
 }
 
