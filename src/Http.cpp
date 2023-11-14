@@ -216,87 +216,84 @@ http::parse_request(const int& client_socket)
 {
     Request req;
     char    buffer[BUFFER_SIZE];
-    string  request;
-    size_t  found;
-    size_t  bytesRead = std::numeric_limits<int>::max();
+    string  raw_request;
+    size_t  found, bytesRead = std::numeric_limits<int>::max();
 
     /////// READ HEADER //////////
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
     if (bytesRead < 0)
         throw http::ReceiveFailed();
-    request += string(buffer, bytesRead);
+    raw_request += string(buffer, bytesRead);
 
-    req._header = request;
-    req.parse_header(request);
+    req._header = raw_request;
+    req.parse_header();
 
     std::cout << req;
 
     if (req._method != "POST")
         return req;
     
+    /////// READ BODY //////////
+    req._body = raw_request;
     while (bytesRead == BUFFER_SIZE) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
             throw http::ReceiveFailed();
-        request += string(buffer, bytesRead);
+        req._body += string(buffer, bytesRead);
     }
 
-    if ((found = request.find(CRLFCRLF)) != string::npos) {
-        req._body = request.substr(found + CRLF_SIZE);
-
-        Log::status(req._contentType);
+    if ((found = req._body.find(CRLFCRLF)) != string::npos) {
+        req._body = req._body.substr(found + CRLF_SIZE);
 
         if (req.isMultipartFormData()) {
-            Log::status("Structured body");
             req.parseStructuredBody();
+            req.setFilename(req._body);
+            req.setPayload(req._body);
         }
-        else {
-            Log::status("Unstructured body");
+        else
             req.parseUnstructuredBody();
-        }
-
-        map<string, string>::iterator it = req._postData.begin();
-        Log::status("////////////////");
-        size_t i = 0;
-        for (; it != req._formData.end() && i < req._postData.size(); it++) {
-            std::cout << (*it).first << ": " << (*it).second << std::endl;
-            i++;
-        }
-        Log::status("////////////////");
-
-        req.setFilename(req._body);
-        req.setPayload(req._body);
     }
-    
     return req;
 }
 
 void
 http::Request::parseStructuredBody()
 {
-    stringstream    ss(this->_body);
+    stringstream    ss(_body);
     string          currLine;
     string          keyword = "Content-Disposition: form-data; name=\"";
-    string key, value;
+    string key = "", value = "";
+    size_t pos;
 
     while (std::getline(ss, currLine))
     {
-        if (currLine.find(_formBoundary) != string::npos && std::getline(ss, currLine) /*check ending*/) {
+        if (currLine.find(_formBoundary) != string::npos /*check ending*/) {
+            if (!std::getline(ss, currLine))
+                break ;
             if (ft::startswith(currLine, keyword)) {
                 key = currLine.substr(keyword.size());
-                key = key.substr(0, key.find_last_of("\"")); // remove " from ending
+                key = key.substr(0, key.find_first_of("\"")); // remove " from ending
 
-                std::getline(ss, currLine); // empty line
+                std::getline(ss, currLine);
+                if (ft::startswith(currLine, "Content-Type:"))
+                    std::getline(ss, currLine);
+                
                 std::getline(ss, currLine);
 
-                _postData[key] = currLine;
-                // TODO: remove empty line in map
-                // _postData.insert(std::make_pair(key, currLine));
-
-                Log::highlight(key + ": " + currLine);
+                _postData[key] = currLine + LF;
             }
         }
+        else if (!key.empty()) {
+            if ((pos = currLine.find(_formBoundary+"--")) != string::npos) {
+                Log::highlight("FOUND");
+                currLine = currLine.substr(0, pos);
+            }
+            _postData[key] += currLine + LF;
+        }
     }
+    // std::cout << "__start_of_body +++\n";
+    // std::cout << _postData["file"] << CYELLOW << "$" << CRESET;
+    // std::cout << "__end_of_body +++\n";
 }
 
 void
@@ -336,17 +333,34 @@ http::build_response(Request& req, Server& server)
     */
 
     Log::mark("uri: " + req._uri);
-    if (!req._cgiContent.empty()) {
-        res._body = req._cgiContent;
+
+    /**************************************************************************/
+    /* FIND RESSOURCE PATH: 3 options                                         */
+    /* ***                                                                    */
+    /* 1) CGI                                                                 */
+    /* 2) filename                                                            */
+    /* 3) location                                                            */
+    /**************************************************************************/
+    ////////////////////////////////////////////////////////////////////////////
+    // CGI 
+    if (ft::startswith(req._uri, "/cgi-bin")) {
+        if (req._cgiContent.empty())
+            res._body = "<div><h2>No content returned by CGI</h2></div>";
+        else
+            res._body = req._cgiContent;
         res._body += '\0';
         res._contentLength = res._body.size();
         res._contentType = "text/html";
-        req._uri = "./public/index.html";
-        path = "./public/index.html";
+        req._uri = "./public/404.html";
+        path = "./public/404.html";
     }
-    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
+    ////////////////////////////////////////////////////////////////////////////
+    // FILENAMES
+    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream")
         path = req.getPathToRequestedFile();
-    } else {
+    ////////////////////////////////////////////////////////////////////////////
+    // LOCATIONS
+    else {
         bool found = false;
         string root = server.get_root();
         string index = "";
@@ -401,6 +415,11 @@ http::build_response(Request& req, Server& server)
             path = root + "/" + "404.html";
         }
     }
+
+    /**************************************************************************/
+    /* SAVE FILE CONTENT IN BODY                                              */
+    /**************************************************************************/
+    // skip if CGI content is set (= body not empty)
     if (req._cgiContent.empty()) {
         requestedFile.open(path, std::ios::in);
         if (!requestedFile.is_open()) {
@@ -415,14 +434,10 @@ http::build_response(Request& req, Server& server)
                 res._body = generate_errorPage();
             }
         } else {
-            //////////////////////////////////////////////////////
-            // BODY
-            // : store content in `response._body`
-            res._body = ""; // get_ressource()
+            res._body = "";
             while (std::getline(requestedFile, buffer)) {
-                if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos) {
+                if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos)
                     res._body += generate_storageList();
-                }
                 res._body += buffer + "\n";
             }
             res._body += '\0';
@@ -758,17 +773,19 @@ http::Request::setPayload(string& body)
             std::getline(ss, line);
             this->_payload += line + LF;
         }
-        else
+        else {
             this->_payload += line + LF;
+        }
     }
 }
 
 void
-http::Request::parse_header(string& header_raw)
+http::Request::parse_header()
 {
-    stringstream    ss(header_raw);
     string          line;
     size_t          found;
+    string          tmp = _header.substr(0, _header.find(CRLFCRLF));
+    stringstream    ss(tmp);
     
     ss >> _method >> _uri >> _httpVersion;
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
@@ -784,7 +801,7 @@ http::Request::parse_header(string& header_raw)
         if (line.find(keyword) != string::npos) {
             line = line.substr(keyword.size(), line.size());
             if ((found = line.find(";")) != string::npos) {
-                _contentType = line.substr(0, found);
+                _contentType = line.substr(0, found) + "\0";
             }
             else
                 _contentType = line;
@@ -792,9 +809,7 @@ http::Request::parse_header(string& header_raw)
             if ((found = line.find(keyword)) != string::npos) {
                 _formBoundary = line.substr(found+keyword.size());
                 trim(_formBoundary, WHITE_SPACE); // remove leading spaces
-                Log::highlight(_formBoundary);
             }
-            // Log::highlight(type);
         }
         keyword = "Content-Length: ";
         if (line.find(keyword) != string::npos) {

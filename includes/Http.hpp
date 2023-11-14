@@ -147,7 +147,7 @@
                 void    setStatusLine(string& header);
                 void    setContentLength(string& header);
 
-                void    parse_header(std::string& header_raw);
+                void    parse_header();
                 void    parse_query();
 
                 void    setReferer(string header);
