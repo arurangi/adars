@@ -49,7 +49,6 @@ http::Response::reset()
 
     // This is a generic error message indicating that something went wrong on the server's side, and the server couldn't be more specific about the issue.
     _statusCodes["500"] = "Internal Server Error";
-
 }
 
 ///////////////// UTILS //////////////////////////////////////////////////
@@ -320,18 +319,6 @@ http::build_response(Request& req, Server& server)
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
 
-    /**
-     * At this point, I've gathered all informations about the request.
-     * Now possibilities:
-     * 1) Bad request => return default error page for that location
-     * 2) Good request => build appropriate response
-     *      - GET --> 2 cases
-     *          -- standard: 
-     *          -- query_parameters: 
-     *      - POST --> send uploaded.html
-     *      - DELETE --> send uploaded.html
-    */
-
     Log::mark("uri: " + req._uri);
 
     /**************************************************************************/
@@ -342,7 +329,7 @@ http::build_response(Request& req, Server& server)
     /* 3) location                                                            */
     /**************************************************************************/
     ////////////////////////////////////////////////////////////////////////////
-    // CGI 
+    // CGI
     if (ft::startswith(req._uri, "/cgi-bin")) {
         if (req._cgiContent.empty())
             res._body = "<div><h2>No content returned by CGI</h2></div>";
@@ -368,45 +355,30 @@ http::build_response(Request& req, Server& server)
         for (; v != server.lend() && !found; v++) {
             LocationMap::iterator m = (*v).begin();
             for (; m != (*v).end() && !found; m++) {
-                // m.first is a string of the location path
-                string location_path = (*m).first; /* ANCHOR */
-                Log::mark("location_path: " + location_path);
+                string location_path = (*m).first;
                 if (req._uri == location_path)
                 {
                     found = true; Log::success(req._uri);
 
-                    // TODO: 
-                    // 1) define root directory, if not specified take from server
-                    // 2) append index file to root
+                    // default values
+                    root    = server.get_root();
+                    index   = DEFAULT_INDEX;
 
-                    // m.second is a map of the location directives
                     map<string, vector<string> > directives = (*m).second;
-                    if (directives.find("root") != directives.end()) {
-                        root = directives["root"][0];
-                    } else {
-                        root = server.get_root();
-                    }
-
-                    if (directives.find("index") != directives.end()) {
-                        index = directives["index"][0];
-                    } else {
-                        index = DEFAULT_INDEX;
-                    }
-
                     map<string, vector<string> >::iterator d = directives.begin();
                     for (; d != directives.end(); d++) {
+                        string          type        = (*d).first;
+                        vector<string>  settings    = (*d).second;
 
-                        // In curr location contex: curr directive type & its settings
-                        string          type        = (*d).first; /* ANCHOR */
-                        vector<string>  settings    = (*d).second; /* ANCHOR */
-                    }
-                }
-
-            }
-        }
-
+                        if (type == "root")
+                            root = settings[0];
+                        else if (type == "index")
+                            index = settings[0];
+                    } /* End of loop through location settings */
+                } /* End of 'if (req._uri == location_path)' */
+            } /* End of loop through LocationMap (1) */
+        } /* End of loop through LocationList */
         ////////////////////////////////////////////////////////////////////////////
-
         if (found) {
             path = root + "/" + index;
         } else {
@@ -414,7 +386,7 @@ http::build_response(Request& req, Server& server)
             res.set_status("404"); // NOT FOUND
             path = root + "/" + "404.html";
         }
-    }
+    } // end location
 
     /**************************************************************************/
     /* SAVE FILE CONTENT IN BODY                                              */
