@@ -369,8 +369,12 @@ http::build_response(Request& req, Server& server)
                     for (; d != directives.end(); d++) {
                         string          type        = (*d).first;
                         vector<string>  settings    = (*d).second;
-
-                        if (type == "root")
+                        if (type == "return" && settings[0] == "302")
+                        {
+                            index = settings[1];
+                            break ;
+                        }
+                        else if (type == "root")
                             root = settings[0];
                         else if (type == "index")
                             index = settings[0];
