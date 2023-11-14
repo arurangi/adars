@@ -660,6 +660,10 @@ http::generate_storageList()
     // storageItem += "</div>\n";
 
     // files list
+    if (list.empty()) {
+        storageItem += "<p>Nothing here</p>";
+        return storageItem;
+    }
     while (!list.empty()) {
         storageItem += "<div class=\"file\">\n";
         storageItem += "<p>" + list.front() + "</p>";
