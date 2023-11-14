@@ -374,6 +374,14 @@ http::build_response(Request& req, Server& server)
                             root = settings[0];
                         else if (type == "index")
                             index = settings[0];
+                        else if (type == "allow_methods") {
+                            vector<string>::iterator itr = std::find(settings.begin(), settings.end(), req._method);
+                            if (itr == settings.end()) {  // not found
+                                res.set_status("405");
+                                index = "405.html";
+                                break ;
+                            }
+                        }
                     } /* End of loop through location settings */
                 } /* End of 'if (req._uri == location_path)' */
             } /* End of loop through LocationMap (1) */

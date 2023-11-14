@@ -10,7 +10,7 @@ server
     client_max_body_size 2g;
 
     location / {
-        allow_methods [GET];
+        allow_methods [POST];
         autoindex on;
         root ./public;
         index index.html;
