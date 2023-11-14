@@ -21,6 +21,7 @@ server
         autoindex off;
         root ./public;
         index about.html;
+        return 302 maintenance.html;
     }
 
     location /send-files {
@@ -28,6 +29,7 @@ server
         autoindex on;
         root ./public;
         index upload.html;
+        return 302 maintenance.html;
     }
 
     location /storage {
@@ -53,6 +55,7 @@ server
         allow_methods [GET];
         autoindex on;
         index index.html;
+
     }
 
     location /assets {
