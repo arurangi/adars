@@ -18,7 +18,7 @@ int main(int ac, char **av)
     if (data.error.length())
         exit(Log::out(data.error));
 
-    // printServerData(data.server_list);
+    printServerData(data.server_list);
 
     Log::success("CONFIGURATION FILE PARSING DONE");
 
