@@ -46,8 +46,9 @@ Cluster::init(Serv_list servers)
                     s.set_default_index(server_data_it->second[0]);
                 else if (server_data_it->first == "server_name")
                     s.set_server_name(server_data_it->second[0]);
-                else if (server_data_it->first == "error_page")
+                else if (server_data_it->first == "error_page") {
                     s.set_default_error_page(server_data_it->second);
+                }
            }
         }
         

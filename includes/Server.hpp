@@ -98,6 +98,7 @@
             string          get_storage_dir() const { return _storage_dir; }
             LocationsList   get_locations() { return _locations; }
             string          get_root() { return _root; }
+            int             get_max_body_size() { return _request_body_size_limit; }
 
             LocationsList::iterator lbegin();
             LocationsList::iterator lend();

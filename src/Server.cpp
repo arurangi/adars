@@ -177,7 +177,11 @@ Server::set_host(string host)
 void
 Server::set_default_error_page(vector<string> pages)
 {
-    _error_pages[pages[0]] = pages[1];
+    size_t incr = 0;
+    for (size_t i = 0; incr < pages.size() / 2; incr++) {
+        _error_pages[pages[i]] = pages[i + 1];
+        i += 2;
+    }
 }
 
 void

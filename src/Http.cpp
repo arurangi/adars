@@ -69,6 +69,14 @@ http::handle_request(int client_socket, Cluster& cluster)
 {
     Request req = http::parse_request(client_socket);
     Server server = cluster.getServerByPort(req._server_port);
+    // if (req._method == "POST" && req._contentLength < server.get_max_body_size()) {
+    // }
+
+    map<string, string >::iterator itr =  server._error_pages.begin();
+    for (; itr != server._error_pages.end(); itr++) {
+        Log::status((*itr).first);
+    }
+
     req.execute(req, server.get_storage_dir());
     Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
@@ -303,6 +311,7 @@ http::Request::parseUnstructuredBody()
 
     while (std::getline(ss, currLine))
         _rawBody += currLine;
+    // _contentLength = _rawBody.size();
 }
 
 bool
@@ -332,7 +341,15 @@ http::build_response(Request& req, Server& server)
     /**************************************************************************/
     ////////////////////////////////////////////////////////////////////////////
     // DIRECTORY PATH -> sets body
-    if (ft::isdirectory(("."+req._uri).c_str())) {
+    Log::status("Body size max: " + ft::to_str(server.get_max_body_size()));
+    Log::status("Content-length: " + ft::to_str(req._contentLength));
+    if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
+        res.set_status("413");
+        path = "./public/" + server._error_pages["413"];
+        // path = "./public/413.html";
+
+    }
+    else if (ft::isdirectory(("."+req._uri).c_str())) {
         Log::status("===> directory");
         res._body = generate_directoryPage("./public/");
         res._contentLength = res._body.size();
@@ -597,6 +614,7 @@ http::generate_directoryPage(string uri)
                     "<li><a href=\"/about\">About</a></li>\n"
                     "<li><a href=\"/send-files\">Send files</a></li>\n"
                     "<li><a href=\"/storage\">Storage</a></li>\n"
+                    "<li><a href=\"/form\">Form</a></li>\n"
                     "</ul>\n"
                 "</nav>"
                 "<h1>Directory listing</h1>\n"
@@ -836,6 +854,7 @@ http::Request::parse_header()
             string length = line.substr(keyword.size(), line.size());
             this->_contentLengthStr = length;
             this->_contentLength = std::atoi(length.c_str());
+            Log::highlight(_contentLength);
         }
         keyword = "Host: ";
         if (line.find(keyword) != string::npos) {
