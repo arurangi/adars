@@ -341,6 +341,12 @@ http::build_response(Request& req, Server& server)
         body_is_set = true;
     }
     ////////////////////////////////////////////////////////////////////////////
+    // FILE PATH -> sets path
+    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
+        Log::status("===> Filepath");
+        path = req.getPathToRequestedFile();
+    }
+    ////////////////////////////////////////////////////////////////////////////
     // CGI -> sets body
     else if (ft::startswith(req._uri, "/cgi-bin")) {
         Log::status("===> CGI");
@@ -354,12 +360,6 @@ http::build_response(Request& req, Server& server)
         req._uri = "./public/" + error_page;
         path = "./public/" + error_page;
         body_is_set = true;
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    // FILE PATH -> sets path
-    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
-        Log::status("===> Filepath");
-        path = req.getPathToRequestedFile();
     }
     ////////////////////////////////////////////////////////////////////////////
     // LOCATIONS -> sets path
@@ -924,9 +924,10 @@ http::Request::getPathToRequestedFile()
     string path;
     size_t found = 0;
     string storagePath = "/public/storage";
-    
-    // if ((found = _uri.find(storagePath)) != string::npos)
-    //     _uri = _uri.substr(found+storagePath.size());
+    string style = "/stylesheets";
+
+    if ((found = _uri.find(style)) != string::npos)
+        _uri = _uri.substr(found);
 
     if ((found = _uri.find("/public")) != string::npos)
         path = ".";
