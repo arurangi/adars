@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/14 17:02:48 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/14 17:20:54 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -326,9 +326,7 @@ bool check_exist_server_data(map_vector server_data, std::string key)
 
 void set_default_error_vector(std::vector<std::string> &error_page)
 {
-    error_page.push_back("400");
-    error_page.push_back(ERROR_PATH);
-    error_page.push_back("500");
+    error_page.push_back("404");
     error_page.push_back(ERROR_PATH);
 }
 
@@ -338,10 +336,10 @@ void    Config::set_default(Data &wbsv_data)
     Serv_list &server_list = wbsv_data.server_list; 
     
     for (Serv_list::iterator it = server_list.begin(); it != server_list.end()  && !wbsv_data.error.length(); ++it) {
-        // if (!check_exist_server_data(it->server_data, "error_page")) {
-        //     set_default_error_vector(vector_value);
-        //     it->server_data.insert(std::make_pair("error_page",vector_value));
-        // }
+        if (!check_exist_server_data(it->server_data, "error_page")) {
+            set_default_error_vector(vector_value);
+            it->server_data.insert(std::make_pair("error_page",vector_value));
+        }
         if (!check_exist_server_data(it->server_data, "listen"))
             wbsv_data.error = "Webserv: need to define listen directive in the " + this->filename;
         if (!check_exist_server_data(it->server_data, "root"))

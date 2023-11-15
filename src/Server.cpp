@@ -177,7 +177,6 @@ Server::set_host(string host)
 void
 Server::set_default_error_page(vector<string> pages)
 {
-    Log::status(pages[0] + ": " + pages[1]);
     _error_pages[pages[0]] = pages[1];
 }
 

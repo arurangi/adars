@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adamkorompai <adamkorompai@student.42.f    +#+  +:+       +#+        */
+/*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 15:12:14 by akorompa          #+#    #+#             */
-/*   Updated: 2023/10/30 18:41:35 by adamkorompa      ###   ########.fr       */
+/*   Updated: 2023/11/14 17:20:41 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@
 # define RED "\x1b[31m"
 # define END_CLR "\033[0m"
 # define SIZE_TYPE "MKGBmkgb"
-# define ERROR_PATH "./error.html"
+# define ERROR_PATH "default404.html"
 
 
 class Data
