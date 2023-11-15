@@ -318,7 +318,8 @@ http::build_response(Request& req, Server& server)
     string              buffer, path;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
-    string error_page = server._error_pages["404"];
+    string              error_page = server._error_pages["404"];
+    bool                body_is_set = false;
 
     Log::mark("uri: " + req._uri);
 
@@ -330,8 +331,25 @@ http::build_response(Request& req, Server& server)
     /* 3) location                                                            */
     /**************************************************************************/
     ////////////////////////////////////////////////////////////////////////////
-    // CGI
-    if (ft::startswith(req._uri, "/cgi-bin")) {
+    // DIRECTORY PATH -> sets body
+    if (ft::isdirectory(("."+req._uri).c_str())) {
+        Log::status("===> directory");
+        res._body = generate_directoryPage("./public/");
+        res._contentLength = res._body.size();
+        Log::mark(res._body);
+        path = ".html";
+        body_is_set = true;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    // FILE PATH -> sets path
+    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
+        Log::status("===> Filepath");
+        path = req.getPathToRequestedFile();
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    // CGI -> sets body
+    else if (ft::startswith(req._uri, "/cgi-bin")) {
+        Log::status("===> CGI");
         if (req._cgiContent.empty())
             res._body = "<div><h2>No content returned by CGI</h2></div>";
         else
@@ -341,14 +359,13 @@ http::build_response(Request& req, Server& server)
         res._contentType = "text/html";
         req._uri = "./public/" + error_page;
         path = "./public/" + error_page;
+        body_is_set = true;
     }
     ////////////////////////////////////////////////////////////////////////////
-    // FILENAMES
-    else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream")
-        path = req.getPathToRequestedFile();
-    ////////////////////////////////////////////////////////////////////////////
-    // LOCATIONS
-    else {
+    // LOCATIONS -> sets path
+    else { // TODO: add condition, allowed locations (std::set)
+        Log::status("===> Location");
+        Log::mark("in location checking");
         bool found = false;
         string root = server.get_root();
         string index = "";
@@ -408,24 +425,21 @@ http::build_response(Request& req, Server& server)
     } // end location
 
     /**************************************************************************/
-    /* SAVE FILE CONTENT IN BODY                                              */
+    /* OPEN REQUESTED RESSOURCE (if body is not set)                          */
     /**************************************************************************/
-    // skip if CGI content is set (= body not empty)
-    if (req._cgiContent.empty()) {
+    if (!body_is_set) {
         requestedFile.open(path, std::ios::in);
         if (!requestedFile.is_open()) {
-            Log::out("Can't open :" + path);
             res.set_status(HTTP_NOT_FOUND);
             if (req._autoindex == "on") {
-                req._uri = ".html";
+                req._uri = ".html"; // TODO: can I delete this?
                 res._body = http::generate_directoryPage(path);
             }
             else {
-                req._uri = "/" + error_page;
+                req._uri = "/" + error_page; // TODO: can I delete this?
                 res._body = generate_errorPage(error_page);
             }
         } else {
-            res._body = "";
             while (std::getline(requestedFile, buffer)) {
                 if (ft::endswith(path, "/uploaded.html") && buffer.find("</body>") != string::npos)
                     res._body += generate_storageList();
@@ -448,6 +462,7 @@ http::build_response(Request& req, Server& server)
     // : Content-Type, Content-Length, Connection
     res._header += res._statusLine;
     // Log
+    Log::highlight(path);
     res._contentType = get_mimeType(path, mimeTypes);
     res._header   += "Content-Type: " + res._contentType + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
@@ -578,17 +593,21 @@ http::generate_directoryPage(string uri)
             "<section class=\"wrapper\">\n"
                 "<nav >\n"
                     "<ul class=\"navbar\">\n"
-                    "<li><a href=\"index.html\">Home</a></li>\n"
-                    "<li><a href=\"about.html\">About</a></li>\n"
-                    "<li><a href=\"upload.html\">Send files</a></li>\n"
-                    "<li><a href=\"uploaded.html\">Storage</a></li>\n"
+                    "<li><a href=\"/\">Home</a></li>\n"
+                    "<li><a href=\"/about\">About</a></li>\n"
+                    "<li><a href=\"/send-files\">Send files</a></li>\n"
+                    "<li><a href=\"/storage\">Storage</a></li>\n"
                     "</ul>\n"
-                "</nav>\n";
+                "</nav>"
+                "<h1>Directory listing</h1>\n"
+                "<div class=\"dirlist\">\n";
+                
     while (!list.empty()) {
-        htmlPage += "<p>" + list.front() + "</p>\n";
+        htmlPage += "<p class=\"dirfiles\">" + list.front() + "</p>\n";
         list.pop_front();
     }
-    htmlPage += "</section>"
+    htmlPage += "</div>\n"
+                "</section>\n"
                 "</body>\n"
                 "</html>\n";
     
@@ -905,9 +924,10 @@ http::Request::getPathToRequestedFile()
     string path;
     size_t found = 0;
     string storagePath = "/public/storage";
-    
-    // if ((found = _uri.find(storagePath)) != string::npos)
-    //     _uri = _uri.substr(found+storagePath.size());
+    string style = "/stylesheets";
+
+    if ((found = _uri.find(style)) != string::npos)
+        _uri = _uri.substr(found);
 
     if ((found = _uri.find("/public")) != string::npos)
         path = ".";
