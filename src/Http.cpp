@@ -320,6 +320,15 @@ http::Request::isMultipartFormData()
     return (_contentType == "multipart/form-data");
 }
 
+string get_error_page(Server& s, string error_code)
+{
+    if (s._error_pages.find(error_code) != s._error_pages.end())
+        return s._error_pages[error_code];
+    else {
+        return "default404.html";
+    }
+}
+
 http::Response
 http::build_response(Request& req, Server& server)
 {
@@ -327,7 +336,7 @@ http::build_response(Request& req, Server& server)
     string              buffer, path;
     std::ifstream       requestedFile;
     map<string, string> mimeTypes = http::load_mimeTypes("./conf/mime.types");
-    string              error_page = server._error_pages["404"];
+    string              error_page = get_error_page(server, "404");
     bool                body_is_set = false;
 
     Log::mark("uri: " + req._uri);
@@ -345,7 +354,7 @@ http::build_response(Request& req, Server& server)
     Log::status("Content-length: " + ft::to_str(req._contentLength));
     if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
         res.set_status("413");
-        path = "./public/" + server._error_pages["413"];
+        path = "./public/" + get_error_page(server, "413");
         // path = "./public/413.html";
 
     }
