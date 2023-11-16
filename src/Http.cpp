@@ -493,7 +493,7 @@ http::build_response(Request& req, Server& server)
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
     res._header   += "Connection: keep-alive\r\n";
-    res._header   += "Server: Adars\r\n";
+    res._header   += "Server: " + server.get_server_name() + "\r\n";
     res._header   += "Cache-Control: no-cache\r\n";
     res._header   += "\r\n";
 
@@ -524,10 +524,10 @@ void
 http::Request::save_payload(string storageDir)
 {
     Log::status("save_payload()..");
-    if (_method == "POST") {
+    if (_method == "POST" && !_payload.empty()) {
         string path = storageDir + _filename; // TODO: prefix with _storage_dir
         Log::status("filepath: " + path);
-        std::ofstream outputFile(path, std::ios::binary);
+        std::ofstream outputFile(path.c_str(), std::ios::binary);
         if (outputFile) {
             outputFile.write(_payload.c_str(), _payload.size());
             outputFile.close();
