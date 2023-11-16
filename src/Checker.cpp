@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/15 17:20:14 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/16 11:56:22 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -326,14 +326,9 @@ bool check_exist_server_data(map_vector server_data, std::string key)
 
 void set_default_error_vector(std::vector<std::string> &error_page)
 {
+    
     error_page.push_back("400");
     error_page.push_back("default400.html");
-    error_page.push_back("401");
-    error_page.push_back("default401.html");
-    error_page.push_back("403");
-    error_page.push_back("default403.html");
-    error_page.push_back("404");
-    error_page.push_back("default404.html");
     error_page.push_back("500");
     error_page.push_back("default500.html");
     
