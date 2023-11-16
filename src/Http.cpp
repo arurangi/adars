@@ -377,6 +377,7 @@ http::build_response(Request& req, Server& server)
             res._contentLength = res._body.size();
             body_is_set = true;
             res._contentType = "text/html";
+            path = ".html";
         }
         // req._uri = "./public/index.html";
         // path = "./public/" + error_page;
