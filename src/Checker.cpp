@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/16 11:56:22 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/16 14:33:19 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ void    Config::server_data(Data &wbsv_data)
 
 void    Config::valid_host(Data &wbsv_data, std::string value)
 {
-    if (value != "127.0.0.1")
+    if (value != "127.0.0.1" && value != "0.0.0.0")
     {
         wbsv_data.error = "Webserv: wrong host in \"";
         wbsv_data.error += value + "\" of the \"host\" directive in " + this->filename;
