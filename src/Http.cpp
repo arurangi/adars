@@ -311,7 +311,6 @@ http::Request::parseUnstructuredBody()
 
     while (std::getline(ss, currLine))
         _rawBody += currLine;
-    // _contentLength = _rawBody.size();
 }
 
 bool
@@ -325,7 +324,10 @@ string get_error_page(Server& s, string error_code)
     if (s._error_pages.find(error_code) != s._error_pages.end())
         return s._error_pages[error_code];
     else {
-        return "default404.html";
+        if (ft::startswith(error_code, "4"))
+            return "default400.html";
+        else
+            return "default500.html";
     }
 }
 
@@ -339,8 +341,12 @@ http::build_response(Request& req, Server& server)
     string              error_page = get_error_page(server, "404");
     bool                body_is_set = false;
 
-    Log::mark("uri: " + req._uri);
-
+    // BODY SIZE TOO BIG -> sets path
+    if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
+        res.set_status("413");
+        path = "./public/" + get_error_page(server, "413");
+        // path = "./public/413.html";
+    }
     /**************************************************************************/
     /* FIND RESSOURCE PATH: 3 options                                         */
     /* ***                                                                    */
@@ -350,14 +356,6 @@ http::build_response(Request& req, Server& server)
     /**************************************************************************/
     ////////////////////////////////////////////////////////////////////////////
     // DIRECTORY PATH -> sets body
-    Log::status("Body size max: " + ft::to_str(server.get_max_body_size()));
-    Log::status("Content-length: " + ft::to_str(req._contentLength));
-    if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
-        res.set_status("413");
-        path = "./public/" + get_error_page(server, "413");
-        // path = "./public/413.html";
-
-    }
     else if (ft::isdirectory(("."+req._uri).c_str())) {
         Log::status("===> directory");
         res._body = generate_directoryPage("./public/");
@@ -376,16 +374,19 @@ http::build_response(Request& req, Server& server)
     // CGI -> sets body
     else if (ft::startswith(req._uri, "/cgi-bin")) {
         Log::status("===> CGI");
-        if (req._cgiContent.empty())
-            res._body = "<div><h2>No content returned by CGI</h2></div>";
-        else
+        if (req._cgiContent.empty()) {
+            path = "./public/" + get_error_page(server, "501");
+            req._uri = ".html";
+        }
+        else {
             res._body = req._cgiContent;
-        res._body += '\0';
-        res._contentLength = res._body.size();
-        res._contentType = "text/html";
-        req._uri = "./public/" + error_page;
-        path = "./public/" + error_page;
-        body_is_set = true;
+            res._body += '\0';
+            res._contentLength = res._body.size();
+            body_is_set = true;
+            res._contentType = "text/html";
+        }
+        // req._uri = "./public/index.html";
+        // path = "./public/" + error_page;
     }
     ////////////////////////////////////////////////////////////////////////////
     // LOCATIONS -> sets path
@@ -403,7 +404,7 @@ http::build_response(Request& req, Server& server)
                 if (req._uri == location_path)
                 {
                     found = true; Log::success(req._uri);
-
+                    
                     // default values
                     root    = server.get_root();
                     index   = DEFAULT_INDEX;
@@ -428,6 +429,7 @@ http::build_response(Request& req, Server& server)
                             vector<string>::iterator itr = std::find(settings.begin(), settings.end(), req._method);
                             if (itr == settings.end()) {  // not found
                                 res.set_status("405");
+                                error_page = get_error_page(server, "405");
                                 index = error_page;
                                 //break ;
                             }
@@ -446,6 +448,7 @@ http::build_response(Request& req, Server& server)
         } else {
             Log::error("Location not found");
             res.set_status("404"); // NOT FOUND
+            error_page = get_error_page(server, "404");
             path = root + "/" + error_page;
         }
     } // end location
@@ -480,17 +483,13 @@ http::build_response(Request& req, Server& server)
     ////////////////////////////////////////////////////
     // STATUS_LINE
     // : version, status_code, status_text
-    res._httpVersion = req._httpVersion;
-    res._statusLine = res._httpVersion + " " + res._code + " " + res._message + "\r\n";
+    res._statusLine = req._httpVersion + " " + res._code + " " + res._message + "\r\n";
 
     ////////////////////////////////////////////////////
     // HEADER:
     // : Content-Type, Content-Length, Connection
-    res._header += res._statusLine;
-    // Log
-    Log::highlight(path);
-    res._contentType = get_mimeType(path, mimeTypes);
-    res._header   += "Content-Type: " + res._contentType + "\r\n";
+    res._header   += res._statusLine;
+    res._header   += "Content-Type: " + get_mimeType(path, mimeTypes) + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
     res._header   += "Connection: keep-alive\r\n";
@@ -498,7 +497,9 @@ http::build_response(Request& req, Server& server)
     res._header   += "Cache-Control: no-cache\r\n";
     res._header   += "\r\n";
 
-    // Construct raw HTTP response
+    ////////////////////////////////////////////////////
+    // FULL RESPONSE:
+    // : header, body
     res._raw = res._header + res._body;
 
     std::cout << res;
