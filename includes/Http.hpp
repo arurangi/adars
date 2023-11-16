@@ -7,11 +7,9 @@
     #include <iostream>
     #include <sstream>
     #include <fstream>
-    // #include <thread>
-    #include <pthread.h>
-    #include <thread> // TODO: delete this. Not in c++98
     #include <map>
     #include <set>
+
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <unistd.h>
@@ -22,8 +20,6 @@
     #include "Server.hpp"
     #include "Cluster.hpp"
     #include "Html.hpp"
-
-    // class Cgi;
 
     using std::set;
     using std::string;

@@ -5,7 +5,6 @@
     #include <string>
     #include <fstream>
     #include <map>
-    #include <thread>
     #include <vector>
 
     #include <sys/socket.h>
@@ -22,8 +21,6 @@
     using std::string;
     using std::vector;
     using std::map;
-    // using http::Request;
-    // using http::Response;
 
     typedef map< string, map<string, vector<string> > > LocationMap;
     typedef vector< LocationMap > LocationsList;
@@ -39,6 +36,10 @@
     #define BLANK_LINE          "\r\n"
     #define PORT                8080
     #define BACKLOG             10
+
+    #define NORMAL              0
+    #define CONTAINER           1
+    #define MODE                NORMAL
 
     enum states {
         isOff,

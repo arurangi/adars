@@ -36,6 +36,9 @@ void
 Server::setup(int domain, int service, int protocol, int backlog)
 {
     int status, on = 1;
+    #if MODE == CONTAINER
+        _host = "0.0.0.0";
+    #endif
 
     /*************************************************************/
     /* Create an AF_INET4 stream socket to receive incoming      */
@@ -68,7 +71,7 @@ Server::setup(int domain, int service, int protocol, int backlog)
     /*************************************************************/
     /* Bind the socket                                           */
     /*************************************************************/
-    std::memset(&_address, 0, sizeof(_address));
+    memset(&_address, 0, sizeof(_address));
     _address.sin_family = domain;
     _address.sin_port = htons(_port);
     status = inet_pton(AF_INET, _host.c_str(), &_address.sin_addr); // TODO: replace IP with server IP

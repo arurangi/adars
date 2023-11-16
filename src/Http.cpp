@@ -69,14 +69,6 @@ http::handle_request(int client_socket, Cluster& cluster)
 {
     Request req = http::parse_request(client_socket);
     Server server = cluster.getServerByPort(req._server_port);
-    // if (req._method == "POST" && req._contentLength < server.get_max_body_size()) {
-    // }
-
-    map<string, string >::iterator itr =  server._error_pages.begin();
-    for (; itr != server._error_pages.end(); itr++) {
-        Log::status((*itr).first);
-    }
-
     req.execute(req, server.get_storage_dir());
     Response res = http::build_response(req, server);
     http::send_response(client_socket, res);
@@ -224,7 +216,8 @@ http::parse_request(const int& client_socket)
     Request req;
     char    buffer[BUFFER_SIZE];
     string  raw_request;
-    size_t  found, bytesRead = std::numeric_limits<int>::max();
+    size_t  found;
+    ssize_t bytesRead = std::numeric_limits<int>::max();
 
     /////// READ HEADER //////////
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
@@ -457,7 +450,7 @@ http::build_response(Request& req, Server& server)
     /* OPEN REQUESTED RESSOURCE (if body is not set)                          */
     /**************************************************************************/
     if (!body_is_set) {
-        requestedFile.open(path, std::ios::in);
+        requestedFile.open(path.c_str(), std::ios::in);
         if (!requestedFile.is_open()) {
             res.set_status(HTTP_NOT_FOUND);
             if (req._autoindex == "on") {
@@ -565,7 +558,7 @@ http::load_mimeTypes(string mimesFilePath) {
     int seperator;
 
     // open mime file
-    mimeFile.open(mimesFilePath, std::ios::in);
+    mimeFile.open(mimesFilePath.c_str(), std::ios::in);
     if (!mimeFile.is_open()) {
         Log::error("Error: opening MIME file");
         // throw exception???
@@ -645,10 +638,7 @@ http::generate_directoryPage(string uri)
 string
 http::generate_errorPage(string path)
 {
-    // TODO: add map<int, string>
-    // key (int): status code
-    // value (string): full html page of the error code in a string
-    std::ifstream requestedFile("./public/" + path, std::ios::in);
+    std::ifstream requestedFile(("./public/" + path).c_str(), std::ios::in);
     string body = "", buffer = "";
     while (std::getline(requestedFile, buffer)) {
         body += buffer + "\n";
@@ -657,31 +647,6 @@ http::generate_errorPage(string path)
     requestedFile.close();
 
     return body;
-
-    // string page =
-    //             "<!DOCTYPE html>\n"
-    //             "<html lang=\"en\">\n"
-    //             "<head>\n"
-    //                 "<meta charset=\"UTF-8\">\n"
-    //                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-    //                 "<link rel=\"stylesheet\" href=\"stylesheets/styles.css\">\n"
-    //                 "<title>Error 404</title>\n"
-    //             "</head>\n"
-    //             "<body>\n"
-    //                 "<section class=\"wrapper\">\n"
-    //                 "<nav >\n"
-    //                     "<ul class=\"navbar\">\n"
-    //                     "<li><a href=\"index.html\">Home</a></li>\n"
-    //                     "<li><a href=\"about.html\">About</a></li>\n"
-    //                     "<li><a href=\"upload.html\">Send files</a></li>\n"
-    //                     "<li><a href=\"uploaded.html\">Storage</a></li>\n"
-    //                     "</ul>\n"
-    //                 "</nav>\n"
-    //                 "<h1>Error 404</h1>\n"
-    //                 "</section>\n"
-    //             "</body>\n"
-    //             "</html>\n";
-    // return page;
 }
 
 std::set<string> get_xtension_list(std::deque<string> files_list)
@@ -705,24 +670,6 @@ http::generate_storageList()
     std::deque<string> list = ft::list_files_in("./public/storage");
     string storageItem = "";
 
-    // filtering buttons
-    // std::set<string> xtension_list = get_xtension_list(list);
-    // storageItem += "<div class=\"filter_buttons\">\n";
-    // storageItem += "<p>filter by: </p>\n";
-    // storageItem += html::filter("all");
-
-    // storageItem += "<form action=\"filter\" method=\"get\"> \
-    //                 <input type=\"submit\" name=\"all\" value=\"all\" /> \
-    //                 </form>";
-
-
-    // storageItem += "<button class=\"toggle\">all</button>\n";
-    // set<string>::iterator itr = xtension_list.begin();
-    // for (; itr != xtension_list.end(); itr++)
-    //     storageItem += "<button class=\"toggle\">" + (*itr) + "</button>\n";
-    // storageItem += "</div>\n";
-
-    // files list
     if (list.empty()) {
         storageItem += "<p>Nothing here</p>";
         return storageItem;
@@ -788,7 +735,7 @@ void http::Request::setFilename(string& body)
     string line, tmp, keyword = "filename=\"";
     
     if ((pos = body.find("Content-Disposition")) == string::npos) {
-        Log::error("No `Content-Disposition` in POST request");
+        Log::error("setFilename(): No `Content-Disposition` in POST request");
         return ;
     }
     stringstream ss(body.substr(pos));
@@ -808,7 +755,7 @@ http::Request::setPayload(string& body)
     string line;
     
     if ((pos = body.find("Content-Disposition")) == string::npos) {
-        Log::error("No `Content-Disposition` in POST request");
+        Log::error("setPayload(): No `Content-Disposition` in POST request");
         return ;
     }
     stringstream ss(body.substr(pos));

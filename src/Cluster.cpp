@@ -40,7 +40,7 @@ Cluster::init(Serv_list servers)
                     s.set_request_body_size_limit(server_data_it->second[0]);
                 else if (server_data_it->first == "root")
                     s.set_root(server_data_it->second[0]);
-                else if (server_data_it->first == "host") // <== doesn't find "host"
+                else if (server_data_it->first == "host")
                     s.set_host(server_data_it->second[0]);
                 else if (server_data_it->first == "index")
                     s.set_default_index(server_data_it->second[0]);
@@ -105,7 +105,7 @@ Cluster::watch()
                     } catch(std::exception& e) {
                         Log::error("Caught error");
                         close(curr_fd);
-                        if (std::strncmp(e.what(), "Empty request", 13) != 0)
+                        if (strncmp(e.what(), "Empty request", 13) != 0)
                             Log::warn(e.what());
                     }
                     FD_CLR(curr_fd, &master_set);
