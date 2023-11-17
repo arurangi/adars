@@ -7,8 +7,6 @@ http::Request::Request() : _contentLength(0), _referer(""){}
 http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
-
-
 void
 http::Response::reset()
 {
@@ -435,7 +433,6 @@ http::build_response(Request& req, Server& server)
             } /* End of loop through LocationMap (1) */
         } /* End of loop through LocationList */
         ////////////////////////////////////////////////////////////////////////////
-        std::cout << error_page << std::endl;
         if (found) {
             path = root + "/" + index;
             std::cout << path << std::endl;
