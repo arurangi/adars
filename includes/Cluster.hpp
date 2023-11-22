@@ -4,6 +4,7 @@
     #include <iostream>
     #include <vector>
     #include <sys/socket.h>
+    #include <sys/select.h>
     #include "Server.hpp"
     #include "Webserv.hpp"
 

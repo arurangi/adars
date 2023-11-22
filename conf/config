@@ -81,29 +81,3 @@ server
     }
 }
 
-server 
-{
-    listen 8002;
-    host 127.0.0.1;
-    server_name adarsthethird;
-
-    root ./public;
-    index index.html;
-
-    client_max_body_size 2g;
-
-    location / {
-        allow_methods [GET];
-        autoindex on;
-    }
-
-    location /assets {
-        allow_methods GET;
-        autoindex off;
-    }
-
-    location /upload {
-        allow_methods [GET POST DELETE];
-        autoindex on;
-    }
-}

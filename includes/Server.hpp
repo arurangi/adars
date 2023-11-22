@@ -30,12 +30,12 @@
     #define TCP                 SOCK_STREAM
     #define UDP                 SOCK_DGRAM
     #define DEFAULT             0
-    #define BACKLOG_LISTENING   3
+    #define BACKLOG_LISTENING   30
     #define BUFFER_SIZE         2047
     #define BYTES_PER_CHAR      2
     #define BLANK_LINE          "\r\n"
     #define PORT                8080
-    #define BACKLOG             10
+    #define BACKLOG             1000
 
     #define NORMAL              0
     #define CONTAINER           1
