@@ -35,7 +35,7 @@
     #define BYTES_PER_CHAR      2
     #define BLANK_LINE          "\r\n"
     #define PORT                8080
-    #define BACKLOG             10
+    #define BACKLOG             1024
 
     #define NORMAL              0
     #define CONTAINER           1
