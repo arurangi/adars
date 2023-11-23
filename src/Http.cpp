@@ -329,6 +329,12 @@ http::build_response(Request& req, Server& server)
     string              error_page = get_error_page(server, "404");
     bool                body_is_set = false;
 
+    // TODO: handle method not found
+    // if (req._status == HTTP_BAD_REQUEST) {
+    //     Log::highlight("in HTTP_BAD_REQUEST");
+    //     res.set_status("400");
+    //     path = "./public/404.html";
+    // }
     // BODY SIZE TOO BIG -> sets path
     if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
         res.set_status("413");
@@ -781,7 +787,9 @@ http::Request::parse_header()
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
         if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
+        
         _status = HTTP_BAD_REQUEST;
+        return ;
     }
 
     this->parse_query();
