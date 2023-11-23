@@ -30,6 +30,7 @@
         string get_dir(string file_path);
         std::deque<string> list_files_in(string directory);
         bool isdirectory(const char* path);
+        void delay(int time_in_ms);
     };
 
 #endif

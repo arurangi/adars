@@ -77,3 +77,10 @@ ft::isdirectory(const char* path)
     else
         return false;
 }
+
+void ft::delay(int time_in_ms) {
+    struct timeval timeout;
+    timeout.tv_sec = time_in_ms / 1000;
+    timeout.tv_usec = (time_in_ms % 1000) * 1000;
+    select(0, NULL, NULL, NULL, &timeout);
+}

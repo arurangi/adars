@@ -57,6 +57,7 @@ int http::accept_connection(int serverSocket)
     socklen_t           addrLen = sizeof(addr);
 
     int client_socket = accept(serverSocket, (struct sockaddr *)&addr, &addrLen);
+    ft::delay(1);
     if (client_socket < 0)
         throw http::AcceptFailed();
     return client_socket;
