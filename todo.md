@@ -1,7 +1,6 @@
 # Mandatory
 read & write in CGI: add checking for -1 and 0
-recv in parse_request: check for 0 and -1
-send in parse_request: check for 0 and -1
+recv & send in handle_request: check for 0 and -1
 
 # Configuration
 Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1 http://example.com/)
