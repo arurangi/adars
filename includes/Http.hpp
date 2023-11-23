@@ -167,6 +167,8 @@
                 void    initEnv(Request &req);
                 string	execute(Request &req);
                 void	clear();
+                void    freeCgiEnv();
+
         };
 
         int         accept_connection(int serverSocket);

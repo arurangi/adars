@@ -124,6 +124,24 @@ void http::Request::handle_cgi(Request &req)
         req._status = "500";
 }
 
+void    http::Request::freeCgiEnv()
+{
+    if (this->_ch_env != nullptr)
+    {
+        for (int i = 0; this->_ch_env[i] != nullptr; i++) {
+                free(this->_ch_env[i]);
+            }
+        free(this->_ch_env);
+    }
+
+    if (this->_argv != nullptr) {
+        for (int i = 0; this->_argv[i] != nullptr; i++) {
+            free(this->_argv[i]);
+        }
+        free(this->_argv);
+    }
+}
+
 void    http::Request::initEnv(Request &req)
 {
     std::string cgi_exec = "." + req._uri;

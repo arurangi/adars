@@ -1,10 +1,8 @@
 # Mandatory
-read & write in CGI: add checking for -1 and 0
 recv & send in handle_request: check for 0 and -1
 
 # Configuration
 Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1 http://example.com/)
-- remove default error page and must still display some error message (40x or 50x)
 - error 404 when change root_dir of location
 
 # Basic checks
