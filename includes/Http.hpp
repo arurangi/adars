@@ -122,8 +122,6 @@
                 map<string, string> _queryParameters;
                 string              _querystr;
 
-                string _connection;
-
                 string  _filename;
                 string  _payload;
 
@@ -204,15 +202,6 @@
         };
 
         class EmptyRequest : public std::exception {
-            public:
-                const char* what() const throw();
-        };
-
-        class Abort : public std::exception {
-            public:
-                const char* what() const throw();
-        };
-        class AbortClose : public std::exception {
             public:
                 const char* what() const throw();
         };

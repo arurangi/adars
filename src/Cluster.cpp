@@ -63,26 +63,19 @@ Cluster::init(Serv_list servers)
 void
 Cluster::watch()
 {
-    int status, curr_fd, setsize = 0;
+    int status, curr_fd, setsize = FD_SETSIZE;
 
     // initialize data structure to store all known sockets (server and client)
     fd_set master_set, working_set;
     FD_ZERO(&master_set);
-    for (IteratorS it = this->begin(); it != this->end(); it++) {
+    for (IteratorS it = this->begin(); it != this->end(); it++)
         FD_SET((*it).first, &master_set);
-        setsize = (*it).first;
-    }
-
+    
     do
     {
         working_set = master_set; // because select() is destructive
-        // memcpy(&working_set, &master_set, sizeof(master_set));
-
-        std::cout << setsize << std::endl;
         // wait for something to read
-        status = select(setsize+1, &working_set, NULL, NULL, NULL);
-        Log::highlight(status);
-        // std::cout << status << std::endl;
+        status = select(setsize, &working_set, NULL, NULL, NULL);
         if (status < 0) {
             Log::out("select() call failed");
             break ;
@@ -92,34 +85,14 @@ Cluster::watch()
         }
         
         // identify which socket is readable
-        int desc_fd = status;
-        std::cout << RED << "WORKSET" << END_CLR << std::endl;
-        for (int i = 0; i <= setsize; i++) {
-            if (FD_ISSET(i, &master_set)) {
-                std::cout << i << " ";
-            }
-        }
-        int onze = 1;
-        for (curr_fd = 0; curr_fd <= setsize && desc_fd > 0; curr_fd++) {
+        for (curr_fd = 0; curr_fd < setsize; curr_fd++) {
             if (FD_ISSET(curr_fd, &working_set)) {
-
-                desc_fd -= 1;
-
                 // server = new TCP connection
                 if (this->find(curr_fd)) {
                     Log::mark("Listening socket is readable");
-                    int new_client = 0;
                     try { /* accept() */
-                        do {
-                            new_client = http::accept_connection(curr_fd);
-                            Log::status("new_client: " + ft::to_str(curr_fd));
-                            FD_SET(new_client, &master_set);
-                            std::cout << onze << std::endl;
-                            onze++;
-                            if (new_client > setsize)
-                                setsize = new_client;
-
-                        } while (new_client != -1);
+                        int new_client = http::accept_connection(curr_fd);
+                        FD_SET(new_client, &master_set);
                     } catch (std::exception& e) {
                         Log::warn(e.what());
                     }
@@ -127,15 +100,13 @@ Cluster::watch()
                 // client = new HTTP request
                 else {
                     Log::mark("Descriptor " + ft::to_str(curr_fd) + " is readable");
-                    try { /* recv() & send() */
-                        Log::status("new_req: " + ft::to_str(curr_fd));
+                    try { /* recv() & write() */
                         http::handle_request(curr_fd, *this);
                     } catch(std::exception& e) {
                         Log::error("Caught error");
-                        // if (strncmp(e.what(), "Empty request", 13) != 0)
-                        //     Log::warn(e.what());
-                        if (string(e.what()) == "close")
-                            close(curr_fd);
+                        close(curr_fd);
+                        if (strncmp(e.what(), "Empty request", 13) != 0)
+                            Log::warn(e.what());
                     }
                     FD_CLR(curr_fd, &master_set);
                 }

@@ -3,7 +3,7 @@
 http::Response::Response() { reset(); }
 http::Response::~Response() {}
 
-http::Request::Request() : _contentLength(0), _referer(""), _connection("") {}
+http::Request::Request() : _contentLength(0), _referer(""){}
 http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
@@ -59,8 +59,6 @@ int http::accept_connection(int serverSocket)
     int client_socket = accept(serverSocket, (struct sockaddr *)&addr, &addrLen);
     if (client_socket < 0)
         throw http::AcceptFailed();
-    // else if (client_socket == 0)
-    //     throw http::AcceptFailed();
     return client_socket;
 }
 
@@ -84,6 +82,7 @@ http::Request::execute(Request& req, string storageDir) {
         handle_cgi(req);
         size_t pos = req._cgiContent.find_last_of('>');
         req._cgiContent = req._cgiContent.substr(0, pos + 1);
+        std::cout << req._cgiContent << std::endl;
     }
     else if (_method == "POST" && _contentLength > 0) {
         Log::status("Execution: saving payload to storage");
@@ -152,12 +151,12 @@ string    http::Request::execute(Request &req)
     
     if (this->_argv[0] == NULL || this->_argv[1] == NULL)
 	{
-		return NULL;
+		return "CACA";
 	}
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
 	{
         Log::status("pipe() failed");
-		return NULL;
+		return "CACA";
 	}
 	this->_cgi_pid = fork();
 	if (this->_cgi_pid == 0)
@@ -220,14 +219,8 @@ http::parse_request(const int& client_socket)
 
     /////// READ HEADER //////////
     bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-    if (bytesRead < 0) {
-        if (errno != EWOULDBLOCK)
-            throw http::AbortClose();
-        throw http::Abort();
-    }
-    else if (bytesRead == 0)
-        throw http::AbortClose();
-
+    if (bytesRead < 0)
+        throw http::ReceiveFailed();
     raw_request += string(buffer, bytesRead);
 
     req._header = raw_request;
@@ -242,13 +235,8 @@ http::parse_request(const int& client_socket)
     req._body = raw_request;
     while (bytesRead == BUFFER_SIZE) {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytesRead < 0) {
-            if (errno != EWOULDBLOCK)
-                throw http::AbortClose();
-            throw http::Abort();
-        }
-        else if (bytesRead == 0)
-            throw http::AbortClose();
+        if (bytesRead < 0)
+            throw http::ReceiveFailed();
         req._body += string(buffer, bytesRead);
     }
 
@@ -495,8 +483,7 @@ http::build_response(Request& req, Server& server)
     res._header   += "Content-Type: " + get_mimeType(path, mimeTypes) + "\r\n";
     res._header   += "Content-Length: " + ft::to_str(res._contentLength) + "\r\n";
     res._header   += "Date: " + res.get_gmt_time() + "\r\n";
-    string tmp = (req._connection == "close") ? "close" : "keep-alive";
-    res._header   += "Connection: " + tmp + "\r\n";
+    res._header   += "Connection: keep-alive\r\n";
     res._header   += "Server: " + server.get_server_name() + "\r\n";
     res._header   += "Cache-Control: no-cache\r\n";
     res._header   += "\r\n";
@@ -515,11 +502,7 @@ void http::send_response(int client_socket, http::Response& res)
     int bytes_sent = 0;
     bytes_sent = send(client_socket, (res._raw).c_str(), res._raw.size(), 0);
     if (bytes_sent < 0)
-        throw http::AbortClose();
-        // Log::error("in handleHttpRequest(): send(): No bytes to send");
-    // else if (bytes_sent == 0)
-    //     return;
-
+        Log::error("in handleHttpRequest(): send(): No bytes to send");
 
     // std::cout << CGREEN << "••• Bytes transmitted: "
     //         << CBOLD << bytes_sent
@@ -841,10 +824,6 @@ http::Request::parse_header()
             else
                 this->_referer = "/index.html";
         }
-        keyword = "Connection: ";
-        if ((found = line.find(keyword)) != string::npos) {
-            _connection = line.substr(found+keyword.size());
-        }
     }
 
 }
@@ -972,13 +951,4 @@ const char* http::BadRequest::what() const throw()
 const char* http::EmptyRequest::what() const throw()
 {
     return "Empty request";
-}
-
-const char* http::Abort::what() const throw()
-{
-    return "close";
-}
-const char* http::AbortClose::what() const throw()
-{
-    return "open";
 }
