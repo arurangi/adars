@@ -66,6 +66,7 @@ int http::accept_connection(int serverSocket)
 void
 http::handle_request(int client_socket, Cluster& cluster)
 {
+
     Request req = http::parse_request(client_socket);
     Server server = cluster.getServerByPort(req._server_port);
     req.execute(req, server.get_storage_dir());
@@ -76,14 +77,18 @@ http::handle_request(int client_socket, Cluster& cluster)
 void
 http::Request::execute(Request& req, string storageDir) {
 
+    if (!req._status.empty())
+        return ;
     if (ft::startswith(req._uri, "/cgi-bin/") && ft::endswith(req._uri, ".py"))
     {
         Log::status("Execution: processing CGI");
         req._cgiContent = "";
         handle_cgi(req);
+        if (!req._status.empty())
+            return ;
         size_t pos = req._cgiContent.find_last_of('>');
         req._cgiContent = req._cgiContent.substr(0, pos + 1);
-        std::cout << req._cgiContent << std::endl;
+        
     }
     else if (_method == "POST" && _contentLength > 0) {
         Log::status("Execution: saving payload to storage");
@@ -107,6 +112,8 @@ void http::Request::handle_cgi(Request &req)
     this->_cgi_path = req._uri;
     initEnv(req);
     req._cgiContent = execute(req);
+    if (req._cgiContent.empty())
+        req._status = "500";
 }
 
 void    http::Request::initEnv(Request &req)
@@ -149,15 +156,16 @@ void    http::Request::initEnv(Request &req)
 string    http::Request::execute(Request &req)
 {
     std::string final;
+    size_t check;
     
     if (this->_argv[0] == NULL || this->_argv[1] == NULL)
 	{
-		return "CACA";
+		return NULL;
 	}
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
 	{
         Log::status("pipe() failed");
-		return "CACA";
+		return NULL;
 	}
 	this->_cgi_pid = fork();
 	if (this->_cgi_pid == 0)
@@ -178,7 +186,13 @@ string    http::Request::execute(Request &req)
 
         if (req._method == "POST")
         {
-            write(pipe_in[1], this->_rawBody.c_str(), strlen(this->_rawBody.c_str()));
+            check = write(pipe_in[1], this->_rawBody.c_str(), strlen(this->_rawBody.c_str()));
+            if (check == -1)
+            {
+                close(pipe_in[1]);
+                close(pipe_out[0]);
+                return NULL;
+            }
         }
         close(pipe_in[1]);
 
@@ -188,8 +202,19 @@ string    http::Request::execute(Request &req)
 
         while ((bytes = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
         {
-            write(STDOUT_FILENO, buffer, bytes);
+            if (bytes == -1)
+            {
+                close(pipe_out[0]);
+                return NULL;
+            }
+            check = write(STDOUT_FILENO, buffer, bytes);
+            if (check == -1)
+            {
+                close(pipe_out[0]);
+                return NULL;
+            }
         }
+        close(pipe_out[0]);
         final = buffer;
     }
 	else
@@ -224,15 +249,16 @@ http::parse_request(const int& client_socket)
     do {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
+        {
+            req._status = "500";
             throw http::ReceiveFailed();
+        }
         raw_request += string(buffer, bytesRead);
     }
     while (bytesRead == BUFFER_SIZE);
 
     req._header = raw_request, req._body = raw_request;
     req.parse_header();
-
-    // std::cout << req;
 
     if (req._method != "POST")
         return req;
@@ -330,16 +356,14 @@ http::build_response(Request& req, Server& server)
     bool                body_is_set = false;
 
     // TODO: handle method not found
-    // if (req._status == HTTP_BAD_REQUEST) {
-    //     Log::highlight("in HTTP_BAD_REQUEST");
-    //     res.set_status("400");
-    //     path = "./public/404.html";
-    // }
+    if (!req._status.empty()) {
+        res.set_status(req._status);
+        path = "./public/" + get_error_page(server, req._status);
+    }
     // BODY SIZE TOO BIG -> sets path
     if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
         res.set_status("413");
         path = "./public/" + get_error_page(server, "413");
-        // path = "./public/413.html";
     }
     /**************************************************************************/
     /* FIND RESSOURCE PATH: 3 options                                         */
@@ -505,12 +529,10 @@ void http::send_response(int client_socket, http::Response& res)
     int bytes_sent = 0;
     bytes_sent = send(client_socket, (res._raw).c_str(), res._raw.size(), 0);
     if (bytes_sent < 0)
+    {
         Log::error("in handleHttpRequest(): send(): No bytes to send");
-
-    // std::cout << CGREEN << "••• Bytes transmitted: "
-    //         << CBOLD << bytes_sent
-    //         << "/" << res._contentLength << CRESET << std::endl;
-            
+        res.set_status("500");
+    }
     close(client_socket);
 }
 
