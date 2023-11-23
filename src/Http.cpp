@@ -218,27 +218,23 @@ http::parse_request(const int& client_socket)
     ssize_t bytesRead = std::numeric_limits<int>::max();
 
     /////// READ HEADER //////////
-    bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-    if (bytesRead < 0)
-        throw http::ReceiveFailed();
-    raw_request += string(buffer, bytesRead);
 
-    req._header = raw_request;
-    req.parse_header();
 
-    std::cout << req;
-
-    if (req._method != "POST")
-        return req;
-    
-    /////// READ BODY //////////
-    req._body = raw_request;
-    while (bytesRead == BUFFER_SIZE) {
+    do {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
         if (bytesRead < 0)
             throw http::ReceiveFailed();
-        req._body += string(buffer, bytesRead);
+        raw_request += string(buffer, bytesRead);
     }
+    while (bytesRead == BUFFER_SIZE);
+
+    req._header = raw_request, req._body = raw_request;
+    req.parse_header();
+
+    // std::cout << req;
+
+    if (req._method != "POST")
+        return req;
 
     if ((found = req._body.find(CRLFCRLF)) != string::npos) {
         req._body = req._body.substr(found + CRLF_SIZE);
@@ -707,7 +703,7 @@ operator<< (std::ostream& os, http::Response& rhs)
     stringstream ss(content);
     
     os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET; 
-    while (std::getline(ss, currentLine))
+    while (std::getline(ss, currentLine) && currentLine != CRLFCRLF)
         os << CGREEN << "<< " << CRESET << currentLine << std::endl;
     return os;
 }

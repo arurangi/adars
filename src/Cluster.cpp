@@ -67,7 +67,7 @@ Cluster::init(Serv_list servers)
 void
 Cluster::watch()
 {
-    int status, curr_fd, max_fd = 0;
+    int status, curr_fd, max_fd = 0, client_fd;
 
     // initialize data structure to store all known sockets (server and client)
     fd_set master_set, working_set;
@@ -79,8 +79,8 @@ Cluster::watch()
 
     do
     {
-        working_set = master_set; // because select() is destructive
         // wait for something to read
+        working_set = master_set; // because select() is destructive
         status = select(max_fd+1, &working_set, NULL, NULL, &this->_timeout);
         if (status < 0) {
             Log::error("select() call failed");
@@ -99,26 +99,19 @@ Cluster::watch()
 
                 // server = new TCP connection
                 if (this->find(curr_fd)) {
-                    Log::mark("Listening socket is readable");
                     try { /* accept() */
-                        int new_client_fd = http::accept_connection(curr_fd);
-                        FD_SET(new_client_fd, &master_set);
-                        if (new_client_fd > max_fd)
-                            max_fd = new_client_fd;
-                    } catch (std::exception& e) {
-                        Log::warn(e.what());
-                    }
+                        client_fd = http::accept_connection(curr_fd);
+                        FD_SET(client_fd, &master_set);
+                        if (client_fd > max_fd)
+                            max_fd = client_fd;
+                    } catch (std::exception& e) {}
                 }
                 // client = new HTTP request
                 else {
-                    Log::mark("Descriptor " + ft::to_str(curr_fd) + " is readable");
-                    try { /* recv() & write() */
+                    try { /* recv() & send() */
                         http::handle_request(curr_fd, *this);
                     } catch(std::exception& e) {
-                        Log::error("Caught error");
                         close(curr_fd);
-                        if (strncmp(e.what(), "Empty request", 13) != 0)
-                            Log::warn(e.what());
                     }
                     FD_CLR(curr_fd, &master_set);
                 }
