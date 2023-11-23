@@ -156,7 +156,7 @@ void    http::Request::initEnv(Request &req)
 string    http::Request::execute(Request &req)
 {
     std::string final;
-    size_t check;
+    int check;
     
     if (this->_argv[0] == NULL || this->_argv[1] == NULL)
 	{
