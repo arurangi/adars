@@ -12,7 +12,7 @@ int main(int ac, char **av)
     Data data;
 
     if (ac != 2)
-        data.config.parsing_file("conf/config", data);
+        data.config.parsing_file("conf/default.config", data);
     else if (ac == 2)
         data.config.parsing_file(av[1], data);
     if (data.error.length())
