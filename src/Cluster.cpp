@@ -3,7 +3,11 @@
 typedef vector< map<string, map<string, vector<string> > > > LocationsList;
 typedef map< string, map<string, vector<string> > > LocationsMap;
 
-Cluster::Cluster() : _size(0) {}
+Cluster::Cluster() : _size(0) {
+    // if no activity after 3 minutes, 
+    _timeout.tv_sec = 3 * 60;
+    _timeout.tv_usec = 0;
+}
 Cluster::~Cluster()
 {
     for (IteratorS it = this->begin(); it != this->end(); it++) {
@@ -70,17 +74,17 @@ Cluster::watch()
     FD_ZERO(&master_set);
     for (IteratorS it = this->begin(); it != this->end(); it++)
         FD_SET((*it).first, &master_set);
-    
+
     do
     {
         working_set = master_set; // because select() is destructive
         // wait for something to read
-        status = select(setsize, &working_set, NULL, NULL, NULL);
+        status = select(setsize, &working_set, NULL, NULL, &this->_timeout);
         if (status < 0) {
-            Log::out("select() call failed");
+            Log::error("select() call failed");
             break ;
         } else if (status == 0) {
-            Log::error("select() timed-out. Ending program.");
+            Log::status("Server timed-out.");
             break ;
         }
         

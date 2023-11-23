@@ -19,6 +19,7 @@
             IteratorS         _begin;
             IteratorS         _end;
         public:
+            struct timeval    _timeout;
             Cluster();
             ~Cluster();
             void        init(Serv_list serverList);
