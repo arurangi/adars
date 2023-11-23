@@ -67,19 +67,21 @@ Cluster::init(Serv_list servers)
 void
 Cluster::watch()
 {
-    int status, curr_fd, setsize = FD_SETSIZE;
+    int status, curr_fd, max_fd = 0;
 
     // initialize data structure to store all known sockets (server and client)
     fd_set master_set, working_set;
     FD_ZERO(&master_set);
-    for (IteratorS it = this->begin(); it != this->end(); it++)
+    for (IteratorS it = this->begin(); it != this->end(); it++) {
         FD_SET((*it).first, &master_set);
+        max_fd = (*it).first;
+    }
 
     do
     {
         working_set = master_set; // because select() is destructive
         // wait for something to read
-        status = select(setsize, &working_set, NULL, NULL, &this->_timeout);
+        status = select(max_fd+1, &working_set, NULL, NULL, &this->_timeout);
         if (status < 0) {
             Log::error("select() call failed");
             break ;
@@ -89,14 +91,20 @@ Cluster::watch()
         }
         
         // identify which socket is readable
-        for (curr_fd = 0; curr_fd < setsize; curr_fd++) {
+        int readable_fds = status;
+        for (curr_fd = 0; curr_fd <= max_fd && readable_fds ; curr_fd++) {
             if (FD_ISSET(curr_fd, &working_set)) {
+
+                readable_fds -= 1;
+
                 // server = new TCP connection
                 if (this->find(curr_fd)) {
                     Log::mark("Listening socket is readable");
                     try { /* accept() */
-                        int new_client = http::accept_connection(curr_fd);
-                        FD_SET(new_client, &master_set);
+                        int new_client_fd = http::accept_connection(curr_fd);
+                        FD_SET(new_client_fd, &master_set);
+                        if (new_client_fd > max_fd)
+                            max_fd = new_client_fd;
                     } catch (std::exception& e) {
                         Log::warn(e.what());
                     }
@@ -120,7 +128,7 @@ Cluster::watch()
     while (isRunning);
 
     // clean up all opened sockets
-    for (curr_fd = 0; curr_fd <= setsize; ++curr_fd) {
+    for (curr_fd = 0; curr_fd <= max_fd; ++curr_fd) {
         if (FD_ISSET(curr_fd, &master_set))
             close(curr_fd);
     }
