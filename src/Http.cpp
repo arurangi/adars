@@ -223,8 +223,7 @@ http::parse_request(const int& client_socket)
 
     do {
         bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytesRead < 0)
-            throw http::ReceiveFailed();
+        check::failure(bytesRead);
         raw_request += string(buffer, bytesRead);
     }
     while (bytesRead == BUFFER_SIZE);
@@ -232,7 +231,7 @@ http::parse_request(const int& client_socket)
     req._header = raw_request, req._body = raw_request;
     req.parse_header();
 
-    // std::cout << req;
+    std::cout << req;
 
     if (req._method != "POST")
         return req;
@@ -504,13 +503,7 @@ void http::send_response(int client_socket, http::Response& res)
 {
     int bytes_sent = 0;
     bytes_sent = send(client_socket, (res._raw).c_str(), res._raw.size(), 0);
-    if (bytes_sent < 0)
-        Log::error("in handleHttpRequest(): send(): No bytes to send");
-
-    // std::cout << CGREEN << "••• Bytes transmitted: "
-    //         << CBOLD << bytes_sent
-    //         << "/" << res._contentLength << CRESET << std::endl;
-            
+    check::failure(bytes_sent);
     close(client_socket);
 }
 
@@ -943,9 +936,9 @@ const char* http::ConnectionClosed::what() const throw()
     return "";
 }
 
-const char* http::ReceiveFailed::what() const throw()
+const char* http::Abort::what() const throw()
 {
-    return "Reading issue because of recv()";
+    return "aborted. Because of recv() or send().";
 }
 
 const char* http::BadRequest::what() const throw()

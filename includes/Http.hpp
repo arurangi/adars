@@ -20,6 +20,7 @@
     #include "Server.hpp"
     #include "Cluster.hpp"
     #include "Html.hpp"
+    #include "Checks.hpp"
 
     using std::set;
     using std::string;
@@ -187,7 +188,7 @@
             public:
                 const char* what() const throw();
         };
-        class ReceiveFailed : public std::exception {
+        class Abort : public std::exception {
             public:
                 const char* what() const throw();
         };
