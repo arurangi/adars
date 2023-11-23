@@ -21,3 +21,7 @@ Setup multiple servers with different hostnames (use something like: curl --reso
 
 # Siege & stress test
 - Check if there is no hanging connection
+
+# errors 
+
+- in parse_header

@@ -6,7 +6,7 @@
 /*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:26:48 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/16 14:33:19 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/23 16:15:19 by akorompa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,10 +183,20 @@ void    Config::server_location(Data &wbsv_data)
 
 void    Config::check_error_pages(Data &wbsv_data, map_vector_it location_data_it)
 {
+    std::set<std::string> errors;
+    
+    errors.insert("400");
+    errors.insert("401");
+    errors.insert("403");
+    errors.insert("404");
+    errors.insert("500");
+    errors.insert("501");
+    errors.insert("503");
+    
     if (location_data_it->second.size() != 2)
         wbsv_data.error = "Webserv: invalid numbers of arguments in error_pages in " + this->filename;
     std::vector<std::string>::iterator value_it = location_data_it->second.begin();
-    if (*value_it != "400" && *value_it != "401" && *value_it != "403" && *value_it != "404")
+    if (errors.find(*value_it) == errors.end())
         wbsv_data.error = "Webserv: invalid arguments \"" + *value_it + "\" in error_pages in " + this->filename;
     value_it++;
     if (value_it->find(".html") == std::string::npos)

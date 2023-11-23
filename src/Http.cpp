@@ -3,7 +3,7 @@
 http::Response::Response() { reset(); }
 http::Response::~Response() {}
 
-http::Request::Request() : _contentLength(0), _referer(""){}
+http::Request::Request() : _contentLength(0), _referer(""), _status("") {}
 http::Request::~Request() { _referer = ""; }
 //////////////////////////////////////////////////////////////////////////
 
@@ -47,6 +47,8 @@ http::Response::reset()
 
     // This is a generic error message indicating that something went wrong on the server's side, and the server couldn't be more specific about the issue.
     _statusCodes["500"] = "Internal Server Error";
+
+    _statusCodes["413"] = "Payload too large";
 }
 
 ///////////////// UTILS //////////////////////////////////////////////////
@@ -102,6 +104,12 @@ http::Request::execute(Request& req, string storageDir) {
         if (ft::startswith(filepath, "./public/")) {
             Log::status(">>>>>>>>> deleting file at: " + filepath + "<<<<<<<<<<<\n");
             remove(filepath.c_str());
+            if (errno != 0)
+            {  
+                Log::error("Error removing file.");
+                perror("");
+                req._status = "500";
+            }
         }
     }
 }
@@ -337,7 +345,9 @@ string get_error_page(Server& s, string error_code)
         return s._error_pages[error_code];
     else {
         if (ft::startswith(error_code, "4"))
+        {
             return "default400.html";
+        }
         else
             return "default500.html";
     }
@@ -354,7 +364,9 @@ http::build_response(Request& req, Server& server)
     bool                body_is_set = false;
 
     // TODO: handle method not found
+    Log::highlight("BUILDING RESPONSE");
     if (!req._status.empty()) {
+        Log::highlight("COOUCOU");
         res.set_status(req._status);
         path = "./public/" + get_error_page(server, req._status);
     }
@@ -391,7 +403,8 @@ http::build_response(Request& req, Server& server)
     else if (ft::startswith(req._uri, "/cgi-bin")) {
         Log::status("===> CGI");
         if (req._cgiContent.empty()) {
-            path = "./public/" + get_error_page(server, "501");
+            res.set_status("500");
+            path = "./public/" + get_error_page(server, "500");
             req._uri = ".html";
         }
         else {
@@ -448,7 +461,7 @@ http::build_response(Request& req, Server& server)
                                 res.set_status("405");
                                 error_page = get_error_page(server, "405");
                                 index = error_page;
-                                //break ;
+                                break ;
                             }
                         } else if (type == "error_page") {
                             error_page = settings[1];
@@ -472,16 +485,25 @@ http::build_response(Request& req, Server& server)
     /**************************************************************************/
     /* OPEN REQUESTED RESSOURCE (if body is not set)                          */
     /**************************************************************************/
+    // bool opened = true;
+
     if (!body_is_set) {
+        Log::status("=> opening.." + path);
         requestedFile.open(path.c_str(), std::ios::in);
+        // if (requestedFile.eof())
+        //     opened = false;
         if (!requestedFile.is_open()) {
-            res.set_status(HTTP_NOT_FOUND);
+            Log::status("==> couldn't open");
+            // res.set_status(HTTP_NOT_FOUND);
+            string code = requestedFile.eof() == true ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR; // TODO: YOU CAN DO BETTER
+            res.set_status(code);
+            error_page = get_error_page(server, code);
             if (req._autoindex == "on") {
                 req._uri = ".html"; // TODO: can I delete this?
                 res._body = http::generate_directoryPage(path);
             }
             else {
-                req._uri = "/" + error_page; // TODO: can I delete this?
+                req._uri = "./public/" + error_page; // TODO: can I delete this?
                 res._body = generate_errorPage(error_page);
             }
         } else {
@@ -534,7 +556,7 @@ void
 http::Request::save_payload(string storageDir)
 {
     Log::status("save_payload()..");
-    if (_method == "POST" && !_payload.empty()) {
+    if (!_payload.empty()) {
         string path = storageDir + _filename; // TODO: prefix with _storage_dir
         Log::status("filepath: " + path);
         std::ofstream outputFile(path.c_str(), std::ios::binary);
@@ -544,6 +566,7 @@ http::Request::save_payload(string storageDir)
             std::cout << "Image saved as: " << ("." + _filename) << std::endl;
         } else {
             std::cerr << "♨ Error saving the image." << std::endl;
+            this->_status = "500";
         }
     }
     _uri = "/";
@@ -803,7 +826,7 @@ http::Request::parse_header()
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
         if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
-        
+        // Log::highlight(_method);
         _status = HTTP_BAD_REQUEST;
         return ;
     }
