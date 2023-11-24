@@ -99,11 +99,9 @@ http::Request::execute(Request& req, string storageDir) {
         string filename = _queryParameters["name"];
         string filepath = storageDir + filename;
         if (ft::startswith(filepath, "./public/")) {
-            remove(filepath.c_str());
-            if (errno != 0)
-            {  
-                Log::error("Error removing file.");
-                perror("");
+            int test = remove(filepath.c_str());
+            if (test != 0) {
+                Log::error("removing file.");
                 req._status = "500";
             }
         }
@@ -738,7 +736,9 @@ http::generate_storageList()
     }
     while (!list.empty()) {
         storageItem += "<div class=\"file\">\n";
-        storageItem += "<img src=\"./public/storage/" + list.front() + "\" height=\"30px\"></img>\n";
+        if (ft::endswith(list.front(), ".jpg") || ft::endswith(list.front(), ".png") || ft::endswith(list.front(), ".jpeg")) {
+            storageItem += "<img src=\"./public/storage/" + list.front() + "\" height=\"30px\"></img>\n";
+        }
         storageItem += "<p>" + list.front() + "</p>";
         storageItem += "<img onclick='deleter(\"" + list.front() + "\")' src=\"images/delete_icon.png\" height=\"16px\" width=\"16px\">\n";
         storageItem += "</div>\n";
