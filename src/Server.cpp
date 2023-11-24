@@ -102,13 +102,9 @@ Server::setup(int domain, int service, int protocol, int backlog)
     if (hostsfile.is_open()) {
         hostsfile <<  _host + " " + _server_name << std::endl;
         hostsfile.close();
-    } else {
-        Log::out("Couldn't link server_name to host");
-    }
+    } else {}
 
     Log::listening(_host, _port, _server_name);
-    // Log::mark(_root);
-    // Log::ltree(_locations);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

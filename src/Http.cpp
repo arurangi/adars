@@ -83,7 +83,6 @@ http::Request::execute(Request& req, string storageDir) {
         return ;
     if (ft::startswith(req._uri, "/cgi-bin/") && ft::endswith(req._uri, ".py"))
     {
-        Log::status("Execution: processing CGI");
         req._cgiContent = "";
         handle_cgi(req);
         if (!req._status.empty())
@@ -93,16 +92,13 @@ http::Request::execute(Request& req, string storageDir) {
         
     }
     else if (_method == "POST" && _contentLength > 0) {
-        Log::status("Execution: saving payload to storage");
         save_payload(storageDir);
         _uri = "/storage";
     }
     else if (_method == "DELETE") {
-        Log::status("Execution: deleting files from storage");
         string filename = _queryParameters["name"];
         string filepath = storageDir + filename;
         if (ft::startswith(filepath, "./public/")) {
-            Log::status(">>>>>>>>> deleting file at: " + filepath + "<<<<<<<<<<<\n");
             remove(filepath.c_str());
             if (errno != 0)
             {  
@@ -192,7 +188,7 @@ string    http::Request::execute(Request &req)
 	}
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
 	{
-        Log::status("pipe() failed");
+        Log::error("pipe() failed");
 		return NULL;
 	}
 	this->_cgi_pid = fork();
@@ -361,7 +357,6 @@ http::Request::parseStructuredBody()
         }
         else if (!key.empty()) {
             if ((pos = currLine.find(_formBoundary+"--")) != string::npos) {
-                Log::highlight("FOUND");
                 currLine = currLine.substr(0, pos);
             }
             _postData[key] += currLine + LF;
@@ -412,10 +407,7 @@ http::build_response(Request& req, Server& server)
     string              error_page = get_error_page(server, "404");
     bool                body_is_set = false;
 
-    // TODO: handle method not found
-    Log::highlight("BUILDING RESPONSE");
     if (!req._status.empty()) {
-        Log::highlight("COOUCOU");
         res.set_status(req._status);
         path = "./public/" + get_error_page(server, req._status);
     }
@@ -434,23 +426,19 @@ http::build_response(Request& req, Server& server)
     ////////////////////////////////////////////////////////////////////////////
     // DIRECTORY PATH -> sets body
     else if (ft::isdirectory(("."+req._uri).c_str())) {
-        Log::status("===> directory");
         res._body = generate_directoryPage("./public/");
         res._contentLength = res._body.size();
-        Log::mark(res._body);
         path = ".html";
         body_is_set = true;
     }
     ////////////////////////////////////////////////////////////////////////////
     // FILE PATH -> sets path
     else if  (get_mimeType(req._uri, mimeTypes) != "application/octet-stream") {
-        Log::status("===> Filepath");
         path = req.getPathToRequestedFile();
     }
     ////////////////////////////////////////////////////////////////////////////
     // CGI -> sets body
     else if (ft::startswith(req._uri, "/cgi-bin")) {
-        Log::status("===> CGI");
         if (req._cgiContent.empty()) {
             res.set_status("500");
             path = "./public/" + get_error_page(server, "500");
@@ -464,14 +452,10 @@ http::build_response(Request& req, Server& server)
             res._contentType = "text/html";
             path = ".html";
         }
-        // req._uri = "./public/index.html";
-        // path = "./public/" + error_page;
     }
     ////////////////////////////////////////////////////////////////////////////
     // LOCATIONS -> sets path
     else { // TODO: add condition, allowed locations (std::set)
-        Log::status("===> Location");
-        Log::mark("in location checking");
         bool found = false;
         string root = server.get_root();
         string index = "";
@@ -481,9 +465,8 @@ http::build_response(Request& req, Server& server)
             for (; m != (*v).end() && !found; m++) {
                 string location_path = (*m).first;
                 if (req._uri == location_path)
-                {
-                    found = true; Log::success(req._uri);
-                    
+                {            
+                    found = true;        
                     // default values
                     root    = server.get_root();
                     index   = DEFAULT_INDEX;
@@ -537,22 +520,17 @@ http::build_response(Request& req, Server& server)
     // bool opened = true;
 
     if (!body_is_set) {
-        Log::status("=> opening.." + path);
         requestedFile.open(path.c_str(), std::ios::in);
-        // if (requestedFile.eof())
-        //     opened = false;
         if (!requestedFile.is_open()) {
-            Log::status("==> couldn't open");
-            // res.set_status(HTTP_NOT_FOUND);
             string code = errno == 2 ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR; // TODO: YOU CAN DO BETTER
             res.set_status(code);
             error_page = get_error_page(server, code);
             if (req._autoindex == "on") {
-                req._uri = ".html"; // TODO: can I delete this?
+                req._uri = ".html"; //?
                 res._body = http::generate_directoryPage(path);
             }
             else {
-                req._uri = "./public/" + error_page; // TODO: can I delete this?
+                req._uri = "./public/" + error_page; //?
                 res._body = generate_errorPage(error_page);
             }
         } else {
@@ -604,17 +582,15 @@ void http::send_response(int client_socket, http::Response& res)
 void
 http::Request::save_payload(string storageDir)
 {
-    Log::status("save_payload()..");
     if (!_payload.empty()) {
         string path = storageDir + _filename; // TODO: prefix with _storage_dir
-        Log::status("filepath: " + path);
         std::ofstream outputFile(path.c_str(), std::ios::binary);
         if (outputFile) {
             outputFile.write(_payload.c_str(), _payload.size());
             outputFile.close();
             std::cout << "Image saved as: " << ("." + _filename) << std::endl;
         } else {
-            std::cerr << "♨ Error saving the image." << std::endl;
+            Log::error("♨ Error saving the image.");
             this->_status = "500";
         }
     }
@@ -629,7 +605,7 @@ http::get_mimeType(string filepath, map<string, string> accepted_types)
 
     size_t dotPosition = filepath.find_last_of(".");
     if (dotPosition == string::npos) {
-        Log::error("Can't identify MIME type: No extension.");
+        // Log::error("Can't identify MIME type: No extension.");
         return defaultMime;
     }
     string extension = filepath.substr(dotPosition);
@@ -648,10 +624,8 @@ http::load_mimeTypes(string mimesFilePath) {
 
     // open mime file
     mimeFile.open(mimesFilePath.c_str(), std::ios::in);
-    if (!mimeFile.is_open()) {
+    if (!mimeFile.is_open())
         Log::error("Error: opening MIME file");
-        // throw exception???
-    }
     
     // read line by line
     while (std::getline(mimeFile, line)) {
@@ -746,7 +720,6 @@ std::set<string> get_xtension_list(std::deque<string> files_list)
         size_t dotPosition = curr_file.find_last_of(".");
         if (dotPosition != string::npos) {
             xtensions.insert(curr_file.substr(dotPosition));
-            Log::mark(curr_file.substr(dotPosition));
         }
         files_list.pop_front();
     }
@@ -785,9 +758,11 @@ operator<< (std::ostream& os, http::Request& rhs)
     stringstream ss(rhs._header);
 
     os << CBLUE CBOLD << "\nREQUEST\n" << CRESET;
-    while (std::getline(ss, curr)) {
-        os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
-    }
+    std::getline(ss, curr);
+    os << CGREEN << "<< " << CRESET << curr << std::endl;
+    // // while (std::getline(ss, curr) && curr != CRLFCRLF) {
+    // //     os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
+    // }
     return os;
 }
 
@@ -798,7 +773,9 @@ operator<< (std::ostream& os, http::Response& rhs)
     string currentLine;
     stringstream ss(content);
     
-    os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET; 
+    os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET;
+    // std::getline(ss, currentLine);
+    // os << CGREEN << "<< " << CRESET << currentLine << std::endl;
     while (std::getline(ss, currentLine) && currentLine != CRLFCRLF)
         os << CGREEN << "<< " << CRESET << currentLine << std::endl;
     return os;
@@ -873,7 +850,6 @@ http::Request::parse_header()
     stringstream    ss(tmp);
     
     ss >> _method >> _uri >> _httpVersion;
-    Log::highlight(_method);
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
         if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
@@ -903,7 +879,6 @@ http::Request::parse_header()
             string length = line.substr(keyword.size(), line.size());
             this->_contentLengthStr = length;
             this->_contentLength = std::atoi(length.c_str());
-            Log::highlight(_contentLength);
         }
         keyword = "Host: ";
         if (line.find(keyword) != string::npos) {
