@@ -313,7 +313,7 @@ http::parse_request(const int& client_socket)
     req._header = raw_request, req._body = raw_request;
     req.parse_header();
 
-    // std::cout << req;
+    std::cout << req;
 
     if (req._method != "POST")
         return req;
@@ -873,10 +873,10 @@ http::Request::parse_header()
     stringstream    ss(tmp);
     
     ss >> _method >> _uri >> _httpVersion;
+    Log::highlight(_method);
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
         if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
-        // Log::highlight(_method);
         _status = HTTP_BAD_REQUEST;
         return ;
     }
