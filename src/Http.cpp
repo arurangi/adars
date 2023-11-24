@@ -544,7 +544,7 @@ http::build_response(Request& req, Server& server)
         if (!requestedFile.is_open()) {
             Log::status("==> couldn't open");
             // res.set_status(HTTP_NOT_FOUND);
-            string code = requestedFile.eof() == true ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR; // TODO: YOU CAN DO BETTER
+            string code = errno == 2 ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR; // TODO: YOU CAN DO BETTER
             res.set_status(code);
             error_page = get_error_page(server, code);
             if (req._autoindex == "on") {
