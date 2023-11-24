@@ -477,6 +477,7 @@ http::build_response(Request& req, Server& server)
                         if (type == "return" && settings[0] == "302")
                         {
                             index = settings[1];
+                            res.set_status("302");
                             break ;
                         }
                         else if (type == "root")
@@ -586,7 +587,6 @@ http::Request::save_payload(string storageDir)
         if (outputFile) {
             outputFile.write(_payload.c_str(), _payload.size());
             outputFile.close();
-            std::cout << "Image saved as: " << ("." + _filename) << std::endl;
         } else {
             Log::error("♨ Error saving the image.");
             this->_status = "500";
@@ -827,6 +827,14 @@ http::Request::setPayload(string& body)
     }
     stringstream ss(body.substr(pos));
     while (std::getline(ss, line)) {
+        // TODO: remove last boundary
+        // if (line.find(_formBoundary) != string::npos)
+        // {
+        //     Log::success("FOUND MY G");
+        //     // std::cout << "UI";
+        //     // this->_payload += line.substr(0, line.find_first_of("-"));
+        //     // break;
+        // }
         if ((pos = line.find("filename=\"")) != string::npos)
             continue ;
         else if ((pos = line.find("Content-Type:")) != string::npos)
@@ -839,6 +847,7 @@ http::Request::setPayload(string& body)
             this->_payload += line + LF;
         }
     }
+    // std::cout << this->_payload;
 }
 
 void
