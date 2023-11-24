@@ -313,7 +313,7 @@ http::parse_request(const int& client_socket)
     req._header = raw_request, req._body = raw_request;
     req.parse_header();
 
-    std::cout << req;
+    // std::cout << req;
 
     if (req._method != "POST")
         return req;
@@ -765,6 +765,7 @@ http::generate_storageList()
     }
     while (!list.empty()) {
         storageItem += "<div class=\"file\">\n";
+        storageItem += "<img src=\"./public/storage/" + list.front() + "\" height=\"30px\"></img>\n";
         storageItem += "<p>" + list.front() + "</p>";
         storageItem += "<img onclick='deleter(\"" + list.front() + "\")' src=\"images/delete_icon.png\" height=\"16px\" width=\"16px\">\n";
         storageItem += "</div>\n";
