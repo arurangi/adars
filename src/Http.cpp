@@ -121,6 +121,7 @@ void http::Request::handle_cgi(Request &req)
     initEnv(req);
     req._cgiContent = execute(req);
     freeCgiEnv();
+    std::cout << "cgi content : " << req._cgiContent;
     if (req._cgiContent.empty())
         req._status = "500";
 }
@@ -211,6 +212,8 @@ string    http::Request::execute(Request &req)
         close(pipe_in[0]);
         close(pipe_out[1]);
 
+
+
         if (req._method == "POST")
         {
             check = write(pipe_in[1], this->_rawBody.c_str(), strlen(this->_rawBody.c_str()));
@@ -226,6 +229,33 @@ string    http::Request::execute(Request &req)
 
         char buffer[1024];
         ssize_t bytes;
+
+
+        int status;
+        pid_t result = waitpid(this->_cgi_pid, &status, WNOHANG);
+        if (result == -1)
+        {
+            close(pipe_out[0]);
+            return NULL;
+        }
+        
+        int timeout_seconds = 5;
+
+        int timeout_counter = 0;
+
+        while (result == 0 && timeout_counter < timeout_seconds)
+        {
+            ft::delay(1000);
+            result = waitpid(this->_cgi_pid, &status, WNOHANG);
+            ++timeout_counter;
+        }
+
+        if (result == 0)
+        {
+            kill(this->_cgi_pid, SIGTERM);
+            return "";
+        }
+
 
         while ((bytes = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
         {
