@@ -120,6 +120,7 @@ void http::Request::handle_cgi(Request &req)
     this->_cgi_path = req._uri;
     initEnv(req);
     req._cgiContent = execute(req);
+    freeCgiEnv();
     if (req._cgiContent.empty())
         req._status = "500";
 }
@@ -204,7 +205,7 @@ string    http::Request::execute(Request &req)
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		this->_exit_status = execve(this->_argv[0], this->_argv, this->_ch_env);
-		exit(this->_exit_status);
+        exit(this->_exit_status);
 	}
 	else if (this->_cgi_pid > 0){
         close(pipe_in[0]);
