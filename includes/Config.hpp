@@ -47,6 +47,7 @@ class Config
         void    check_error_pages(Data &wbsv_data, map_vector_it location_data_it);
         void    set_default(Data &wbsv_data);
         void    printData(ServerConf server);
+        int     read_File(std::string infile);
 };
 
 void ft_error_server_bloc(Data &wbsv_data, Utils utils, std::string filename, int line_index);

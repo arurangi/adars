@@ -25,13 +25,38 @@ void    Config::printData(ServerConf server)
         }
 }
 
+int     Config::read_File(std::string infile)
+{
+    std::string line;
+    std::ifstream path(infile);
+
+    while(std::getline(path, line))
+    {
+        if (line.find_first_not_of(" \t\n") != std::string::npos)
+        {
+            path.seekg(0, std::ios::beg);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void    Config::parsing_file(std::string file, Data &wbsv_data)
 {
     this->_infile.open(file.c_str());
     if (this->_infile.is_open())
     {
-        this->filename = file;
-        getData(wbsv_data);
+        this->_infile.seekg(0, std::ios::end);
+        if (this->_infile.tellg() == 0)
+            throw FileOpenException();
+        this->_infile.seekg(0, std::ios::beg);
+        int check = read_File(file);
+        if (check == 1) {
+            this->filename = file;
+            getData(wbsv_data);
+        }
+        else
+            throw FileOpenException();
     }
     else
         throw   FileOpenException();

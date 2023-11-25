@@ -11,10 +11,26 @@ int main(int ac, char **av)
     Cluster cluster;
     Data data;
 
-    if (ac != 2)
-        data.config.parsing_file("conf/default.config", data);
-    else if (ac == 2)
-        data.config.parsing_file(av[1], data);
+    if (ac == 1) {
+        try {
+            data.config.parsing_file("conf/default.config", data);
+        }
+        catch (std::exception &e) {
+            exit(Log::out(e.what()));
+        }
+    }
+    else if (ac == 2) {
+        try {
+            data.config.parsing_file(av[1], data);
+        }
+        catch (std::exception &e) {
+            exit(Log::out(e.waht()));
+        }
+    }
+    else {
+        Log::error("Wrong numers of arguments");
+        return (EXIT_FAILURE);
+    }
     if (data.error.length())
         exit(Log::out(data.error));
         
