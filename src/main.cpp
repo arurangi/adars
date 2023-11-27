@@ -24,7 +24,7 @@ int main(int ac, char **av)
             data.config.parsing_file(av[1], data);
         }
         catch (std::exception &e) {
-            exit(Log::out(e.waht()));
+            exit(Log::out(e.what()));
         }
     }
     else {
