@@ -335,6 +335,8 @@ http::Request::parseStructuredBody()
     string key = "", value = "";
     size_t pos;
 
+
+
     while (std::getline(ss, currLine))
     {
         if (currLine.find(_formBoundary) != string::npos /*check ending*/) {
@@ -354,6 +356,7 @@ http::Request::parseStructuredBody()
             }
         }
         else if (!key.empty()) {
+            // std::cout << CBLUE << currLine;
             if ((pos = currLine.find(_formBoundary+"--")) != string::npos) {
                 currLine = currLine.substr(0, pos);
             }
@@ -361,8 +364,13 @@ http::Request::parseStructuredBody()
         }
     }
     // std::cout << "__start_of_body +++\n";
-    // std::cout << _postData["file"] << CYELLOW << "$" << CRESET;
+    // std::cout << _postData["file"];
     // std::cout << "__end_of_body +++\n";
+    // if ((ft::mfind(_postData["file"], _formBoundary+"--")) != -1)
+    //     Log::success("FOUNDDDD");
+    // else {
+    //     Log::warn("NOT FOUND");
+    // }
 }
 
 void
@@ -504,7 +512,6 @@ http::build_response(Request& req, Server& server)
         ////////////////////////////////////////////////////////////////////////////
         if (found) {
             path = root + "/" + index;
-            std::cout << path << std::endl;
         } else {
             Log::error("Location not found");
             res.set_status("404"); // NOT FOUND
@@ -581,11 +588,13 @@ void http::send_response(int client_socket, http::Response& res)
 void
 http::Request::save_payload(string storageDir)
 {
+    string payloadTrimmed = _payload.substr(0, _payload.size()-_formEnd.size()-3);
+
     if (!_payload.empty()) {
         string path = storageDir + _filename; // TODO: prefix with _storage_dir
         std::ofstream outputFile(path.c_str(), std::ios::binary);
         if (outputFile) {
-            outputFile.write(_payload.c_str(), _payload.size());
+            outputFile.write(payloadTrimmed.c_str(), payloadTrimmed.size());
             outputFile.close();
         } else {
             Log::error("♨ Error saving the image.");
@@ -759,10 +768,13 @@ operator<< (std::ostream& os, http::Request& rhs)
 
     os << CBLUE CBOLD << "\nREQUEST\n" << CRESET;
     std::getline(ss, curr);
-    os << CGREEN << "<< " << CRESET << curr << std::endl;
-    // // while (std::getline(ss, curr) && curr != CRLFCRLF) {
-    // //     os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
-    // }
+    os << CBLUE << ">> " << CRESET << curr << std::endl;
+    while (std::getline(ss, curr) && curr != CRLFCRLF) {
+        if (ft::startswith(curr, "Host: ")
+            ||ft::startswith(curr, "Content-Length: ")
+            ||ft::startswith(curr, "Content-Type: "))
+            os << CBLUE CBOLD << ">> " << CRESET << curr << std::endl;
+    }
     return os;
 }
 
@@ -776,8 +788,11 @@ operator<< (std::ostream& os, http::Response& rhs)
     os << CGREEN CBOLD << "\nRESPONSE\n" << CRESET;
     // std::getline(ss, currentLine);
     // os << CGREEN << "<< " << CRESET << currentLine << std::endl;
+    string color = CGREEN;
+    if (ft::startswith(rhs._code, "4") || ft::startswith(rhs._code, "5"))
+        color = CRED;
     while (std::getline(ss, currentLine) && currentLine != CRLFCRLF)
-        os << CGREEN << "<< " << CRESET << currentLine << std::endl;
+        os << color << "<< " << CRESET << currentLine << std::endl;
     return os;
 }
 
@@ -818,36 +833,33 @@ void http::Request::setFilename(string& body)
 void
 http::Request::setPayload(string& body)
 {
-    size_t pos;
-    string line;
+    size_t  pos;
+    string  line;
+    bool    savingData = false;
     
     if ((pos = body.find("Content-Disposition")) == string::npos) {
         Log::error("setPayload(): No `Content-Disposition` in POST request");
         return ;
     }
+
     stringstream ss(body.substr(pos));
     while (std::getline(ss, line)) {
-        // TODO: remove last boundary
-        // if (line.find(_formBoundary) != string::npos)
-        // {
-        //     Log::success("FOUND MY G");
-        //     // std::cout << "UI";
-        //     // this->_payload += line.substr(0, line.find_first_of("-"));
-        //     // break;
-        // }
-        if ((pos = line.find("filename=\"")) != string::npos)
-            continue ;
-        else if ((pos = line.find("Content-Type:")) != string::npos)
-        {
-            std::getline(ss, line);
-            std::getline(ss, line);
+        if (savingData)
             this->_payload += line + LF;
-        }
         else {
-            this->_payload += line + LF;
+            std::cout << "out--\n";
+            if ((pos = line.find("filename=\"")) != string::npos)
+                continue ;
+            else if ((pos = line.find("Content-Type:")) != string::npos)
+            {
+                std::getline(ss, line);
+                std::getline(ss, line);
+                this->_payload += line + LF;
+                savingData = true;
+            }
+
         }
     }
-    // std::cout << this->_payload;
 }
 
 void
@@ -881,6 +893,9 @@ http::Request::parse_header()
             if ((found = line.find(keyword)) != string::npos) {
                 _formBoundary = line.substr(found+keyword.size());
                 trim(_formBoundary, WHITE_SPACE); // remove leading spaces
+                _formBoundary = "--"+_formBoundary;
+                _formBoundary[_formBoundary.size()-1] = '\0';
+                _formEnd = _formBoundary+"--";
             }
         }
         keyword = "Content-Length: ";

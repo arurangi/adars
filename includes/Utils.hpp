@@ -23,14 +23,15 @@
     #define CRESET    "\033[0m"
 
     namespace ft {
-        string to_str(int num);
-        bool startswith(const string& str, const string& keyword);
-        bool endswith(const string& str, const string& keyword);
+        string              to_str(int num);
+        bool                startswith(const string& str, const string& keyword);
+        bool                endswith(const string& str, const string& keyword);
 
-        string get_dir(string file_path);
-        std::deque<string> list_files_in(string directory);
-        bool isdirectory(const char* path);
-        void delay(int time_in_ms);
+        string              get_dir(string file_path);
+        std::deque<string>  list_files_in(string directory);
+        bool                isdirectory(const char* path);
+        void                delay(int time_in_ms);
+        ssize_t             mfind(std::string str, std::string substr);
     };
 
 #endif

@@ -32,7 +32,7 @@
         private:
             //
         public:
-            static void status(std::string msg);
+            static void status(std::string msg, string end = "\n");
 
             static void listening(std::string host, int port, std::string server_name);
 

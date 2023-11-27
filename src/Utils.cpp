@@ -84,3 +84,23 @@ void ft::delay(int time_in_ms) {
     timeout.tv_usec = (time_in_ms % 1000) * 1000;
     select(0, NULL, NULL, NULL, &timeout);
 }
+
+// Manual Find. Does not stop at '\n' (Line Return)
+ssize_t ft::mfind(std::string str, std::string substr){
+    if (str.empty() || substr.empty())
+        return -1;
+    for (size_t i = 0; i < str.size(); i++) {
+        if (str[i] == substr[0]) {
+            size_t j = 0;
+            while (j < substr.size() && i+j < str.size()) {
+                if (str[i+j] != substr[j])
+                    break ;
+                j++;
+            }
+            if (j == substr.size()) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}

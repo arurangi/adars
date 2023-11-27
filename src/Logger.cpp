@@ -1,10 +1,10 @@
 #include "../includes/Logger.hpp"
 
 void
-Log::status(std::string msg) {
+Log::status(std::string msg, std::string end) {
 std::cout << std::endl << CYELLOW CBOLD
-            << "◌" 
-            << " " << msg << " " << CRESET << std::endl;
+            << "◌"
+            << " " << msg << " " << CRESET << end;
 }
 
 void

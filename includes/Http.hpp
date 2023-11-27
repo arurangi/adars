@@ -115,9 +115,9 @@
 
                 string    _autoindex;
 
-                string _contentType;
+                string  _contentType;
                 int     _contentLength;
-                string _contentLengthStr;
+                string  _contentLengthStr;
                 char    _raw[BUFFER_SIZE];
                 string  _referer;
                 int     _server_port;
@@ -130,6 +130,7 @@
                 string  _status;
 
                 string _formBoundary;
+                string _formEnd;
 
                 string                      _cgiContent;
                 std::map<string, string>	_env;
