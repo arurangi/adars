@@ -34,7 +34,7 @@ void convert_body_size(std::string &size, std::string number, char type)
 {
     
     std::ostringstream s_num;
-    long num = std::atoi(number.c_str());
+    long num = std::atof(number.c_str());
 
     if (type == 'G' || type == 'g')
         s_num << (num * 1024 * 1024 * 1024);

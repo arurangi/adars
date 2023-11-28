@@ -1,0 +1,35 @@
+cmd PUT method "const url = 'http://127.0.0.1:8000';
+
+// Create an object representing the data you want to send in the request
+const data = {
+  key1: 'value1',
+  key2: 'value2'
+};
+
+// Perform the PUT request using the Fetch API
+fetch(url, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json', // Specify the content type as JSON if you're sending JSON data
+    // Add any other headers if needed
+  },
+  body: JSON.stringify(data) // Convert the data object to a JSON string
+})
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json(); // Assuming your server returns JSON; use response.text() if it's plain text, etc.
+  })
+  .then(responseData => {
+    // Handle the response data here
+    console.log('PUT request successful:', responseData);
+  })
+  .catch(error => {
+    // Handle errors here
+    console.error('Error during PUT request:', error);
+  });"
+
+curl --resolve adarscom:8000:127.0.0.1 http://adarscom:8000/about --output -
+
+curl -X POST -H "Content-Type: plain/text" http:/localhost:8000 --data "BODY IS HERE write something shorter or longer than body limit"

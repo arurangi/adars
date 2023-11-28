@@ -115,23 +115,22 @@ void http::Request::handle_cgi(Request &req)
     initEnv(req);
     req._cgiContent = execute(req);
     freeCgiEnv();
-    std::cout << "cgi content : " << req._cgiContent;
     if (req._cgiContent.empty())
         req._status = "500";
 }
 
 void    http::Request::freeCgiEnv()
 {
-    if (this->_ch_env != nullptr)
+    if (this->_ch_env != NULL)
     {
-        for (int i = 0; this->_ch_env[i] != nullptr; i++) {
+        for (int i = 0; this->_ch_env[i] != NULL; i++) {
                 free(this->_ch_env[i]);
             }
         free(this->_ch_env);
     }
 
-    if (this->_argv != nullptr) {
-        for (int i = 0; this->_argv[i] != nullptr; i++) {
+    if (this->_argv != NULL) {
+        for (int i = 0; this->_argv[i] != NULL; i++) {
             free(this->_argv[i]);
         }
         free(this->_argv);
@@ -206,8 +205,6 @@ string    http::Request::execute(Request &req)
         close(pipe_in[0]);
         close(pipe_out[1]);
 
-
-
         if (req._method == "POST")
         {
             check = write(pipe_in[1], this->_rawBody.c_str(), strlen(this->_rawBody.c_str()));
@@ -254,12 +251,6 @@ string    http::Request::execute(Request &req)
         while ((bytes = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
         {
             if (bytes == -1)
-            {
-                close(pipe_out[0]);
-                return NULL;
-            }
-            check = write(STDOUT_FILENO, buffer, bytes);
-            if (check == -1)
             {
                 close(pipe_out[0]);
                 return NULL;
@@ -356,21 +347,12 @@ http::Request::parseStructuredBody()
             }
         }
         else if (!key.empty()) {
-            // std::cout << CBLUE << currLine;
             if ((pos = currLine.find(_formBoundary+"--")) != string::npos) {
                 currLine = currLine.substr(0, pos);
             }
             _postData[key] += currLine + LF;
         }
     }
-    // std::cout << "__start_of_body +++\n";
-    // std::cout << _postData["file"];
-    // std::cout << "__end_of_body +++\n";
-    // if ((ft::mfind(_postData["file"], _formBoundary+"--")) != -1)
-    //     Log::success("FOUNDDDD");
-    // else {
-    //     Log::warn("NOT FOUND");
-    // }
 }
 
 void
@@ -392,7 +374,10 @@ http::Request::isMultipartFormData()
 string get_error_page(Server& s, string error_code)
 {
     if (s._error_pages.find(error_code) != s._error_pages.end())
-        return s._error_pages[error_code];
+    {
+        if (s._error_pages[error_code] == (error_code + ".html"))
+            return s._error_pages[error_code];
+    }
     else {
         if (ft::startswith(error_code, "4"))
         {
@@ -401,6 +386,7 @@ string get_error_page(Server& s, string error_code)
         else
             return "default500.html";
     }
+    return ("default400.html");
 }
 
 http::Response
@@ -416,9 +402,13 @@ http::build_response(Request& req, Server& server)
     if (!req._status.empty()) {
         res.set_status(req._status);
         path = "./public/" + get_error_page(server, req._status);
+
     }
     // BODY SIZE TOO BIG -> sets path
-    if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
+    if (res._code == "405"){
+        ;
+    }
+    else if (req._method == "POST" && req._contentLength > server.get_max_body_size()) {
         res.set_status("413");
         path = "./public/" + get_error_page(server, "413");
     }
@@ -528,7 +518,7 @@ http::build_response(Request& req, Server& server)
     if (!body_is_set) {
         requestedFile.open(path.c_str(), std::ios::in);
         if (!requestedFile.is_open()) {
-            string code = errno == 2 ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR; // TODO: YOU CAN DO BETTER
+            string code = errno == 2 ? HTTP_NOT_FOUND : HTTP_INTERNAL_SERVER_ERROR;
             res.set_status(code);
             error_page = get_error_page(server, code);
             if (req._autoindex == "on") {
@@ -847,7 +837,6 @@ http::Request::setPayload(string& body)
         if (savingData)
             this->_payload += line + LF;
         else {
-            std::cout << "out--\n";
             if ((pos = line.find("filename=\"")) != string::npos)
                 continue ;
             else if ((pos = line.find("Content-Type:")) != string::npos)
@@ -874,7 +863,7 @@ http::Request::parse_header()
     if (_method != "GET" && _method != "POST" && _method != "DELETE") { // special func
         if (_uri.empty() && _httpVersion.empty())
             throw EmptyRequest();
-        _status = HTTP_BAD_REQUEST;
+        _status = "405";
         return ;
     }
 

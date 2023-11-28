@@ -150,7 +150,7 @@ void Server::set_root(string rootFolder)
 void
 Server::set_request_body_size_limit(string size_limit)
 {
-    _request_body_size_limit = std::atoi(size_limit.c_str());
+    _request_body_size_limit = std::atof(size_limit.c_str());
 }
 
 void
