@@ -15,7 +15,7 @@ This project was about building an HTTP in order to understand how they work und
 ## Try it
 The easiest way is to run the docker image of our server. Here is how:
 1. install and launch [Docker](https://www.docker.com/)
-2. run the command `docker run rurangiza/adars` in your terminal
+2. run the command `docker run -p 8000:8000 rurangiza/adars` in your terminal
 3. visit http://localhost:8000/ and have fun!
 
 ## How it works

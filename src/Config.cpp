@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: akorompa <akorompa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arurangi <arurangi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 14:17:29 by akorompa          #+#    #+#             */
-/*   Updated: 2023/11/14 16:08:00 by akorompa         ###   ########.fr       */
+/*   Updated: 2023/11/30 20:32:40 by arurangi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void    Config::printData(ServerConf server)
 int     Config::read_File(std::string infile)
 {
     std::string line;
-    std::ifstream path(infile);
+    std::ifstream path(infile.c_str());
 
     while(std::getline(path, line))
     {
