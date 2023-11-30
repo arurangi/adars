@@ -104,3 +104,12 @@ ssize_t ft::mfind(std::string str, std::string substr){
     }
     return -1;
 }
+
+void ft::sighandler(int signum)
+{
+	if (signum == SIGINT)
+	{
+        std::cout << CRED << "\rShuting down.." << CRESET << std::endl;
+		exit(1);
+	}
+}

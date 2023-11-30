@@ -9,11 +9,12 @@ std::cout << std::endl << CYELLOW CBOLD
 
 void
 Log::listening(std::string host, int port, std::string server_name) {
-std::cout << std::endl << CYELLOW CBOLD
+(void) server_name;    
+std::cout << CYELLOW CBOLD
             << "◌ " << CRESET
-            << "Listening on " << CYELLOW << host << ":" << ft::to_str(port) << CRESET
-            << " (or " << CYELLOW << server_name << ":" << ft::to_str(port) << CRESET << ")\n"
-            << CRESET;
+            << "Server listening at " << CYELLOW << host << ":" << ft::to_str(port) << CRESET
+            //<< " (or " << CYELLOW << server_name << ":" << ft::to_str(port) << CRESET << ")\n"
+            << std::endl;
 }
 
 void

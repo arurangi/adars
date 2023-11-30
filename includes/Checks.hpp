@@ -5,6 +5,7 @@
 
     namespace check {
         void failure(int status);
+        bool failed(int status);
     }
 
 #endif

@@ -32,6 +32,7 @@
         bool                isdirectory(const char* path);
         void                delay(int time_in_ms);
         ssize_t             mfind(std::string str, std::string substr);
+        void                sighandler(int signum);
     };
 
 #endif

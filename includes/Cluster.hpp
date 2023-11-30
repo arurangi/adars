@@ -7,6 +7,9 @@
     #include "Server.hpp"
     #include "Webserv.hpp"
 
+    #define WRITE_FDS   NULL
+    #define ERROR_FDS   NULL
+
     class Server;
 
     typedef std::map<int, Server>::iterator IteratorS;

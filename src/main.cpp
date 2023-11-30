@@ -9,41 +9,29 @@
 int main(int ac, char **av)
 {
     Cluster cluster;
-    Data data;
+    Data    data;
 
-    if (ac == 1) {
-        try {
-            data.config.parsing_file("conf/default.config", data);
+    try
+    {
+        switch (ac)
+        {
+            case 1:
+                data.config.parsing_file("conf/default.config", data);
+                break ;
+            case 2:
+                data.config.parsing_file(av[1], data);
+                break ;
+            default:
+                exit(Log::out("Wrong numers of arguments"));
         }
-        catch (std::exception &e) {
-            exit(Log::out(e.what()));
-        }
-    }
-    else if (ac == 2) {
-        try {
-            data.config.parsing_file(av[1], data);
-        }
-        catch (std::exception &e) {
-            exit(Log::out(e.what()));
-        }
-    }
-    else {
-        Log::error("Wrong numers of arguments");
-        return (EXIT_FAILURE);
-    }
-    if (data.error.length())
-        exit(Log::out(data.error));
-        
-    Log::success("CONFIGURATION FILE PARSING DONE");
-
-    try {
+        if (data.error.length())
+            exit(Log::out(data.error));      
         cluster.init(data.server_list);
-        Log::success("CLUSTER INITIALIZED");
     }
     catch (std::exception& e) {
         exit(Log::out(e.what()));
     }
+    signal(SIGINT, ft::sighandler);
     cluster.watch();
-
     return EXIT_SUCCESS;
 }

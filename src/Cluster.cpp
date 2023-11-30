@@ -28,6 +28,7 @@ Cluster::init(Serv_list servers)
     _size = servers.size();
     string tmp;
 
+    Log::success("Configuration file parsing done"); 
     for(Serv_list::iterator it = servers.begin(); it != servers.end(); ++it)
     {
 
@@ -59,15 +60,16 @@ Cluster::init(Serv_list servers)
         s.setup(IPV4,TCP,DEFAULT, BACKLOG);
         _servers[s._socket] = s;
     }
-
     _begin = _servers.begin();
     _end = _servers.end();
+
+    std::cout << "Press CONTROL-C to quit\n";
 }
 
 void
 Cluster::watch()
 {
-    int status, curr_fd, max_fd = 0, client_fd;
+    int readable_fds, curr_fd, max_fd = 0, client_fd;
 
     // initialize data structure to store all known sockets (server and client)
     fd_set master_set, working_set;
@@ -79,19 +81,13 @@ Cluster::watch()
 
     do
     {
+        working_set = master_set;
         // wait for something to read
-        working_set = master_set; // because select() is destructive
-        status = select(max_fd+1, &working_set, NULL, NULL, &this->_timeout);
-        if (status < 0) {
-            Log::error("select() call failed");
+        readable_fds = select(max_fd+1, &working_set, WRITE_FDS, ERROR_FDS, &this->_timeout);
+        if (check::failed(readable_fds))
             break ;
-        } else if (status == 0) {
-            Log::status("Server timed-out.");
-            break ;
-        }
-        
+
         // identify which socket is readable
-        int readable_fds = status;
         for (curr_fd = 0; curr_fd <= max_fd && readable_fds ; curr_fd++) {
             if (FD_ISSET(curr_fd, &working_set)) {
 
